@@ -12,3 +12,4 @@
 
 *TGMAINCHAT=*ID чату модераторрів*
 
+Логіка бота - ../src/routes/bot.js
