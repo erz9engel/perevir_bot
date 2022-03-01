@@ -1,0 +1,31 @@
+{
+  "name": "factchecking",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "description": "fact Checking",
+  "author": {
+    "name": ""
+  },
+  "dependencies": {
+    "@binance/connector": "^1.7.0",
+    "body-parser": "^1.15.0",
+    "cookie-parser": "^1.4.0",
+    "crypto": "^1.0.1",
+    "debug": "^2.2.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.14.0",
+    "fs": "^0.0.1-security",
+    "mongoose": "^6.0.12",
+    "morgan": "^1.7.0",
+    "node-telegram-bot-api": "^0.56.0",
+    "pug": "^3.0.2",
+    "request": "^2.88.2",
+    "serve-favicon": "^2.3.0"
+  },
+  "engines": {
+    "node": "~6.10.x"
+  }
+}
