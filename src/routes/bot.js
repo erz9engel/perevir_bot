@@ -15,7 +15,6 @@ const Video = mongoose.model('Video');
 const CheckContentText = "Перевірити контент"
 
 bot.on('message', async (msg) => {
-
     const text = msg.text;
 
     if (text == '/start') {
@@ -41,7 +40,7 @@ bot.on('message', async (msg) => {
         const request = await Request.findByIdAndUpdate(request_id, {commentMsgId: commentMsgId, commentChatId: msg.chat.id });
         informRequestersWithComment(request, msg.chat.id, commentMsgId);
 
-    } else if ((msg.photo || msg.video || msg.text) && !msg.reply_to_message) {
+    } else if ((msg.photo || msg.video || (msg.text && msg.text.length > 10)) && !msg.reply_to_message) { //Check if text > 10 in order to sort out short msgs
         console.log(msg);
         //Check any input message 
         const requestId = new mongoose.Types.ObjectId();
@@ -178,27 +177,36 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
         if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         
-        bot.editMessageText("#pending", {
-            chat_id: msg.chat.id,
-            message_id: msg.message_id,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        });
+        try {
+            bot.editMessageText("#pending", {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            });
+        } catch (e){ console.log(e) }
     
     } else if (action.indexOf('COMMENT_') == 0) {
         const requestId = action.split('_')[1];
         const moderator = callbackQuery.from.id;
         const request = await Request.findById(requestId);
         //Send message to moderator (forvarded + action)
-        const sentMsg = await bot.forwardMessage(moderator, msg.chat.id, request.moderatorMsgID);
-        var options = {
-            reply_to_message_id: sentMsg.message_id,
-            reply_markup: JSON.stringify({
-                force_reply: true
-            })
-        };
-        bot.sendMessage(moderator, '#comment_' + requestId , options);
+        try {
+            var sentMsg = await bot.forwardMessage(moderator, msg.chat.id + 1, request.moderatorMsgID);
+            var options = {
+                reply_to_message_id: sentMsg.message_id,
+                reply_markup: JSON.stringify({
+                    force_reply: true
+                })
+            };
+        } catch (e){
+            bot.sendMessage(msg.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43");
+        }
+        
+        try {
+            bot.sendMessage(moderator, '#comment_' + requestId , options);
+        } catch (e){ console.log(e) }
         //Update moderators action message
         var inline_keyboard;
         if (request.fakeStatus == 0) {
@@ -219,14 +227,20 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
 });
 
 function addToWaitlist(msg, foundRequest) {
-    bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
+    try {
+        bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
+    } catch (e){ console.log(e) }
     Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}}, function(){});
 }
 
 async function reportStatus(msg, foundRequest) {
-    if (foundRequest.fakeStatus == 1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як правдива');
-    else if (foundRequest.fakeStatus == -1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як оманлива');
-    if (foundRequest.commentMsgId) bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
+    try {
+        if (foundRequest.fakeStatus == 1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як правдива');
+        else if (foundRequest.fakeStatus == -1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як оманлива');
+    } catch (e){ console.log(e) } 
+    try {
+        if (foundRequest.commentMsgId) bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
+    } catch (e){ console.log(e) } 
 }
 
 function notifyUsers(foundRequest, fakeStatus) {
@@ -235,21 +249,31 @@ function notifyUsers(foundRequest, fakeStatus) {
     };
 
     if (fakeStatus == 1) {
-        bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як правдиве', options);
+        try {
+            bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як правдиве', options);
+        } catch (e){ console.log(e) }
+
         for (var i in foundRequest.otherUsetsTG) {
             const optionsR = {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
-            bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як правдиве', optionsR);
+            try {
+                bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як правдиве', optionsR);
+            } catch (e){ console.log(e) }
         }
+
     } else if (fakeStatus == -1) {
-        
-        bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як оманливе', options);
+        try {
+            bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як оманливе', options);
+        } catch (e){ console.log(e) }
+
         for (var i in foundRequest.otherUsetsTG) {
             const optionsR = {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
-            bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як оманливе', optionsR);
+            try {
+                bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як оманливе', optionsR);
+            } catch (e){ console.log(e) }
         }
     }
 }
@@ -258,17 +282,29 @@ function informRequestersWithComment(request, chatId, commentMsgId) {
     var options = {
         reply_to_message_id: request.requesterMsgID
     };
-    bot.copyMessage(request.requesterTG, chatId , commentMsgId, options);
+    
+    try {
+        bot.copyMessage(request.requesterTG, chatId , commentMsgId, options);
+    } catch (e){ console.log(e) }
     
     for (var i in request.otherUsetsTG) {
         const optionsR = {
             reply_to_message_id: request.otherUsetsTG[i].requesterMsgID
         };
-        bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId , commentMsgId, optionsR);
+        try {
+            bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId , commentMsgId, optionsR);
+        } catch (e){ console.log(e) }
     }
-    //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus chenged
+    //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }
 
-bot.on("polling_error", (err) => console.log(err));
+bot.on("polling_error", (err) => console.log(err.message));
 
-module.exports = {};
+module.exports = {
+    message: async function (msg, pin) {
+        try {
+            const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg);
+            if(pin) bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
+        } catch (e){ console.log(e) }
+    }
+};
