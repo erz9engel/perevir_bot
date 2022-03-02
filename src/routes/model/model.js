@@ -5,6 +5,8 @@ var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
     requesterTG: Number, //Telegram ID of requester
     requesterMsgID: Number, //Telegram message ID
+    moderatorMsgID: Number, //Telegram message ID of resent message
+    moderatorActionMsgID: Number, //Telegram message ID of action message
     otherUsetsTG: [{
         requesterTG: Number,
         requesterMsgID: Number
@@ -17,6 +19,8 @@ var requestSchema = Schema({
     text: String, //Text of the message
     searchPhrase: String, //Processed text for search
     tags: [String], //Tags, each separate
+    commentChatId: Number, //Telegram ID of moderator of the comment
+    commentMsgId: Number, //Telegram message ID of comment message
     fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
     createdAt: {type: Date, default: new Date()} //Time of the creation
