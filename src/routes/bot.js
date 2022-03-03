@@ -33,7 +33,7 @@ bot.on('message', async (msg) => {
     } else if (text == CheckContentText) {
         bot.sendMessage(msg.chat.id, 'Надішліть чи перешліть матеріали які бажаєте перевірити');
 
-    } else if (msg.reply_to_message && msg.reply_to_message.text.indexOf('#comment_') != -1){
+    } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         //Process moderator's comment
         const request_id = msg.reply_to_message.text.split('_')[1];
         const commentMsgId = msg.message_id;
@@ -193,7 +193,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         const request = await Request.findById(requestId);
         //Send message to moderator (forvarded + action)
         try {
-            var sentMsg = await bot.forwardMessage(moderator, msg.chat.id + 1, request.moderatorMsgID);
+            var sentMsg = await bot.forwardMessage(moderator, msg.chat.id, request.moderatorMsgID);
             var options = {
                 reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({
