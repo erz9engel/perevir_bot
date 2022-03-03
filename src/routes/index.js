@@ -17,8 +17,7 @@ fs.readdirSync(__dirname + '/model').forEach(function (filename) {
     if (~filename.indexOf('.js')) require(__dirname + '/model/' + filename)
 });
 
-const Request = mongoose.model('Request');
-
-require('./bot');
+require('./bot/bot');
+router.use(require('./api'));
 
 module.exports = router;

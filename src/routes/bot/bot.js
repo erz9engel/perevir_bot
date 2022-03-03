@@ -238,7 +238,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
                 })
             };
         } catch (e){
-            bot.sendMessage(msg.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43");
+            bot.sendMessage(msg.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
+            console.error(e)
         }
         
         try {
