@@ -1,18 +1,23 @@
 const mongoose = require('mongoose');
-const fs = require('fs');
 require('dotenv').config();
 
 //TELEGRAM BOT
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
+const admins = String(process.env.ADMINS).split(',');
 
 const Request = mongoose.model('Request');
 const Image = mongoose.model('Image');
 const Video = mongoose.model('Video');
+const TelegramUser = mongoose.model('TelegramUser');
+const Data = mongoose.model('Data');
 
 //BUTTONS TEXT
 const CheckContentText = "Перевірити контент"
+const SubscribtionText = "🔥 Актуальні фейки"
+//OTHER TEXT
+const FakeNewsText = "Надсилаємо тобі підбірку фейків, які зараз літають по Україні та світу і загрожують нам. Знай найголовніше, поширюй це в соціальних мережах та протидій.\n\n";
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -23,16 +28,48 @@ bot.on('message', async (msg) => {
                 resize_keyboard: true,
                 one_time_keyboard: false,
                 keyboard: [
-                    [{ text: CheckContentText }]
+                    [{ text: CheckContentText }],
+                    [{ text: SubscribtionText }]
                 ]
             }
         };
 
         bot.sendMessage(msg.chat.id, 'Перевір - інформаційний бот для перевірки даних та повідомлення сумнівних новин.\n\nПовідомляй дані, які хочеш перевірити:\n-пости в соціальних мережах\n-посилання\n-медіафайли або фото\n\nЦей контент перевіриться вручну та алгоритмами і ми дамо тобі відповідь.\n\nПеревіряють інформацію журналісти @gwaramedia, медіаволонтери та громадські активісти.', replyOptions);
-    
+        //Check if user registerd
+        var newUser = new TelegramUser({
+            _id: new mongoose.Types.ObjectId(),
+            telegramID: msg.chat.id
+        });
+        newUser.save().then(() => {}).catch((error) => {
+            console.log("MongoErr: " + error.code);
+        });
+
+
     } else if (text == CheckContentText) {
         bot.sendMessage(msg.chat.id, 'Надішліть чи перешліть матеріали які бажаєте перевірити');
 
+    } else if (text == SubscribtionText) {
+        const user = await TelegramUser.findOne({telegramID: msg.chat.id});
+        if (!user) return console.log("User not found 1.1")
+        const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
+        var options = {
+            parse_mode: 'HTML',
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            }) 
+        };
+        const fakeNews = await Data.findOne({name: 'fakeNews'});
+        try {
+            bot.sendMessage(msg.chat.id, FakeNewsText + fakeNews.value, options);
+        } catch (e) { console.log(e) }
+
+    } else if (text.indexOf('/setfakes ') != -1) {
+        if (admins.includes(String(msg.from.id)) && text.split(' ')[2] != undefined) { //Check if >1 word
+            const newFakes = text.substring(text.split(' ')[0].length + 1);
+            Data.findOneAndUpdate({name: 'fakeNews'}, {value: newFakes}, function(){});
+            bot.sendMessage(msg.chat.id, FakeNewsText + newFakes);
+        } else {console.log('not allowed')}
+    
     } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         //Process moderator's comment
         const request_id = msg.reply_to_message.text.split('_')[1];
@@ -52,7 +89,7 @@ bot.on('message', async (msg) => {
             requesterUsername: msg.from.username
         });
 
-        if (msg.forward_from_chat) { //Check if message has forwarded data
+        if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
             request.telegramForwardedChat = msg.forward_from_chat.id;
             request.telegramForwardedMsg = msg.forward_from_message_id;
 
@@ -123,10 +160,10 @@ bot.on('message', async (msg) => {
         bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит');
         
         //Send message to moderation
+        const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
+
         var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
-        
-        const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -191,7 +228,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         const requestId = action.split('_')[1];
         const moderator = callbackQuery.from.id;
         const request = await Request.findById(requestId);
-        //Send message to moderator (forvarded + action)
+        //Send message to moderator (forwarded + action)
         try {
             var sentMsg = await bot.forwardMessage(moderator, msg.chat.id, request.moderatorMsgID);
             var options = {
@@ -223,6 +260,21 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         //Set moderator for the comment
         Request.findByIdAndUpdate(requestId, {commentChatId: msg.chat.id }, function(){});
 
+    } else if (action.indexOf('SUB_') == 0) {
+        //Change status back to pending
+        const status = Boolean(parseInt(action.split('_')[1]));
+        const userId = action.split('_')[2];
+        //Update DB
+        const user = await TelegramUser.findByIdAndUpdate(userId, {subscribed: status});
+        //Update MSG
+        const inline_keyboard = getSubscriptionBtn(status, user._id);
+        bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+                chat_id: msg.chat.id,
+                message_id: msg.message_id
+            });
+
     }
 });
 
@@ -231,6 +283,13 @@ function addToWaitlist(msg, foundRequest) {
         bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
     } catch (e){ console.log(e) }
     Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}}, function(){});
+}
+
+function getSubscriptionBtn(status, user_id) {
+    var inline_keyboard = [];
+    if (status) inline_keyboard.push([{ text: '🔴 Відмовитися від підбірок', callback_data: 'SUB_0_' + user_id }]);
+    else inline_keyboard.push([{ text: '✨ Отримувати підбірки', callback_data: 'SUB_1_' + user_id }]);
+    return inline_keyboard;
 }
 
 async function reportStatus(msg, foundRequest) {

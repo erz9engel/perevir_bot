@@ -3,7 +3,7 @@ var Schema = mongoose.Schema;
 
 var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
-    requesterTG: Number, //Telegram ID of requester
+    requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterMsgID: Number, //Telegram message ID
     moderatorMsgID: Number, //Telegram message ID of resent message
     moderatorActionMsgID: Number, //Telegram message ID of action message
@@ -53,6 +53,21 @@ var videoSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
+var telegramUserSchema = Schema({
+    _id: Schema.Types.ObjectId, //User ID
+    telegramID: {type: Number, unique: true}, //User's telegram ID
+    subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
+    createdAt: {type: Date, default: new Date()} //Time of the creation
+});
+
+var dataSchema = Schema({
+    _id: Schema.Types.ObjectId, //Video ID
+    name: String, //Name
+    value: String, //Value
+});
+
 mongoose.model('Request', requestSchema);  
 mongoose.model('Image', imageSchema);  
 mongoose.model('Video', videoSchema);  
+mongoose.model('TelegramUser', telegramUserSchema);  
+mongoose.model('Data', dataSchema);  
