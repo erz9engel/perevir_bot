@@ -30,7 +30,7 @@ bot.on('message', async (msg) => {
         };
 
         bot.sendMessage(msg.chat.id, 'Перевір - інформаційний бот для перевірки даних та повідомлення сумнівних новин.\n\nПовідомляй дані, які хочеш перевірити:\n-пости в соціальних мережах\n-посилання\n-медіафайли або фото\n\nЦей контент перевіриться вручну та алгоритмами і ми дамо тобі відповідь.\n\nПеревіряють інформацію журналісти @gwaramedia, медіаволонтери та громадські активісти.', replyOptions);
-    
+
     } else if (text == CheckContentText) {
         bot.sendMessage(msg.chat.id, 'Надішліть чи перешліть матеріали які бажаєте перевірити');
 
@@ -50,7 +50,7 @@ bot.on('message', async (msg) => {
             request.telegramForwardedChat = msg.forward_from_chat.id;
             request.telegramForwardedMsg = msg.forward_from_message_id;
 
-            const foundRequest = await Request.findOne({$and: [{telegramForwardedChat: request.telegramForwardedChat}, {telegramForwardedMsg: request.telegramForwardedMsg} ]}, '_id fakeStatus');
+            const foundRequest = await Request.findOne({ $and: [{ telegramForwardedChat: request.telegramForwardedChat }, { telegramForwardedMsg: request.telegramForwardedMsg }] }, '_id fakeStatus');
             if (foundRequest != null) {
                 if (foundRequest.fakeStatus == 0) return addToWaitlist(msg, foundRequest);
                 return reportStatus(msg, foundRequest);
@@ -58,22 +58,22 @@ bot.on('message', async (msg) => {
         } else if (msg.forward_from) { //Check if message has forwarded data
             request.telegramForwardedChat = msg.forward_from.id;
         }
-        
+
         if (msg.photo) { //Check if message has photo data
             mediaId = new mongoose.Types.ObjectId();
             var image = msg.photo.find(obj => { return obj.width === 1280 }) //For now only first photo with 1280*886 resolution
             if (image = []) image = msg.photo[msg.photo.length - 1]; //If there is no 1280 image, let's take the highest possible resolution
             const imageFile = await bot.getFile(image.file_id);
             //const fileUrl = 'https://api.telegram.org/file/bot' + token + '/' + imageFile.file_path;
-            
+
             newImage = new Image({
-                _id: mediaId, 
-                telegramFileId: image.file_id, 
-                telegramUniqueFileId: image.file_unique_id, 
+                _id: mediaId,
+                telegramFileId: image.file_id,
+                telegramUniqueFileId: image.file_unique_id,
                 telegramFilePath: imageFile.file_path,
-                fileSize: image.file_size, 
-                width: image.width,  
-                height: image.height, 
+                fileSize: image.file_size,
+                width: image.width,
+                height: image.height,
                 request: requestId
             });
             request.image = mediaId;
@@ -82,20 +82,20 @@ bot.on('message', async (msg) => {
             mediaId = new mongoose.Types.ObjectId();
             const video = msg.video;
             newVideo = new Video({
-                _id: mediaId, 
-                telegramFileId: video.file_id, 
+                _id: mediaId,
+                telegramFileId: video.file_id,
                 telegramUniqueFileId: video.file_unique_id,
-                fileSize: video.file_size, 
-                width: video.width,  
-                height: video.height, 
+                fileSize: video.file_size,
+                width: video.width,
+                height: video.height,
                 duration: video.duration,
                 request: requestId
             });
             request.video = mediaId;
-            
+
         } else {
             //Check if text is already in DB
-            const foundText = await Request.findOne({text: msg.text}, '_id fakeStatus');
+            const foundText = await Request.findOne({ text: msg.text }, '_id fakeStatus');
             if (foundText != null) {
                 if (foundText.fakeStatus == 0) return addToWaitlist(msg, foundText);
                 return reportStatus(msg, foundText);
@@ -110,29 +110,42 @@ bot.on('message', async (msg) => {
 
         //Save new request in DB
         if (newImage) newImage.save();
-        else if (newVideo) newVideo.save(); 
-        request.save(); 
+        else if (newVideo) newVideo.save();
+        request.save();
 
-        //Inform user
-        bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит');
-        
-        //Send message to moderation
         var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        var tag = '#pending';
+
+        const similarRequests = await Request.find(
+            { $text: { $search: msg.text }, fakeStatus: { $ne: 0 } },
+            { score: { $meta: "textScore" } }
+        ).sort({ score: { $meta: "textScore" } })
+            .limit(3);
+
+        if (similarRequests.length > 0) {
+            const statusTag = reportSimilar(request, similarRequests);
+            inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+            tag = '#auto | ' + statusTag;
+        } else {
+            bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит');
+        }
+
+        //Send message to moderation
         inline_keyboard.push([{ text: '✉️ Надіслати повідомлення', callback_data: 'MSG_' + msg.chat.id }]);
-        
+
         const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
                 inline_keyboard
-            }) 
+            })
         };
-        bot.sendMessage(process.env.TGMAINCHAT,'#pending',options)
-    
+        bot.sendMessage(process.env.TGMAINCHAT, tag, options)
+
     } else if (msg.audio || msg.document || msg.voice || msg.location) {
         bot.sendMessage(msg.chat.id, 'Ми поки не обробляємо даний тип звернення.\n\nЯкщо ви хочете поділитись даною інформацією, надішліть на пошту hello@gwaramedia.com з темою ІНФОГРИЗ_Тема_Контекст про що мова. \n\nДодайте якомога більше супроводжуючої інформації:\n- дата матеріалів\n- локація\n- чому це важливо\n- для кого це\n\nЯкщо це важкі файли, краще завантажити їх в клауд з постійним зберіганням і надіслати нам посилання.');
     }
-  
+
 });
 
 bot.on('callback_query', function onCallbackQuery(callbackQuery) {
@@ -142,9 +155,9 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
 
     if (action.indexOf('FS_') == 0) {
         const requestId = action.split('_')[2], fakeStatus = action.split('_')[1];
-        Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus}, function(err, foundRequest){
-            if(!foundRequest) return console.log('No request ' + requestId);
-            var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }, { text: '✉️ Надіслати повідомлення', callback_data: 'MSG_' + msg.chat.id  }]];
+        Request.findByIdAndUpdate(requestId, { fakeStatus: fakeStatus }, function (err, foundRequest) {
+            if (!foundRequest) return console.log('No request ' + requestId);
+            var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }, { text: '✉️ Надіслати повідомлення', callback_data: 'MSG_' + msg.chat.id }]];
             var status;
             if (fakeStatus == 1) status = "#true | Правда"
             else if (fakeStatus == -1) status = "#false | Фейк"
@@ -158,7 +171,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
             });
 
             notifyUsers(foundRequest, fakeStatus);
-                
+
         });
 
     } else if (action.indexOf('CS_') == 0) {
@@ -166,7 +179,7 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
         const requestId = action.split('_')[1];
         var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Надіслати повідомлення', callback_data: 'MSG_' + msg.chat.id }]);
-        
+
         bot.editMessageText("#pending", {
             chat_id: msg.chat.id,
             message_id: msg.message_id,
@@ -175,32 +188,64 @@ bot.on('callback_query', function onCallbackQuery(callbackQuery) {
             })
         });
 
-        Request.findByIdAndUpdate(requestId, {fakeStatus: 0}, function(){});
-    
+        Request.findByIdAndUpdate(requestId, { fakeStatus: 0 }, function () { });
+
     } else if (action.indexOf('MSG_') == 0) {
         const receiver = action.split('_')[1];
         const moderator = callbackQuery.from.id;
-        
+
         //Send message to moderator
         var options = {
             reply_markup: JSON.stringify({
                 force_reply: true
             })
         };
-        bot.sendMessage(moderator, 'ok' , options);
+        bot.sendMessage(moderator, 'ok', options);
 
     }
- 
+
 });
 
 function addToWaitlist(msg, foundRequest) {
     bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
-    Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}}, function(){});
+    Request.findByIdAndUpdate(foundRequest._id, { $push: { "otherUsetsTG": { requesterTG: msg.chat.id, requesterMsgID: msg.message_id } } }, function () { });
 }
 
 function reportStatus(msg, foundRequest) {
     if (foundRequest.fakeStatus == 1) bot.sendMessage(msg.chat.id, 'Дане звернення визначене як правдиве');
     else if (foundRequest.fakeStatus == -1) bot.sendMessage(msg.chat.id, 'Дане звернення визначене як оманливе');
+}
+
+function reportSimilar(request, similarRequests) {
+    let message = 'Ми знайшли схожі звернення:';
+    let fakeCount = 0;
+    let noFakeCount = 0;
+
+    for (var i in similarRequests) {
+        if (similarRequests[i].fakeStatus == 1) {
+            message += '\n\n🟢 Правда\n\n' + similarRequests[i].text;
+            noFakeCount++;
+            //bot.sendMessage(msg.chat.id, '🟢 Правда\n\n' + similarRequests[i].text);
+        } else if (similarRequests[i].fakeStatus == -1) {
+            message += '\n\n⛔ Фейк\n\n' + similarRequests[i].text;
+            fakeCount++;
+            //bot.sendMessage(msg.chat.id, '⛔ Фейк\n\n' + similarRequests[i].text);
+        }
+    }
+
+    var options = {
+        reply_to_message_id: request.requesterMsgID
+    };
+    bot.sendMessage(request.requesterTG, message, options);
+
+    if (fakeCount > noFakeCount) {
+        Request.findByIdAndUpdate(request._id, { fakeStatus: -1 }, function () { });
+        return "#false | Фейк";
+    }
+    else {
+        Request.findByIdAndUpdate(request._id, { fakeStatus: 1 }, function () { });
+        return "#true | Правда";
+    }
 }
 
 function notifyUsers(foundRequest, fakeStatus) {
@@ -217,7 +262,7 @@ function notifyUsers(foundRequest, fakeStatus) {
             bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як правдиве', optionsR);
         }
     } else if (fakeStatus == -1) {
-        
+
         bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як оманливе', options);
         for (var i in foundRequest.otherUsetsTG) {
             const optionsR = {

@@ -14,7 +14,7 @@ var requestSchema = Schema({
     telegramPhotoId: String, //Telegram photo fileID
     image: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Image' }], //Image
     video: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Video' }], //Video
-    text: String, //Text of the message
+    text: {type: String, index: true}, //Text of the message
     searchPhrase: String, //Processed text for search
     tags: [String], //Tags, each separate
     fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake
@@ -48,6 +48,8 @@ var videoSchema = Schema({
     request: { type: mongoose.Schema.Types.ObjectId, ref: 'Request' }, //Original request
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
+
+requestSchema.index({ text: 'text'});
 
 mongoose.model('Request', requestSchema);  
 mongoose.model('Image', imageSchema);  
