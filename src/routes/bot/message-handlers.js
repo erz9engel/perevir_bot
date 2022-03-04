@@ -7,8 +7,12 @@ const Video = mongoose.model('Video');
 const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
 
-//OTHER TEXT
-const FakeNewsText = "Надсилаємо тобі підбірку фейків, які зараз літають по Україні та світу і загрожують нам. Знай найголовніше, поширюй це в соціальних мережах та протидій.\n\n";
+const {
+    CheckContentText,
+    SubscribtionText,
+    FakeNewsText, NoCurrentFakes
+} = require('./contstants')
+const {getSubscriptionBtn} = require("./utils");
 
 const onStart = async (msg, bot) => {
     let replyOptions = {
@@ -49,7 +53,8 @@ const onSubscription = async (msg, bot) => {
     };
     const fakeNews = await Data.findOne({name: 'fakeNews'});
     try {
-        bot.sendMessage(msg.chat.id, FakeNewsText + fakeNews.value, options);
+        const text = fakeNews ? FakeNewsText + fakeNews.value : NoCurrentFakes;
+        await bot.sendMessage(msg.chat.id, text, options);
     } catch (e) { console.log(e) }
 }
 

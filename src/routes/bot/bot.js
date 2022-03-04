@@ -19,9 +19,11 @@ const bot = new TelegramBot(token, { polling: true });
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 
-//BUTTONS TEXT
-const CheckContentText = "Перевірити контент"
-const SubscribtionText = "🔥 Актуальні фейки"
+const {
+    CheckContentText,
+    SubscribtionText,
+} = require('./contstants')
+const {getSubscriptionBtn} = require("./utils");
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -142,13 +144,6 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
 
     }
 });
-
-function getSubscriptionBtn(status, user_id) {
-    var inline_keyboard = [];
-    if (status) inline_keyboard.push([{ text: '🔴 Відмовитися від підбірок', callback_data: 'SUB_0_' + user_id }]);
-    else inline_keyboard.push([{ text: '✨ Отримувати підбірки', callback_data: 'SUB_1_' + user_id }]);
-    return inline_keyboard;
-}
 
 function notifyUsers(foundRequest, fakeStatus) {
     var options = {
