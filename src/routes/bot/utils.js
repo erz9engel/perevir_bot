@@ -1,5 +1,3 @@
-const { FakeNewsText } = require('./contstants')
-
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
     if (status) inline_keyboard.push([{ text: '🔴 Відмовитися від підбірок', callback_data: 'SUB_0_' + user_id }]);
@@ -42,11 +40,11 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
-async function sendFakes(users, fakeNews, bot) {
-    
+async function sendFakes(users, text, bot) {
+
     users.forEach(async function (user) {
         try {
-            await bot.sendMessage(user.telegramID, FakeNewsText + fakeNews);
+            await bot.sendMessage(user.telegramID, text);
         } catch (e) { console.log(e.response.body.description); }
     });
 
