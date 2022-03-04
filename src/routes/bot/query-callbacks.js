@@ -128,7 +128,7 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             const fakeNews = await Data.findOne({name: 'fakeNews'});
             await sendFakes(users, fakeNews.value, bot);
         }
-    } catch (e) { console.log(e.response.body.description); }
+    } catch (e) { console.log(e); }
 
 }
 
