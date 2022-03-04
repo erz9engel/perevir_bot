@@ -69,7 +69,6 @@ const onSetFakes = async (msg, bot) => {
 }
 
 const onReplyWithComment = async (msg, bot) => {
-    await onReplyWithComment();
     //Process moderator's comment
     const request_id = msg.reply_to_message.text.split('_')[1];
     const commentMsgId = msg.message_id;

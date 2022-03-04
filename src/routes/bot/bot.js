@@ -34,7 +34,7 @@ bot.on('message', async (msg) => {
         await onCheckContent(msg, bot)
     } else if (text === SubscribtionText) {
         await onSubscription(msg, bot)
-    } else if (text.startsWith('/setfakes ')) { //todo check really ==-1, maybe startsWith?
+    } else if (text && text.startsWith('/setfakes ')) { //todo check really ==-1, maybe startsWith?
         await onSetFakes(msg, bot);
     } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         await onReplyWithComment(msg, bot);
