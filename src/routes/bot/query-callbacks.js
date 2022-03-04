@@ -1,8 +1,9 @@
-const {getSubscriptionBtn, notifyUsers} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
 const mongoose = require("mongoose");
 
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
+const Data = mongoose.model('Data');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -116,9 +117,26 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
 
 }
 
+const onSendFakesQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    
+    try { 
+        await bot.deleteMessage(message.chat.id, message.message_id);
+        const send = Boolean(parseInt(data.split('_')[1]));
+        if (send) {
+            const users = await TelegramUser.find({subscribed: true}, 'telegramID');
+            const fakeNews = await Data.findOne({name: 'fakeNews'});
+            await sendFakes(users, fakeNews.value, bot);
+        }
+    } catch (e) { console.log(e.response.body.description); }
+
+}
+
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onCommentQuery,
-    onSubscriptionQuery
+    onSubscriptionQuery,
+    onSendFakesQuery
 }

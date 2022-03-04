@@ -68,6 +68,18 @@ const onSetFakes = async (msg, bot) => {
     } else {console.log('not allowed')}
 }
 
+const onSendFakes = async (msg, bot) => {
+    if (admins.includes(String(msg.from.id))) {
+        var inline_keyboard = [[{ text: 'Так', callback_data: 'SENDFAKES_1' }, { text: 'Ні', callback_data: 'SENDFAKES_0' }]];
+        var options = {
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
+    } else {console.log('not allowed')}
+}
+
 const onReplyWithComment = async (msg, bot) => {
     //Process moderator's comment
     const request_id = msg.reply_to_message.text.split('_')[1];
@@ -224,6 +236,7 @@ module.exports = {
     onCheckContent,
     onSubscription,
     onSetFakes,
+    onSendFakes,
     onReplyWithComment,
     onCheckRequest,
     onUnsupportedContent
