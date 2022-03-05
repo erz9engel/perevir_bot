@@ -2,6 +2,16 @@ const mongoose = require("mongoose");
 const router = require("express").Router();
 const NewsRequest = mongoose.model('Request');
 const Moderator = mongoose.model('Moderator');
+const {Strategy: JwtStrategy, ExtractJwt} = require('passport-jwt');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+
+const jwtOpts = {
+    jwtFromRequest: ExtractJwt.fromHeader('authorization'),
+    secretOrKey: process.env.JWTSECRET,
+    issuer: '',
+    audience: ''
+}
 
 const statusMapping = {
     'pending': '0',
@@ -9,7 +19,21 @@ const statusMapping = {
     'true': '1'
 }
 
-router.get('/api/news', async (req, res) => {
+passport.use(new JwtStrategy(jwtOpts, function(jwt_payload, done) {
+    Moderator.findOne({_id: jwt_payload.id}, function(err, user) {
+        if (err) {
+            return done(err, false);
+        }
+        if (user) {
+            return done(null, user);
+        } else {
+            return done(null, false);
+        }
+    });
+}));
+//passport.authenticate('jwt', { session: false })
+
+router.get('/api/news', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const {status} = req.query;
     const bdQuery = status ? { fakeStatus: statusMapping[status] } : {}
     try {
@@ -38,10 +62,18 @@ router.post('/api/sign-in', async  (req, res) => {
 
         try {
             await moderator.comparePassword(password)
+/*
             if (moderator.role === 'unverified') {
                 throw new Error('not verified, ask admin')
             }
-            res.send({ok: true})
+*/
+            const token = jwt.sign({
+                username,
+                role: moderator.role,
+                id: moderator._id
+            }, process.env.JWTSECRET);
+
+            res.send({ token })
         } catch (error) {
             console.error(error)
             res.status(401).send(error.message)
