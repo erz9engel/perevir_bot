@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@binance/connector": "^1.7.0",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.15.0",
     "cookie-parser": "^1.4.0",
     "crypto": "^1.0.1",
@@ -21,6 +22,8 @@
     "mongoose": "^6.0.12",
     "morgan": "^1.7.0",
     "node-telegram-bot-api": "^0.56.0",
+    "passport": "^0.5.2",
+    "passport-jwt": "^4.0.0",
     "pug": "^3.0.2",
     "request": "^2.88.2",
     "serve-favicon": "^2.3.0"

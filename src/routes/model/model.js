@@ -1,4 +1,5 @@
 ﻿var mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 var Schema = mongoose.Schema;
 
 var requestSchema = Schema({
@@ -66,8 +67,54 @@ var dataSchema = Schema({
     value: String, //Value
 });
 
-mongoose.model('Request', requestSchema);  
-mongoose.model('Image', imageSchema);  
-mongoose.model('Video', videoSchema);  
-mongoose.model('TelegramUser', telegramUserSchema);  
-mongoose.model('Data', dataSchema);  
+let moderatorSchema = new Schema({
+    username: {
+        type: Schema.Types.String, //telegram username
+        unique: true
+    },
+    password: Schema.Types.String,
+    role: {
+        type: Schema.Types.String,
+        enum: ['admin', 'moderator', 'unverified']
+    }
+})
+
+moderatorSchema.pre("save", function (next) {
+    const user = this
+
+    if (this.isModified("password") || this.isNew) {
+        bcrypt.genSalt(10, function (saltError, salt) {
+            if (saltError) {
+                return next(saltError)
+            } else {
+                bcrypt.hash(user.password, salt, function(hashError, hash) {
+                    if (hashError) {
+                        return next(hashError)
+                    }
+
+                    user.password = hash
+                    next()
+                })
+            }
+        })
+    } else {
+        return next()
+    }
+})
+
+moderatorSchema.methods.comparePassword = function(password) {
+    const user = this;
+    return new Promise((resolve, reject) =>
+        bcrypt.compare(password, user.password, function(error, isMatch) {
+            if (error) return reject(error);
+            if (!isMatch) return reject(new Error('passwords doesn`t match'));
+            resolve(isMatch)
+    }))
+}
+
+mongoose.model('Request', requestSchema);
+mongoose.model('Image', imageSchema);
+mongoose.model('Video', videoSchema);
+mongoose.model('TelegramUser', telegramUserSchema);
+mongoose.model('Data', dataSchema);
+mongoose.model('Moderator', moderatorSchema);
