@@ -39,7 +39,7 @@ router.post('/sign-up', async  (req, res) => {
 
 router.post('/sign-in', async  (req, res) => {
         const {username, password} = req.body
-        const moderator = await Moderator.findOne({username})
+        const moderator = await Moderator.findOne({username}).select('+password')
 
         try {
             await moderator.comparePassword(password)

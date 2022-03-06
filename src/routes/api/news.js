@@ -8,8 +8,9 @@ const statusMapping = {
     'fake': '-1',
     'true': '1'
 }
+const authenticate = passport.authenticate('jwt', { session: false })
 
-router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
     const {status} = req.query;
     const bdQuery = status ? { fakeStatus: statusMapping[status] } : {}
     try {
@@ -17,6 +18,28 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         res.send(requests);
     } catch (e) {
         res.send(e)
+    }
+})
+
+router.post('/assign', authenticate, async (req, res) => {
+    const { user, body } = req;
+    const { moderatorId, newsRequestId } = body;
+    if (moderatorId && user._id !== moderatorId && user.role !== 'admin') {
+        return res.status(401).send('You`re not authorized to assign to other people');
+    }
+
+    try {
+        const newsRequest = await NewsRequest.findOne({_id: newsRequestId});
+        await newsRequest.update({
+            assignedTo: moderatorId ? moderatorId : user._id
+        });
+
+        const updatedRequest = await NewsRequest.findOne({_id: newsRequestId}).populate('assignedTo');
+
+        console.log(updatedRequest);
+        res.send(updatedRequest);
+    } catch (_) {
+        return res.status(404).send('news request not found');
     }
 })
 

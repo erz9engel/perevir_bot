@@ -1,12 +1,13 @@
-﻿var mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var requestSchema = Schema({
+const requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterMsgID: Number, //Telegram message ID
     moderatorMsgID: Number, //Telegram message ID of resent message
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Moderator' },
     moderatorActionMsgID: Number, //Telegram message ID of action message
     otherUsetsTG: [{
         requesterTG: Number,
@@ -27,7 +28,7 @@ var requestSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-var imageSchema = Schema({
+const imageSchema = Schema({
     _id: Schema.Types.ObjectId, //Image ID
     telegramFileId: String, //file_id of the photo from Telegram
     telegramUniqueFileId: String, //file_unique_id of the photo from Telegram
@@ -42,7 +43,7 @@ var imageSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-var videoSchema = Schema({
+const videoSchema = Schema({
     _id: Schema.Types.ObjectId, //Video ID
     telegramFileId: String, //file_id of the video from Telegram
     telegramUniqueFileId: String, //file_unique_id of the video from Telegram
@@ -54,25 +55,28 @@ var videoSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-var telegramUserSchema = Schema({
+const telegramUserSchema = Schema({
     _id: Schema.Types.ObjectId, //User ID
     telegramID: {type: Number, unique: true}, //User's telegram ID
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-var dataSchema = Schema({
+const dataSchema = Schema({
     _id: Schema.Types.ObjectId, //Video ID
     name: String, //Name
     value: String, //Value
 });
 
-let moderatorSchema = new Schema({
+const moderatorSchema = new Schema({
     username: {
         type: Schema.Types.String, //telegram username
         unique: true
     },
-    password: Schema.Types.String,
+    password: {
+        type: Schema.Types.String,
+        select: false
+    },
     role: {
         type: Schema.Types.String,
         enum: ['admin', 'moderator', 'unverified']
