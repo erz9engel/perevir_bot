@@ -21,6 +21,23 @@ router.get('/', authenticate, async (req, res) => {
     }
 })
 
+router.get('/my', authenticate, async (req, res) => {
+    const {query, user} = req;
+    const {status} = query;
+
+    const bdQuery = {
+        assignedTo: user._id
+    }
+    if (status) bdQuery.fakeStatus = statusMapping[status];
+
+    try {
+        const requests = await NewsRequest.find(bdQuery);
+        res.send(requests);
+    } catch (e) {
+        res.send(e)
+    }
+})
+
 router.post('/assign', authenticate, async (req, res) => {
     const { user, body } = req;
     const { moderatorId, newsRequestId } = body;
