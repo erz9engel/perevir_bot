@@ -10,7 +10,8 @@ const Data = mongoose.model('Data');
 const {
     CheckContentText,
     SubscribtionText,
-    FakeNewsText, NoCurrentFakes
+    SetFakesRequestText,
+    NoCurrentFakes
 } = require('./contstants')
 const {getSubscriptionBtn} = require("./utils");
 
@@ -30,7 +31,8 @@ const onStart = async (msg, bot) => {
     //Check if user registerd
     let newUser = new TelegramUser({
         _id: new mongoose.Types.ObjectId(),
-        telegramID: msg.chat.id
+        telegramID: msg.chat.id,
+        createdAt: new Date()
     });
     await newUser.save().then(() => {}).catch((error) => {
         console.log("MongoErr: " + error.code);
@@ -46,25 +48,38 @@ const onSubscription = async (msg, bot) => {
     if (!user) return console.log("User not found 1.1")
     const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
     var options = {
-        parse_mode: 'HTML',
         reply_markup: JSON.stringify({
             inline_keyboard
         })
     };
     const fakeNews = await Data.findOne({name: 'fakeNews'});
+    if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+    const message_id = fakeNews.value.split('_')[0];
+    const chat_id = fakeNews.value.split('_')[1];
     try {
-        const text = fakeNews ? FakeNewsText + fakeNews.value : NoCurrentFakes;
-        await bot.sendMessage(msg.chat.id, text, options);
+        await bot.copyMessage(msg.chat.id, chat_id, message_id, options);
     } catch (e) { console.log(e) }
 }
 
-const onSetFakes = async (msg, bot) => {
-    const { text } = msg;
+const onSetFakesRequest = async (msg, bot) => {
+    
+    if (admins.includes(String(msg.from.id))) {
+        var options = {
+            reply_markup: JSON.stringify({
+                force_reply: true
+            })
+        };
+        await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
+    } else {console.log('not allowed')}
+}
 
-    if (admins.includes(String(msg.from.id)) && text.split(' ')[2] !== undefined) { //Check if >1 word
-        const newFakes = text.substring(text.split(' ')[0].length + 1);
-        Data.findOneAndUpdate({name: 'fakeNews'}, {value: newFakes}, function(){});
-        await bot.sendMessage(msg.chat.id, FakeNewsText + newFakes);
+const onSetFakes = async (msg, bot) => {
+
+    if (admins.includes(String(msg.from.id))) {
+        const fakeNews = msg.message_id + '_' + msg.chat.id;
+        Data.findOneAndUpdate({name: 'fakeNews'}, {value: fakeNews }, function(){});
+        await bot.sendMessage(msg.chat.id, 'Зміни збережено');
+        await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
     } else {console.log('not allowed')}
 }
 
@@ -97,7 +112,9 @@ const onCheckRequest = async (msg, bot) => {
         _id: requestId,
         requesterTG: msg.chat.id,
         requesterMsgID: msg.message_id,
-        requesterUsername: msg.from.username
+        requesterUsername: msg.from.username,
+        createdAt: new Date(),
+        lastUpdate: new Date()
     });
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
@@ -130,7 +147,8 @@ const onCheckRequest = async (msg, bot) => {
             fileSize: image.file_size,
             width: image.width,
             height: image.height,
-            request: requestId
+            request: requestId,
+            createdAt: new Date()
         });
         request.image = mediaId;
 
@@ -145,7 +163,8 @@ const onCheckRequest = async (msg, bot) => {
             width: video.width,
             height: video.height,
             duration: video.duration,
-            request: requestId
+            request: requestId,
+            createdAt: new Date()
         });
         request.video = mediaId;
 
@@ -170,7 +189,10 @@ const onCheckRequest = async (msg, bot) => {
     await request.save();
 
     //Inform user
-    await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит');
+    var options = {
+        disable_web_page_preview: true
+    };
+    await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
 
     //Send message to moderation
     const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
@@ -229,12 +251,11 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }
 
-
-
 module.exports = {
     onStart,
     onCheckContent,
     onSubscription,
+    onSetFakesRequest,
     onSetFakes,
     onSendFakes,
     onReplyWithComment,

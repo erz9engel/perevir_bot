@@ -40,11 +40,17 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
-async function sendFakes(users, text, bot) {
+async function sendFakes(users, message_id, chat_id, bot) {
 
     users.forEach(async function (user) {
         try {
-            await bot.sendMessage(user.telegramID, text);
+            const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
+            var options = {
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            };
+            await bot.copyMessage(user.telegramID, chat_id, message_id, options);
         } catch (e) { console.log(e.response.body.description); }
     });
 

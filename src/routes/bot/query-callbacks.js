@@ -1,6 +1,6 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
 const {
-    FakeNewsText, NoCurrentFakes
+    NoCurrentFakes
 } = require('./contstants')
 const mongoose = require("mongoose");
 
@@ -122,15 +122,17 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
 
 const onSendFakesQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
-    
+
     try { 
         await bot.deleteMessage(message.chat.id, message.message_id);
         const send = Boolean(parseInt(data.split('_')[1]));
         if (send) {
-            const users = await TelegramUser.find({subscribed: true}, 'telegramID');
+            const users = await TelegramUser.find({subscribed: true});
             const fakeNews = await Data.findOne({name: 'fakeNews'});
-            const text = fakeNews ? FakeNewsText + fakeNews.value : NoCurrentFakes;
-            await sendFakes(users, text, bot);
+            if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+            const message_id = fakeNews.value.split('_')[0];
+            const chat_id = fakeNews.value.split('_')[1];
+            await sendFakes(users, message_id, chat_id, bot);
         }
     } catch (e) { console.log(e); }
 

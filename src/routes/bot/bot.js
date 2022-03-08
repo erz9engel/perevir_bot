@@ -4,6 +4,7 @@ const {
     onStart,
     onCheckContent,
     onSubscription,
+    onSetFakesRequest,
     onSetFakes,
     onSendFakes,
     onReplyWithComment,
@@ -27,6 +28,7 @@ const bot = new TelegramBot(token, { polling: true });
 const {
     CheckContentText,
     SubscribtionText,
+    SetFakesRequestText
 } = require('./contstants')
 
 bot.on('message', async (msg) => {
@@ -38,7 +40,9 @@ bot.on('message', async (msg) => {
         await onCheckContent(msg, bot)
     } else if (text === SubscribtionText) {
         await onSubscription(msg, bot)
-    } else if (text && text.startsWith('/setfakes ')) { 
+    } else if (text == '/setfakes') { 
+        await onSetFakesRequest(msg, bot);
+    } else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
