@@ -11,7 +11,10 @@ const {
     CheckContentText,
     SubscribtionText,
     SetFakesRequestText,
-    NoCurrentFakes
+    NoCurrentFakes,
+    TrueMessageText,
+    FakeMessageText,
+    RejectMessageText
 } = require('./contstants')
 const {getSubscriptionBtn} = require("./utils");
 
@@ -197,7 +200,7 @@ const onCheckRequest = async (msg, bot) => {
     //Send message to moderation
     const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
 
-    var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+    var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
     inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
     var options = {
         reply_to_message_id: sentMsg.message_id,
@@ -223,8 +226,9 @@ async function addToWaitlist(msg, foundRequest, bot ) {
 
 async function reportStatus(msg, foundRequest, bot) {
     try {
-        if (foundRequest.fakeStatus === 1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як правдива');
-        else if (foundRequest.fakeStatus === -1) await bot.sendMessage(msg.chat.id, 'Ця інформація визначена як оманлива');
+        if (foundRequest.fakeStatus === 1) await bot.sendMessage(msg.chat.id, TrueMessageText);
+        else if (foundRequest.fakeStatus === -1) await bot.sendMessage(msg.chat.id, FakeMessageText);
+        else if (foundRequest.fakeStatus === -2) await bot.sendMessage(msg.chat.id, RejectMessageText);
     } catch (e){ console.log(e) }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);

@@ -21,7 +21,7 @@ var requestSchema = Schema({
     tags: [String], //Tags, each separate
     commentChatId: Number, //Telegram ID of moderator of the comment
     commentMsgId: Number, //Telegram message ID of comment message
-    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake
+    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });

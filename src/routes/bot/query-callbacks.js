@@ -21,6 +21,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         let status;
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
+        else if (fakeStatus === '-2') status = "#reject | Відмова"
 
         await bot.editMessageText("#resolved | " + status, {
             chat_id: message.chat.id,
@@ -43,7 +44,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: 0});
     if (!request) return console.log('No request ' + requestId);
-    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
     if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
 
     try {

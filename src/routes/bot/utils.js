@@ -1,3 +1,9 @@
+const {
+    TrueMessageText,
+    FakeMessageText,
+    RejectMessageText
+} = require('./contstants')
+
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
     if (status) inline_keyboard.push([{ text: '🔴 Відмовитися від підбірок', callback_data: 'SUB_0_' + user_id }]);
@@ -35,6 +41,20 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             };
             try {
                 await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як оманливе', optionsR);
+            } catch (e){ console.log(e) }
+        }
+    
+    } else if (fakeStatus === '-2') {
+        try {
+            await bot.sendMessage(foundRequest.requesterTG, RejectMessageText, options);
+        } catch (e){ console.log(e) }
+
+        for (let i in foundRequest.otherUsetsTG) {
+            const optionsR = {
+                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
+            };
+            try {
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, RejectMessageText, optionsR);
             } catch (e){ console.log(e) }
         }
     }
