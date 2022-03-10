@@ -8,6 +8,7 @@ const {
     onSetFakes,
     onSendFakes,
     onReplyWithComment,
+    onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent
 } = require('./message-handlers');
@@ -29,7 +30,7 @@ const {
     CheckContentText,
     SubscribtionText,
     SetFakesRequestText
-} = require('./contstants')
+} = require('./contstants');
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -49,7 +50,8 @@ bot.on('message', async (msg) => {
     } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         await onReplyWithComment(msg, bot);
     } else if ((msg.photo || msg.video || (msg.text && msg.text.length > 10)) && !msg.reply_to_message) { //Check if text > 10 in order to sort out short msgs
-        await onCheckRequest(msg, bot);
+        if (msg.media_group_id) await onCheckGroupRequest(msg, bot);
+        else await onCheckRequest(msg, bot);
     } else if (msg.audio || msg.document || msg.voice || msg.location) {
         await onUnsupportedContent(msg, bot);
     }

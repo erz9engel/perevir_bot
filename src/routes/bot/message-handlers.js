@@ -212,8 +212,95 @@ const onCheckRequest = async (msg, bot) => {
     await Request.findByIdAndUpdate(requestId, {moderatorMsgID: sentMsg.message_id, moderatorActionMsgID: sentActionMsg.message_id });
 }
 
+var mediaGroups = [];
+const onCheckGroupRequest = async (msg, bot) => {
+    console.log(msg);
+
+    var mediaFileId, mediaType;
+    if (msg.photo) {
+        const image = msg.photo[msg.photo.length - 1]; //Let's take the highest possible resolution
+        mediaFileId = image.file_id;
+        mediaType = 'photo';
+
+    } else if (msg.video) {
+        const video = msg.video;
+        mediaFileId = video.file_id;
+        mediaType = 'video';
+    }
+
+    //Handle group of media files
+    const index = mediaGroups.findIndex(group => {
+        return group.groupId === msg.media_group_id;
+    });
+    if (index < 0) {
+        mediaGroups.push({ groupId: msg.media_group_id, text: msg.caption, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
+    } else {
+        mediaGroups[index].mediaFiles.push({mediaFileId: mediaFileId, mediaType: mediaType});
+        if (msg.caption) mediaGroups[index].text += msg.caption;
+    }
+    //Send interactive action
+    bot.sendChatAction(msg.chat.id, 'typing');
+
+    await sleep(2000).then(async () => { 
+        const index = mediaGroups.findIndex(group => {
+            return group.groupId === msg.media_group_id;
+        });
+        if (!mediaGroups[index].sent) {
+            mediaGroups[index].sent = true;
+            var mediaFiles = [];
+            for (var i in mediaGroups[index].mediaFiles) {
+                const mediaFile = mediaGroups[index].mediaFiles[i];
+                mediaFiles.push({type: mediaFile.mediaType, media: mediaFile.mediaFileId})
+            }
+            var sentMsg;
+            if (mediaGroups[index].text) {
+                const textpart = await bot.sendMessage(process.env.TGMAINCHAT, mediaGroups[index].text);
+                const options = {
+                    reply_to_message_id: textpart.message_id
+                };
+                sentMsg = await bot.sendMediaGroup(process.env.TGMAINCHAT, mediaFiles, options);
+            } else {
+                sentMsg = await bot.sendMediaGroup(process.env.TGMAINCHAT, mediaFiles);
+            }
+            const requestId = new mongoose.Types.ObjectId();
+
+            var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+            var options = {
+                reply_to_message_id: sentMsg[0].message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            };
+            const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT,'#pending',options);
+            var request = new Request({
+                _id: requestId,
+                requesterTG: msg.chat.id,
+                requesterMsgID: msg.message_id,
+                requesterUsername: msg.from.username,
+                createdAt: new Date(),
+                lastUpdate: new Date(),
+                text: msg.caption,
+                moderatorMsgID: sentMsg[0].message_id,
+                moderatorActionMsgID: sentActionMsg.message_id
+            });
+            await request.save();
+            //Inform user
+            var options = {
+                disable_web_page_preview: true
+            };
+            await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
+
+        } else return
+    });
+}
+
 const onUnsupportedContent = async (msg, bot) => {
     await bot.sendMessage(msg.chat.id, 'Ми поки не обробляємо даний тип звернення.\n\nЯкщо ви хочете поділитись даною інформацією, надішліть на пошту hello@gwaramedia.com з темою ІНФОГРИЗ_Тема_Контекст про що мова. \n\nДодайте якомога більше супроводжуючої інформації:\n- дата матеріалів\n- локація\n- чому це важливо\n- для кого це\n\nЯкщо це важкі файли, краще завантажити їх в клауд з постійним зберіганням і надіслати нам посилання.');
+}
+
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function addToWaitlist(msg, foundRequest, bot ) {
@@ -263,6 +350,7 @@ module.exports = {
     onSetFakes,
     onSendFakes,
     onReplyWithComment,
+    onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent
 }
