@@ -1,4 +1,4 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse} = require("./utils");
 const {
     NoCurrentFakes
 } = require('./contstants')
@@ -15,13 +15,20 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
 
-        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
-
         let status;
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
+
+        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        if (fakeStatus === '-2') {
+            inline_keyboard.push([
+                { text: 'Клікбейт', callback_data: 'AR1_' + requestId },
+                { text: '0 інфо', callback_data: 'AR2_' + requestId },
+                { text: 'Допомога', callback_data: 'AR3_' + requestId }
+            ]);
+        }
+        if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
 
         await bot.editMessageText("#resolved | " + status, {
             chat_id: message.chat.id,
@@ -37,6 +44,31 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         console.error(err);
     }
 }
+
+const onAutoResponseQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    try {
+        const requestId = data.split('_')[1];
+        const autoResponceType = data[2]
+        const request = await Request.findById(requestId);
+        if (!request) return console.log('No request ' + requestId);
+
+        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+
+        await bot.editMessageText(message.text, {
+            chat_id: message.chat.id,
+            message_id: message.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+
+        await sendAutoResponse(request, autoResponceType, bot);
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 
 const onChangeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -145,5 +177,6 @@ module.exports = {
     onChangeStatusQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery
+    onSendFakesQuery,
+    onAutoResponseQuery
 }

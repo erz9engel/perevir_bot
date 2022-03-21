@@ -1,7 +1,10 @@
 const {
     TrueMessageText,
     FakeMessageText,
-    RejectMessageText
+    RejectMessageText,
+    AutoResponseClickbait,
+    AutoResponseZeroInfo,
+    AutoResponseHelpRequest
 } = require('./contstants')
 
 function getSubscriptionBtn(status, user_id) {
@@ -60,6 +63,23 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
+async function sendAutoResponse(foundRequest, autoReplyType, bot){
+    let options = {
+        reply_to_message_id: foundRequest.requesterMsgID
+    };
+
+    let replyText
+    if (autoReplyType === '1') replyText = AutoResponseClickbait
+    else if (autoReplyType === '2') replyText = AutoResponseZeroInfo
+    else if (autoReplyType === '3') replyText = AutoResponseHelpRequest
+
+    try {
+        await bot.sendMessage(foundRequest.requesterTG, replyText, options);
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 async function sendFakes(users, message_id, chat_id, bot) {
 
     users.forEach(async function (user) {
@@ -79,5 +99,6 @@ async function sendFakes(users, message_id, chat_id, bot) {
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
-    sendFakes
+    sendFakes,
+    sendAutoResponse
 }
