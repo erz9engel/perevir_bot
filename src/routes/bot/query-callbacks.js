@@ -47,6 +47,21 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 
 const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
+    const moderator = callbackQuery.from.id;
+
+    try {
+        let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
+        options = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                force_reply: true
+            })
+        };
+    } catch (e){
+        await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
+        console.error(e)
+    }
+
     try {
         const requestId = data.split('_')[1];
         const autoResponceType = data[2]
@@ -63,7 +78,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
             })
         });
 
-        await sendAutoResponse(request, autoResponceType, bot);
+        await sendAutoResponse(request, autoResponceType, moderator, bot);
     } catch (err) {
         console.error(err);
     }
