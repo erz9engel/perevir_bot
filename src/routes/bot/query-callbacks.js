@@ -1,6 +1,6 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse} = require("./utils");
 const {
-    NoCurrentFakes
+    NoCurrentFakes,AutoResponseMap
 } = require('./contstants')
 const mongoose = require("mongoose");
 
@@ -64,13 +64,13 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
 
     try {
         const requestId = data.split('_')[1];
-        const autoResponceType = data[2]
+        const autoResponseType = data[2]
         const request = await Request.findById(requestId);
         if (!request) return console.log('No request ' + requestId);
 
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
 
-        await bot.editMessageText(message.text, {
+        await bot.editMessageText(message.text + "/n#autoresponse " + AutoResponseMap[autoResponseType], {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -78,7 +78,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
             })
         });
 
-        await sendAutoResponse(request, autoResponceType, moderator, bot);
+        await sendAutoResponse(request, autoResponseType, moderator, bot);
     } catch (err) {
         console.error(err);
     }
