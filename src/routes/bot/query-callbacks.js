@@ -1,6 +1,6 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse} = require("./utils");
 const {
-    NoCurrentFakes,AutoResponseMap
+    NoCurrentFakes, AutoResponseMap
 } = require('./contstants')
 const mongoose = require("mongoose");
 
