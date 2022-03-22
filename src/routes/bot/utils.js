@@ -11,6 +11,15 @@ function getSubscriptionBtn(status, user_id) {
     return inline_keyboard;
 }
 
+function getUserName(user) {
+    if (user.username) {
+        return user.username
+    }
+    let fullname = user.first_name
+    if (user.last_name) fullname = fullname + " " + user.last_name
+    return fullname
+}
+
 async function notifyUsers(foundRequest, fakeStatus, bot) {
     let options = {
         reply_to_message_id: foundRequest.requesterMsgID
@@ -79,5 +88,6 @@ async function sendFakes(users, message_id, chat_id, bot) {
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
-    sendFakes
+    sendFakes,
+    getUserName
 }

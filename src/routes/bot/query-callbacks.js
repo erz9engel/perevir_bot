@@ -1,4 +1,4 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName} = require("./utils");
 const {
     NoCurrentFakes
 } = require('./contstants')
@@ -11,6 +11,7 @@ const Data = mongoose.model('Data');
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
+    const moderator = getUserName(callbackQuery.from);
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
@@ -23,7 +24,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
 
-        await bot.editMessageText("#resolved | " + status, {
+        await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
