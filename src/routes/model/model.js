@@ -21,7 +21,7 @@ var requestSchema = Schema({
     tags: [String], //Tags, each separate
     commentChatId: Number, //Telegram ID of moderator of the comment
     commentMsgId: Number, //Telegram message ID of comment message
-    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected
+    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected, -3 - auto reject, 2 - auto confirm
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
@@ -61,13 +61,34 @@ var telegramUserSchema = Schema({
 });
 
 var dataSchema = Schema({
-    _id: Schema.Types.ObjectId, //Video ID
-    name: String, //Name
-    value: String, //Value
+    _id: Schema.Types.ObjectId,
+    name: String, 
+    value: String
+});
+
+var sourceTelegramSchema = Schema({
+    _id: Schema.Types.ObjectId, 
+    telegramId: {type: Number, unique: true},
+    telegramUsername: String,
+    fake: Boolean,
+    description: String,
+    requestsAmount: {type: Number, default: 0},
+    createdAt: {type: Date, default: new Date()}
+});
+
+var sourceDomainSchema = Schema({
+    _id: Schema.Types.ObjectId, 
+    domain: {type: String, unique: true},
+    fake: Boolean,
+    description: String,
+    requestsAmount: {type: Number, default: 0},
+    createdAt: {type: Date, default: new Date()}
 });
 
 mongoose.model('Request', requestSchema);  
 mongoose.model('Image', imageSchema);  
 mongoose.model('Video', videoSchema);  
 mongoose.model('TelegramUser', telegramUserSchema);  
-mongoose.model('Data', dataSchema);  
+mongoose.model('Data', dataSchema);   
+mongoose.model('SourceTelegram', sourceTelegramSchema);  
+mongoose.model('SourceDomain', sourceDomainSchema);  

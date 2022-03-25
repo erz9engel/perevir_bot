@@ -6,6 +6,8 @@ const Image = mongoose.model('Image');
 const Video = mongoose.model('Video');
 const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
+const SourceTelegram = mongoose.model('SourceTelegram');
+const SourceDomain = mongoose.model('SourceDomain');
 
 const {
     CheckContentText,
@@ -14,7 +16,9 @@ const {
     NoCurrentFakes,
     TrueMessageText,
     FakeMessageText,
-    RejectMessageText
+    RejectMessageText,
+    BlackSourceText,
+    WhiteSourceText
 } = require('./contstants')
 const {getSubscriptionBtn} = require("./utils");
 
@@ -56,7 +60,11 @@ const onSubscription = async (msg, bot) => {
         })
     };
     const fakeNews = await Data.findOne({name: 'fakeNews'});
-    if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+    if (!fakeNews) { 
+        try {
+            return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+        } catch (e) { return console.log(e) }
+    }
     const message_id = fakeNews.value.split('_')[0];
     const chat_id = fakeNews.value.split('_')[1];
     try {
@@ -73,6 +81,58 @@ const onSetFakesRequest = async (msg, bot) => {
             })
         };
         await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
+    } else {console.log('not allowed')}
+}
+
+const onSetSource = async (msg, bot, fake) => {
+    
+    if (admins.includes(String(msg.from.id))) {
+        const text = msg.text;
+        const source = text.split(' ')[1];
+        const description = text.split(' ').slice(2).join(' ');
+        if (!source || source.length < 5) return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
+        //Check if telegram channel
+        if (source.startsWith('https://t.me/')) {
+            const username = '@' + source.split('https://t.me/')[1];
+            const chatInfo = await bot.getChat(username);
+            var newSourceTelegram = new SourceTelegram({
+                _id: new mongoose.Types.ObjectId(),
+                telegramId: chatInfo.id,
+                telegramUsername: chatInfo.username,
+                fake: fake,
+                description: description,
+                createdAt: new Date()
+            });
+            await newSourceTelegram.save().then(async () => {
+                await bot.sendMessage(msg.chat.id, "Чат @" + chatInfo.username + " успішно додано. Опис:\n" + description);
+            }).catch(async () => {
+                await SourceTelegram.findOneAndUpdate({telegramId: chatInfo.id}, {fake: fake, description: description});
+                await bot.sendMessage(msg.chat.id, "Інформацію про чат оновлено");
+            });
+            
+        } else {
+
+            var domain;
+            try {
+                const { hostname } = new URL(source);
+                domain = hostname.replace('www.','');
+            } catch(e) { return await bot.sendMessage(msg.chat.id, 'Введений URL некоректний'); }
+
+            var newSourceDomain = new SourceDomain({
+                _id: new mongoose.Types.ObjectId(),
+                domain: domain,
+                fake: fake,
+                description: description,
+                createdAt: new Date()
+            });
+            await newSourceDomain.save().then(async () => {
+                await bot.sendMessage(msg.chat.id, "Домен " + domain + " успішно додано. Опис:\n" + description);
+            }).catch(async () => {
+                await SourceDomain.findOneAndUpdate({domain: domain}, {fake: fake, description: description});
+                await bot.sendMessage(msg.chat.id, "Інформацію про домен оновлено");
+            });
+
+        }
     } else {console.log('not allowed')}
 }
 
@@ -110,7 +170,7 @@ const onCheckRequest = async (msg, bot) => {
     console.log(msg);
     //Check any input message
     const requestId = new mongoose.Types.ObjectId();
-    var mediaId, newImage, newVideo;
+    var mediaId, newImage, newVideo, notified = false;
     var request = new Request({
         _id: requestId,
         requesterTG: msg.chat.id,
@@ -121,13 +181,22 @@ const onCheckRequest = async (msg, bot) => {
     });
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
+        const bannedChat = await SourceTelegram.findOneAndUpdate({ telegramId: msg.forward_from_chat.id }, { $inc: { requestsAmount: 1 }});
+        if (bannedChat) {
+            try {
+                const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+                request.fakeStatus = bannedChat.fake ? -3 : 2;
+                await bot.sendMessage(msg.chat.id, text + '\n\n' + bannedChat.description);
+                notified = true;
+            } catch (e) {console.log(e)}
+        }
         request.telegramForwardedChat = msg.forward_from_chat.id;
         request.telegramForwardedMsg = msg.forward_from_message_id;
 
         const foundRequest = await Request.findOne({$and: [{telegramForwardedChat: request.telegramForwardedChat}, {telegramForwardedMsg: request.telegramForwardedMsg} ]}, '_id fakeStatus commentChatId commentMsgId');
         if (foundRequest != null) {
             if (foundRequest.fakeStatus === 0) return addToWaitlist(msg, foundRequest, bot);
-            return reportStatus(msg, foundRequest, bot);
+            return reportStatus(msg, foundRequest, bot, foundRequest);
         }
     } else if (msg.forward_from) { //Check if message has forwarded data
         request.telegramForwardedChat = msg.forward_from.id;
@@ -136,9 +205,7 @@ const onCheckRequest = async (msg, bot) => {
     if (msg.photo) {
         //Check if message has photo data
         mediaId = new mongoose.Types.ObjectId();
-        //TODO this should be a bug!!!!
-        var image = msg.photo.find(obj => { return obj.width === 1280 }) //For now only first photo with 1280*886 resolution
-        if (image = []) image = msg.photo[msg.photo.length - 1]; //If there is no 1280 image, let's take the highest possible resolution
+        var image = msg.photo[msg.photo.length - 1]; //Let's take the highest possible resolution
         const imageFile = await bot.getFile(image.file_id);
         //const fileUrl = 'https://api.telegram.org/file/bot' + token + '/' + imageFile.file_path;
 
@@ -171,45 +238,73 @@ const onCheckRequest = async (msg, bot) => {
         });
         request.video = mediaId;
 
-    } else {
-        //Check if text is already in DB
-        const foundText = await Request.findOne({text: msg.text}, '_id fakeStatus commentChatId commentMsgId');
-        if (foundText != null) {
-            if (foundText.fakeStatus === 0) return addToWaitlist(msg, foundText, bot);
-            return reportStatus(msg, foundText, bot);
-        }
-    }
+    } 
 
     if (msg.text) { //Get text data
+        const bannedChat = await getBannedChat(msg.text);
+
+        const foundText = await Request.findOne({text: msg.text}, '_id fakeStatus commentChatId commentMsgId');
+        if (foundText) {
+            if (foundText.fakeStatus === 0) return addToWaitlist(msg, foundText, bot);
+            return reportStatus(msg, foundText, bot, bannedChat);
+            
+        } else if (bannedChat) {
+            const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+            request.fakeStatus = bannedChat.fake ? -3 : 2;
+            try {
+                const description = bannedChat.description ? bannedChat.description : '';
+                await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                notified = true;
+            } catch(e) { console.log(e) }
+        } 
+
         request.text = msg.text;
     } else if (msg.caption) {
         request.text = msg.caption;
     }
+    //Send message to moderation
+    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
+    var sentActionMsg;
+
+    if (!notified) {
+        var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+        var options = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT,'#pending',options);
+
+        //Inform user
+        var options = {
+            disable_web_page_preview: true
+        };
+        await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
+    
+    } else {
+
+        var inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]];
+        var options = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        var status = "#autoDecline"
+        if (request.fakeStatus == 2) status = "#autoConfirm";
+        sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, status ,options);
+
+    }
+
+    request.moderatorMsgID = sentMsg.message_id;
+    request.moderatorActionMsgID = sentActionMsg.message_id;
 
     //Save new request in DB
     if (newImage) await newImage.save();
     else if (newVideo) await newVideo.save();
     await request.save();
-
-    //Inform user
-    var options = {
-        disable_web_page_preview: true
-    };
-    await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
-
-    //Send message to moderation
-    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
-
-    var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
-    var options = {
-        reply_to_message_id: sentMsg.message_id,
-        reply_markup: JSON.stringify({
-            inline_keyboard
-        })
-    };
-    const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT,'#pending',options);
-    await Request.findByIdAndUpdate(requestId, {moderatorMsgID: sentMsg.message_id, moderatorActionMsgID: sentActionMsg.message_id });
 }
 
 var mediaGroups = [];
@@ -311,11 +406,14 @@ async function addToWaitlist(msg, foundRequest, bot ) {
     await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}});
 }
 
-async function reportStatus(msg, foundRequest, bot) {
+async function reportStatus(msg, foundRequest, bot, bannedChat) {
+
     try {
         if (foundRequest.fakeStatus === 1) await bot.sendMessage(msg.chat.id, TrueMessageText);
         else if (foundRequest.fakeStatus === -1) await bot.sendMessage(msg.chat.id, FakeMessageText);
         else if (foundRequest.fakeStatus === -2) await bot.sendMessage(msg.chat.id, RejectMessageText);
+        else if (foundRequest.fakeStatus === -3 && bannedChat.description) await bot.sendMessage(msg.chat.id, bannedChat.description);
+        else if (foundRequest.fakeStatus === 2 && bannedChat.description) await bot.sendMessage(msg.chat.id, bannedChat.description);
     } catch (e){ console.log(e) }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
@@ -342,11 +440,20 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }
 
+async function getBannedChat(text) {
+    try {
+        const { hostname } = new URL(text);
+        domain = hostname.replace('www.','');
+        return await SourceDomain.findOneAndUpdate({ domain: domain }, { $inc: { requestsAmount: 1 }});
+    } catch(e) { return null }    
+}
+
 module.exports = {
     onStart,
     onCheckContent,
     onSubscription,
     onSetFakesRequest,
+    onSetSource,
     onSetFakes,
     onSendFakes,
     onReplyWithComment,

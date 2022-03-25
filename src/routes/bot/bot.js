@@ -5,6 +5,7 @@ const {
     onCheckContent,
     onSubscription,
     onSetFakesRequest,
+    onSetSource,
     onSetFakes,
     onSendFakes,
     onReplyWithComment,
@@ -43,6 +44,10 @@ bot.on('message', async (msg) => {
         await onSubscription(msg, bot)
     } else if (text == '/setfakes') { 
         await onSetFakesRequest(msg, bot);
+    } else if (text && text.startsWith('/setblacksource')) { 
+        await onSetSource(msg, bot, true);
+    } else if (text && text.startsWith('/setwhitesource')) { 
+        await onSetSource(msg, bot, false);
     } else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
@@ -79,9 +84,9 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
 bot.on("polling_error", (err) => console.log(err.message));
 
 module.exports = {
-    message: async function (msg, pin) {
+    message: async function (msg, pin, options) {
         try {
-            const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg);
+            const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg, options);
             if (pin) await bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
         } catch (e){ console.log(e) }
     }

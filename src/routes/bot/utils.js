@@ -18,7 +18,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
 
     if (fakeStatus === '1') {
         try {
-            await bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як правдиве', options);
+            await bot.sendMessage(foundRequest.requesterTG, TrueMessageText, options);
         } catch (e){ console.log(e) }
 
         for (let i in foundRequest.otherUsetsTG) {
@@ -26,13 +26,13 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
             try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як правдиве', optionsR);
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, TrueMessageText, optionsR);
             } catch (e){ console.log(e) }
         }
 
     } else if (fakeStatus === '-1') {
         try {
-            await bot.sendMessage(foundRequest.requesterTG, 'Ваше звернення визначено як оманливе', options);
+            await bot.sendMessage(foundRequest.requesterTG, FakeMessageText, options);
         } catch (e){ console.log(e) }
 
         for (let i in foundRequest.otherUsetsTG) {
@@ -40,7 +40,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
             try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, 'Ваше звернення визначено як оманливе', optionsR);
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, FakeMessageText, optionsR);
             } catch (e){ console.log(e) }
         }
     
