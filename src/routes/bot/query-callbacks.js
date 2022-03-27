@@ -26,8 +26,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
             if (fakeStatus === '-2') {
                 inline_keyboard.push([
                     { text: 'Клікбейт', callback_data: 'AR1_' + requestId },
-                    { text: '0 інфо', callback_data: 'AR2_' + requestId },
-                    { text: 'Допомога', callback_data: 'AR3_' + requestId }
+                    { text: 'Без фактів', callback_data: 'AR2_' + requestId },
+                    { text: 'Про допомогу', callback_data: 'AR3_' + requestId }
                 ]);
             }
         }
@@ -50,6 +50,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const moderator = callbackQuery.from.id;
+    const request = await Request.findById(data.split('_')[1])
 
     try {
         let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
@@ -72,7 +73,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
 
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
 
-        await bot.editMessageText(message.text + "/n#autoresponse " + AutoResponseMap[autoResponseType], {
+        await bot.editMessageText(message.text + "\n#autoresponse " + AutoResponseMap[autoResponseType], {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
