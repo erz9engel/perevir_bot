@@ -24,7 +24,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
 
-        await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
+        await bot.editMessageText("#resolved | " + status + "\nМодератор: @" + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
