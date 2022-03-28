@@ -1,15 +1,8 @@
-const mongoose = require("mongoose");
 const router = require("express").Router();
-const NewsRequest = mongoose.model('Request');
+const newsRouter = require('./news');
+const authRouter = require('./auth');
 
-router.get('/api/news', async (req, res) => {
-    console.log(1)
-    try {
-        const requests = await NewsRequest.find({}).populate('video');
-        res.send(requests);
-    } catch (e) {
-        res.send(e)
-    }
-})
+router.use('/api/news', newsRouter);
+router.use('/api/auth', authRouter);
 
 module.exports = router
