@@ -20,7 +20,8 @@ const {
     onChangeStatusQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery
+    onSendFakesQuery,
+    onAutoResponseQuery
 } = require('./query-callbacks')
 
 //TELEGRAM BOT
@@ -83,6 +84,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onSubscriptionQuery(callbackQuery, bot)
     } else if (data.startsWith('SENDFAKES_')) {
         await onSendFakesQuery(callbackQuery, bot)
+    } else if (data.startsWith('AR')) {
+        await onAutoResponseQuery(callbackQuery, bot)
     }
 });
 
