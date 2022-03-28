@@ -1,7 +1,10 @@
 const {
     TrueMessageText,
     FakeMessageText,
-    RejectMessageText
+    RejectMessageText,
+    AutoResponseClickbait,
+    AutoResponseZeroInfo,
+    AutoResponseHelpRequest
 } = require('./contstants')
 
 function getSubscriptionBtn(status, user_id) {
@@ -9,6 +12,15 @@ function getSubscriptionBtn(status, user_id) {
     if (status) inline_keyboard.push([{ text: '🔴 Відмовитися від підбірок', callback_data: 'SUB_0_' + user_id }]);
     else inline_keyboard.push([{ text: '✨ Отримувати підбірки', callback_data: 'SUB_1_' + user_id }]);
     return inline_keyboard;
+}
+
+function getUserName(user) {
+    if (user.username) {
+        return user.username
+    }
+    let fullname = user.first_name
+    if (user.last_name) fullname = fullname + " " + user.last_name
+    return fullname
 }
 
 async function notifyUsers(foundRequest, fakeStatus, bot) {
@@ -60,6 +72,24 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
+async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
+    let options = {
+        reply_to_message_id: foundRequest.requesterMsgID
+    };
+
+    let replyText
+    if (autoReplyType === '1') replyText = AutoResponseClickbait
+    else if (autoReplyType === '2') replyText = AutoResponseZeroInfo
+    else if (autoReplyType === '3') replyText = AutoResponseHelpRequest
+
+    try {
+        await bot.sendMessage(foundRequest.requesterTG, replyText, options);
+        await bot.sendMessage(moderator, replyText, options);
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 async function sendFakes(users, message_id, chat_id, bot) {
 
     users.forEach(async function (user) {
@@ -79,5 +109,7 @@ async function sendFakes(users, message_id, chat_id, bot) {
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
-    sendFakes
+    sendFakes,
+    sendAutoResponse,
+    getUserName
 }

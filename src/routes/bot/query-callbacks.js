@@ -1,6 +1,6 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName} = require("./utils");
 const {
-    NoCurrentFakes
+    NoCurrentFakes, AutoResponseMap
 } = require('./contstants')
 const mongoose = require("mongoose");
 
@@ -11,19 +11,23 @@ const Data = mongoose.model('Data');
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
+    const moderator = getUserName(callbackQuery.from);
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
-
-        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
 
         let status;
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
 
-        await bot.editMessageText("#resolved | " + status, {
+        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        if (!request.commentChatId) {
+            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
+            if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
+        }
+
+        await bot.editMessageText("#resolved | " + status + "\nМодератор: @" + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -32,6 +36,54 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         });
 
         await notifyUsers(request, fakeStatus, bot);
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+const onAutoResponseQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const moderator = callbackQuery.from.id;
+    const request = await Request.findById(data.split('_')[1])
+
+    try {
+        let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
+        options = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                force_reply: true
+            })
+        };
+    } catch (e){
+        await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
+        console.error(e)
+    }
+
+    try {
+        const requestId = data.split('_')[1];
+        const request = await Request.findById(requestId);
+        if (!request) return console.log('No request ' + requestId);
+
+        const autoResponseType = data[2]
+        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        
+        let messageText = message.text
+
+        if (autoResponseType === '_') {
+            inline_keyboard.push([{ text: 'Клікбейт', callback_data: 'AR1_' + requestId }]);
+            inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
+            inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
+        } else {
+            messageText = messageText + "\n#autoresponse " + AutoResponseMap[autoResponseType]
+            await sendAutoResponse(request, autoResponseType, moderator, bot);
+        }
+
+        await bot.editMessageText(messageText, {
+            chat_id: message.chat.id,
+            message_id: message.message_id,
+            reply_markup: JSON.stringify({inline_keyboard})
+        });
 
     } catch (err) {
         console.error(err);
@@ -145,5 +197,6 @@ module.exports = {
     onChangeStatusQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery
+    onSendFakesQuery,
+    onAutoResponseQuery
 }
