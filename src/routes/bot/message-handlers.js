@@ -18,7 +18,8 @@ const {
     FakeMessageText,
     RejectMessageText,
     BlackSourceText,
-    WhiteSourceText
+    WhiteSourceText,
+    ForbiddenRequestText
 } = require('./contstants')
 const {getSubscriptionBtn} = require("./utils");
 
@@ -90,6 +91,7 @@ const onSetSource = async (msg, bot, fake) => {
         const text = msg.text;
         const source = text.split(' ')[1];
         const description = text.split(' ').slice(2).join(' ');
+        
         if (!source || source.length < 5) return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
         //Check if telegram channel
         if (source.startsWith('https://t.me/')) {
@@ -158,6 +160,14 @@ const onSendFakes = async (msg, bot) => {
     } else {console.log('not allowed')}
 }
 
+const onRequestStatus = async (msg, bot, status) => {
+    if (admins.includes(String(msg.from.id))) {
+        await Data.findOneAndUpdate({name: 'requestStatus'}, {value: status});
+        const confirmMsg = status ? "Прийом запитів увімкнено" : "Прийом запитів вимкнено"
+        await bot.sendMessage(msg.chat.id, confirmMsg);
+    } else {console.log('not allowed')}
+}
+
 const onReplyWithComment = async (msg, bot) => {
     //Process moderator's comment
     const request_id = msg.reply_to_message.text.split('_')[1];
@@ -168,6 +178,8 @@ const onReplyWithComment = async (msg, bot) => {
 
 const onCheckRequest = async (msg, bot) => {
     console.log(msg);
+    const requestStatus = await checkRequestStatus(msg, bot);
+    if (!requestStatus) return
     //Check any input message
     const requestId = new mongoose.Types.ObjectId();
     var mediaId, newImage, newVideo, notified = false;
@@ -182,22 +194,23 @@ const onCheckRequest = async (msg, bot) => {
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
         const bannedChat = await SourceTelegram.findOneAndUpdate({ telegramId: msg.forward_from_chat.id }, { $inc: { requestsAmount: 1 }});
-        if (bannedChat) {
+        
+        const foundRequest = await Request.findOne({$and: [{telegramForwardedChat: request.telegramForwardedChat}, {telegramForwardedMsg: request.telegramForwardedMsg} ]}, '_id fakeStatus commentChatId commentMsgId');
+        if (foundRequest) {
+            if (foundRequest.fakeStatus === 0) return addToWaitlist(msg, foundRequest, bot);
+            return reportStatus(msg, foundRequest, bot, foundRequest);
+        } else if (bannedChat) {
+            const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+            request.fakeStatus = bannedChat.fake ? -3 : 2;
             try {
-                const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
-                request.fakeStatus = bannedChat.fake ? -3 : 2;
-                await bot.sendMessage(msg.chat.id, text + '\n\n' + bannedChat.description);
+                const description = bannedChat.description ? bannedChat.description : '';
+                await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 notified = true;
             } catch (e) {console.log(e)}
         }
         request.telegramForwardedChat = msg.forward_from_chat.id;
         request.telegramForwardedMsg = msg.forward_from_message_id;
 
-        const foundRequest = await Request.findOne({$and: [{telegramForwardedChat: request.telegramForwardedChat}, {telegramForwardedMsg: request.telegramForwardedMsg} ]}, '_id fakeStatus commentChatId commentMsgId');
-        if (foundRequest != null) {
-            if (foundRequest.fakeStatus === 0) return addToWaitlist(msg, foundRequest, bot);
-            return reportStatus(msg, foundRequest, bot, foundRequest);
-        }
     } else if (msg.forward_from) { //Check if message has forwarded data
         request.telegramForwardedChat = msg.forward_from.id;
     }
@@ -285,7 +298,8 @@ const onCheckRequest = async (msg, bot) => {
     
     } else {
 
-        var inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]];
+        var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -310,6 +324,8 @@ const onCheckRequest = async (msg, bot) => {
 var mediaGroups = [];
 const onCheckGroupRequest = async (msg, bot) => {
     console.log(msg);
+    const requestStatus = await checkRequestStatus(msg, bot);
+    if (!requestStatus) return
 
     var mediaFileId, mediaType;
     if (msg.photo) {
@@ -398,6 +414,15 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function checkRequestStatus(msg, bot) {
+    const {value} = await Data.findOne({name: 'requestStatus'});
+    var requestStatus = false;
+    if (value === 'true') requestStatus = true;
+    else bot.sendMessage(msg.chat.id, ForbiddenRequestText);    
+
+    return requestStatus;
+}
+
 async function addToWaitlist(msg, foundRequest, bot ) {
     try {
         await bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
@@ -408,12 +433,17 @@ async function addToWaitlist(msg, foundRequest, bot ) {
 
 async function reportStatus(msg, foundRequest, bot, bannedChat) {
 
+    var text = '', description = '';
+    if (bannedChat) {
+        text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+        description = bannedChat.description ? bannedChat.description : '';
+    }
+
     try {
         if (foundRequest.fakeStatus === 1) await bot.sendMessage(msg.chat.id, TrueMessageText);
         else if (foundRequest.fakeStatus === -1) await bot.sendMessage(msg.chat.id, FakeMessageText);
         else if (foundRequest.fakeStatus === -2) await bot.sendMessage(msg.chat.id, RejectMessageText);
-        else if (foundRequest.fakeStatus === -3 && bannedChat.description) await bot.sendMessage(msg.chat.id, bannedChat.description);
-        else if (foundRequest.fakeStatus === 2 && bannedChat.description) await bot.sendMessage(msg.chat.id, bannedChat.description);
+        else if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
     } catch (e){ console.log(e) }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
@@ -456,6 +486,7 @@ module.exports = {
     onSetSource,
     onSetFakes,
     onSendFakes,
+    onRequestStatus,
     onReplyWithComment,
     onCheckGroupRequest,
     onCheckRequest,

@@ -13,7 +13,7 @@ if (startTime.getTime() < now.getTime()) {
 }
 
 const firstTriggerAfterMs = startTime.getTime() - now.getTime();
-sendStats();
+
 setTimeout(function(){
     sendStats();
     setInterval(sendStats, 24 * 60 * 60 * 1000);

@@ -8,6 +8,7 @@ const {
     onSetSource,
     onSetFakes,
     onSendFakes,
+    onRequestStatus,
     onReplyWithComment,
     onCheckGroupRequest,
     onCheckRequest,
@@ -48,7 +49,11 @@ bot.on('message', async (msg) => {
         await onSetSource(msg, bot, true);
     } else if (text && text.startsWith('/setwhitesource')) { 
         await onSetSource(msg, bot, false);
-    } else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
+    } else if (text === '/allowrequests') {
+        await onRequestStatus(msg, bot, true);
+    } else if (text === '/forbidrequests') {
+        await onRequestStatus(msg, bot, false);
+    }  else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
