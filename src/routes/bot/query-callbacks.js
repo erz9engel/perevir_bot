@@ -1,8 +1,12 @@
-const {getSubscriptionBtn, notifyUsers} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes} = require("./utils");
+const {
+    NoCurrentFakes
+} = require('./contstants')
 const mongoose = require("mongoose");
 
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
+const Data = mongoose.model('Data');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -17,6 +21,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         let status;
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
+        else if (fakeStatus === '-2') status = "#reject | Відмова"
 
         await bot.editMessageText("#resolved | " + status, {
             chat_id: message.chat.id,
@@ -39,7 +44,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: 0});
     if (!request) return console.log('No request ' + requestId);
-    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
     if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
 
     try {
@@ -82,7 +87,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
     //Update moderators action message
     let inline_keyboard;
     if (request.fakeStatus === 0) {
-        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
     } else {
         inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
     }
@@ -116,9 +121,29 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
 
 }
 
+const onSendFakesQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+
+    try { 
+        await bot.deleteMessage(message.chat.id, message.message_id);
+        const send = Boolean(parseInt(data.split('_')[1]));
+        if (send) {
+            const users = await TelegramUser.find({subscribed: true});
+            const fakeNews = await Data.findOne({name: 'fakeNews'});
+            if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+            const message_id = fakeNews.value.split('_')[0];
+            const chat_id = fakeNews.value.split('_')[1];
+            await sendFakes(users, message_id, chat_id, bot);
+        }
+    } catch (e) { console.log(e); }
+
+}
+
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onCommentQuery,
-    onSubscriptionQuery
+    onSubscriptionQuery,
+    onSendFakesQuery
 }

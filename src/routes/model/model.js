@@ -1,13 +1,11 @@
-﻿const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const Schema = mongoose.Schema;
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-const requestSchema = Schema({
+var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterMsgID: Number, //Telegram message ID
     moderatorMsgID: Number, //Telegram message ID of resent message
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Moderator' },
     moderatorActionMsgID: Number, //Telegram message ID of action message
     otherUsetsTG: [{
         requesterTG: Number,
@@ -23,12 +21,12 @@ const requestSchema = Schema({
     tags: [String], //Tags, each separate
     commentChatId: Number, //Telegram ID of moderator of the comment
     commentMsgId: Number, //Telegram message ID of comment message
-    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake
+    fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected, -3 - auto reject, 2 - auto confirm
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-const imageSchema = Schema({
+var imageSchema = Schema({
     _id: Schema.Types.ObjectId, //Image ID
     telegramFileId: String, //file_id of the photo from Telegram
     telegramUniqueFileId: String, //file_unique_id of the photo from Telegram
@@ -43,7 +41,7 @@ const imageSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-const videoSchema = Schema({
+var videoSchema = Schema({
     _id: Schema.Types.ObjectId, //Video ID
     telegramFileId: String, //file_id of the video from Telegram
     telegramUniqueFileId: String, //file_unique_id of the video from Telegram
@@ -55,70 +53,42 @@ const videoSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-const telegramUserSchema = Schema({
+var telegramUserSchema = Schema({
     _id: Schema.Types.ObjectId, //User ID
     telegramID: {type: Number, unique: true}, //User's telegram ID
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
-const dataSchema = Schema({
-    _id: Schema.Types.ObjectId, //Video ID
-    name: String, //Name
-    value: String, //Value
+var dataSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    name: String, 
+    value: String
 });
 
-const moderatorSchema = new Schema({
-    username: {
-        type: Schema.Types.String, //telegram username
-        unique: true
-    },
-    password: {
-        type: Schema.Types.String,
-        select: false
-    },
-    role: {
-        type: Schema.Types.String,
-        enum: ['admin', 'moderator', 'unverified']
-    }
-})
+var sourceTelegramSchema = Schema({
+    _id: Schema.Types.ObjectId, 
+    telegramId: {type: Number, unique: true},
+    telegramUsername: String,
+    fake: Boolean,
+    description: String,
+    requestsAmount: {type: Number, default: 0},
+    createdAt: {type: Date, default: new Date()}
+});
 
-moderatorSchema.pre("save", function (next) {
-    const user = this
+var sourceDomainSchema = Schema({
+    _id: Schema.Types.ObjectId, 
+    domain: {type: String, unique: true},
+    fake: Boolean,
+    description: String,
+    requestsAmount: {type: Number, default: 0},
+    createdAt: {type: Date, default: new Date()}
+});
 
-    if (this.isModified("password") || this.isNew) {
-        bcrypt.genSalt(10, function (saltError, salt) {
-            if (saltError) {
-                return next(saltError)
-            } else {
-                bcrypt.hash(user.password, salt, function(hashError, hash) {
-                    if (hashError) {
-                        return next(hashError)
-                    }
-
-                    user.password = hash
-                    next()
-                })
-            }
-        })
-    } else {
-        return next()
-    }
-})
-
-moderatorSchema.methods.comparePassword = function(password) {
-    const user = this;
-    return new Promise((resolve, reject) =>
-        bcrypt.compare(password, user.password, function(error, isMatch) {
-            if (error) return reject(error);
-            if (!isMatch) return reject(new Error('passwords doesn`t match'));
-            resolve(isMatch)
-    }))
-}
-
-mongoose.model('Request', requestSchema);
-mongoose.model('Image', imageSchema);
-mongoose.model('Video', videoSchema);
-mongoose.model('TelegramUser', telegramUserSchema);
-mongoose.model('Data', dataSchema);
-mongoose.model('Moderator', moderatorSchema);
+mongoose.model('Request', requestSchema);  
+mongoose.model('Image', imageSchema);  
+mongoose.model('Video', videoSchema);  
+mongoose.model('TelegramUser', telegramUserSchema);  
+mongoose.model('Data', dataSchema);   
+mongoose.model('SourceTelegram', sourceTelegramSchema);  
+mongoose.model('SourceDomain', sourceDomainSchema);  

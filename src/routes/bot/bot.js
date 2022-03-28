@@ -4,8 +4,13 @@ const {
     onStart,
     onCheckContent,
     onSubscription,
+    onSetFakesRequest,
+    onSetSource,
     onSetFakes,
+    onSendFakes,
+    onRequestStatus,
     onReplyWithComment,
+    onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent
 } = require('./message-handlers');
@@ -14,7 +19,8 @@ const {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onCommentQuery,
-    onSubscriptionQuery
+    onSubscriptionQuery,
+    onSendFakesQuery
 } = require('./query-callbacks')
 
 //TELEGRAM BOT
@@ -25,8 +31,8 @@ const bot = new TelegramBot(token, { polling: true });
 const {
     CheckContentText,
     SubscribtionText,
-} = require('./contstants')
-const {getSubscriptionBtn} = require("./utils");
+    SetFakesRequestText
+} = require('./contstants');
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -37,12 +43,25 @@ bot.on('message', async (msg) => {
         await onCheckContent(msg, bot)
     } else if (text === SubscribtionText) {
         await onSubscription(msg, bot)
-    } else if (text && text.startsWith('/setfakes ')) { //todo check really ==-1, maybe startsWith?
+    } else if (text == '/setfakes') { 
+        await onSetFakesRequest(msg, bot);
+    } else if (text && text.startsWith('/setblacksource')) { 
+        await onSetSource(msg, bot, true);
+    } else if (text && text.startsWith('/setwhitesource')) { 
+        await onSetSource(msg, bot, false);
+    } else if (text === '/allowrequests') {
+        await onRequestStatus(msg, bot, true);
+    } else if (text === '/forbidrequests') {
+        await onRequestStatus(msg, bot, false);
+    }  else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
         await onSetFakes(msg, bot);
+    } else if (text === '/sendfakes') {
+        await onSendFakes(msg, bot);
     } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         await onReplyWithComment(msg, bot);
     } else if ((msg.photo || msg.video || (msg.text && msg.text.length > 10)) && !msg.reply_to_message) { //Check if text > 10 in order to sort out short msgs
-        await onCheckRequest(msg, bot);
+        if (msg.media_group_id) await onCheckGroupRequest(msg, bot);
+        else await onCheckRequest(msg, bot);
     } else if (msg.audio || msg.document || msg.voice || msg.location) {
         await onUnsupportedContent(msg, bot);
     }
@@ -62,15 +81,17 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('SUB_')) {
         await onSubscriptionQuery(callbackQuery, bot)
+    } else if (data.startsWith('SENDFAKES_')) {
+        await onSendFakesQuery(callbackQuery, bot)
     }
 });
 
 bot.on("polling_error", (err) => console.log(err.message));
 
 module.exports = {
-    message: async function (msg, pin) {
+    message: async function (msg, pin, options) {
         try {
-            const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg);
+            const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg, options);
             if (pin) await bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
         } catch (e){ console.log(e) }
     }
