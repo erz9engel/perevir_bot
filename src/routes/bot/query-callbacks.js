@@ -23,7 +23,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         if (!request.commentChatId) {
             inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
-            if (fakeStatus === '-2') inline_keyboard.push([{ text: 'Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
+            if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
         }
 
         await bot.editMessageText("#resolved | " + status, {
