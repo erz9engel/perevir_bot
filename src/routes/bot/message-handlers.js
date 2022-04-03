@@ -19,7 +19,10 @@ const {
     RejectMessageText,
     BlackSourceText,
     WhiteSourceText,
-    ForbiddenRequestText
+    ForbiddenRequestText,
+    UnsupportedContentText,
+    CheckContentAnswerText,
+    WhatReasonText
 } = require('./contstants')
 const {getSubscriptionBtn} = require("./utils");
 
@@ -48,7 +51,7 @@ const onStart = async (msg, bot) => {
 }
 
 const onCheckContent = async (msg, bot) => {
-    await bot.sendMessage(msg.chat.id, 'Надішліть чи перешліть матеріали які бажаєте перевірити');
+    await bot.sendMessage(msg.chat.id, CheckContentAnswerText);
 }
 
 const onSubscription = async (msg, bot) => {
@@ -193,8 +196,11 @@ const onCheckRequest = async (msg, bot) => {
     });
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
-        const bannedChat = await SourceTelegram.findOneAndUpdate({ telegramId: msg.forward_from_chat.id }, { $inc: { requestsAmount: 1 }});
-        
+        request.telegramForwardedChat = msg.forward_from_chat.id;
+        request.telegramForwardedMsg = msg.forward_from_message_id;
+
+        const bannedChat = await SourceTelegram.findOneAndUpdate({ telegramId: request.telegramForwardedChat }, { $inc: { requestsAmount: 1 }});
+
         const foundRequest = await Request.findOne({$and: [{telegramForwardedChat: request.telegramForwardedChat}, {telegramForwardedMsg: request.telegramForwardedMsg} ]}, '_id fakeStatus commentChatId commentMsgId');
         if (foundRequest) {
             if (foundRequest.fakeStatus === 0) return addToWaitlist(msg, foundRequest, bot);
@@ -207,13 +213,10 @@ const onCheckRequest = async (msg, bot) => {
                 await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 notified = true;
             } catch (e) {console.log(e)}
+        } else {
+            return unsupportedContent(msg, bot);
         }
-        request.telegramForwardedChat = msg.forward_from_chat.id;
-        request.telegramForwardedMsg = msg.forward_from_message_id;
-
-    } else if (msg.forward_from) { //Check if message has forwarded data
-        request.telegramForwardedChat = msg.forward_from.id;
-    }
+    } 
 
     if (msg.photo) {
         //Check if message has photo data
@@ -275,28 +278,23 @@ const onCheckRequest = async (msg, bot) => {
     } else if (msg.caption) {
         request.text = msg.caption;
     }
-    //Send message to moderation
-    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
-    var sentActionMsg;
-
+    
     if (!notified) {
-        var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+        var inline_keyboard = [[{ text: 'Від цього залежить моє життя', callback_data: 'REASON_0_' + requestId }]];
+        inline_keyboard.push([{ text: 'Це допоможе мені в прийнятті рішень', callback_data: 'REASON_1_' + requestId }]);
+        inline_keyboard.push([{ text: 'Важливо це знати ', callback_data: 'REASON_2_' + requestId }]);
+        inline_keyboard.push([{ text: 'Цікаво', callback_data: 'REASON_3_' + requestId }]);
         var options = {
-            reply_to_message_id: sentMsg.message_id,
+            reply_to_message_id: msg.message_id,
             reply_markup: JSON.stringify({
                 inline_keyboard
             })
         };
-        sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT,'#pending',options);
-
-        //Inform user
-        var options = {
-            disable_web_page_preview: true
-        };
-        await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
+        await bot.sendMessage(msg.chat.id, WhatReasonText, options);
     
     } else {
+        //Send message to moderation
+        const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
 
         var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
@@ -308,24 +306,23 @@ const onCheckRequest = async (msg, bot) => {
         };
         var status = "#autoDecline"
         if (request.fakeStatus == 2) status = "#autoConfirm";
-        sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, status ,options);
+
+        const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, status ,options);
+        request.moderatorMsgID = sentMsg.message_id;
+        request.moderatorActionMsgID = sentActionMsg.message_id;
 
     }
-
-    request.moderatorMsgID = sentMsg.message_id;
-    request.moderatorActionMsgID = sentActionMsg.message_id;
 
     //Save new request in DB
     if (newImage) await newImage.save();
     else if (newVideo) await newVideo.save();
     await request.save();
+
 }
 
 var mediaGroups = [];
 const onCheckGroupRequest = async (msg, bot) => {
     console.log(msg);
-    const requestStatus = await checkRequestStatus(msg, bot);
-    if (!requestStatus) return
 
     var mediaFileId, mediaType;
     if (msg.photo) {
@@ -358,6 +355,11 @@ const onCheckGroupRequest = async (msg, bot) => {
         });
         if (!mediaGroups[index].sent) {
             mediaGroups[index].sent = true;
+            const requestStatus = await checkRequestStatus(msg, bot);
+            if (!requestStatus) return
+            if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
+                return unsupportedContent(msg, bot);
+            } 
             var mediaFiles = [];
             for (var i in mediaGroups[index].mediaFiles) {
                 const mediaFile = mediaGroups[index].mediaFiles[i];
@@ -412,6 +414,11 @@ const onUnsupportedContent = async (msg, bot) => {
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function unsupportedContent(msg, bot) {
+    await bot.sendMessage(msg.chat.id, UnsupportedContentText);
+    
 }
 
 async function checkRequestStatus(msg, bot) {
