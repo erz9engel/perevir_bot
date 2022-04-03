@@ -4,8 +4,11 @@ const {
     RejectMessageText,
     AutoResponseClickbait,
     AutoResponseZeroInfo,
-    AutoResponseHelpRequest
+    AutoResponseHelpRequest,
+    TimeoutMessageText
 } = require('./contstants')
+const mongoose = require("mongoose");
+const Request = mongoose.model('Request');
 
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
@@ -69,6 +72,19 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
                 await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, RejectMessageText, optionsR);
             } catch (e){ console.log(e) }
         }
+    } else if (fakeStatus === '-3') {
+        try {
+            await bot.sendMessage(foundRequest.requesterTG, TimeoutMessageText, options);
+        } catch (e){ console.log(e) }
+
+        for (let i in foundRequest.otherUsetsTG) {
+            const optionsR = {
+                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
+            };
+            try {
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, TimeoutMessageText, optionsR);
+            } catch (e){ console.log(e) }
+        }
     }
 }
 
@@ -105,10 +121,28 @@ async function sendFakes(users, message_id, chat_id, bot) {
 
 }
 
+async function closeRequestByTimeout(request, bot) {
+    let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + request._id }]];
+    if (!request.commentChatId) {
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
+    }
+
+    await bot.editMessageText("#timeout", {
+        chat_id: process.env.TGMAINCHAT,
+        message_id: request.moderatorActionMsgID,
+        reply_markup: JSON.stringify({
+            inline_keyboard
+        })
+    });
+    await notifyUsers(request, "-3", bot)
+    await Request.updateOne(request, {fakeStatus: "-3"});
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
     sendAutoResponse,
-    getUserName
+    getUserName,
+    closeRequestByTimeout
 }
