@@ -12,7 +12,8 @@ const {
     onReplyWithComment,
     onCheckGroupRequest,
     onCheckRequest,
-    onUnsupportedContent
+    onUnsupportedContent,
+    onCloseOldRequests
 } = require('./message-handlers');
 
 const {
@@ -59,7 +60,9 @@ bot.on('message', async (msg) => {
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
-    } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
+    } else if (text === '/closepending') {
+        await onCloseOldRequests(msg, bot)
+    }else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
         await onReplyWithComment(msg, bot);
     } else if ((msg.photo || msg.video || (msg.text && msg.text.length > 10)) && !msg.reply_to_message) { //Check if text > 10 in order to sort out short msgs
         if (msg.media_group_id) await onCheckGroupRequest(msg, bot);

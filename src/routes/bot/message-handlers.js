@@ -22,9 +22,10 @@ const {
     ForbiddenRequestText,
     UnsupportedContentText,
     CheckContentAnswerText,
-    WhatReasonText
+    WhatReasonText,
+    RequestTimeout
 } = require('./contstants')
-const {getSubscriptionBtn} = require("./utils");
+const {getSubscriptionBtn, closeRequestByTimeout} = require("./utils");
 
 const onStart = async (msg, bot) => {
     let replyOptions = {
@@ -482,7 +483,21 @@ async function getBannedChat(text) {
         const { hostname } = new URL(text);
         domain = hostname.replace('www.','');
         return await SourceDomain.findOneAndUpdate({ domain: domain }, { $inc: { requestsAmount: 1 }});
-    } catch(e) { return null }    
+    } catch(e) { return null }
+}
+
+const onCloseOldRequests = async (msg, bot) => {
+    var timeoutDate = new Date();
+    timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
+    var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
+    for (var index = 0; index < oldRequests.length; index++) {
+        await closeRequestByTimeout(oldRequests[index], bot);
+        // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+        ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+        ' року та досі були в статусі #pending');
 }
 
 module.exports = {
@@ -497,5 +512,6 @@ module.exports = {
     onReplyWithComment,
     onCheckGroupRequest,
     onCheckRequest,
-    onUnsupportedContent
+    onUnsupportedContent,
+    onCloseOldRequests
 }
