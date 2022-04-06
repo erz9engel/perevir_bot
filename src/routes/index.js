@@ -18,6 +18,6 @@ fs.readdirSync(__dirname + '/model').forEach(function (filename) {
 });
 
 require('./bot/bot');
-router.use(require('./api'));
+//router.use(require('./api'));
 
 module.exports = router;
