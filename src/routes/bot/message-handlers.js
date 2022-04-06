@@ -354,7 +354,7 @@ const onCheckGroupRequest = async (msg, bot) => {
             return group.groupId === msg.media_group_id;
         });
         if (!mediaGroups[index].sent) {
-            mediaGroups[index].sent = true;
+            mediaGroups[index].sent = true; 
             const requestStatus = await checkRequestStatus(msg, bot);
             if (!requestStatus) return
             if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
@@ -458,6 +458,7 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
 }
 
 async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
+    if (!request) return
     var options = {
         reply_to_message_id: request.requesterMsgID
     };
