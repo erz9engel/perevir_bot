@@ -44,29 +44,14 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 }
 
 const onAutoResponseQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery
-    const moderator = callbackQuery.from.id;
-    const request = await Request.findById(data.split('_')[1])
-    let options = {}
-    try {
-        let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
-        options = {
-            reply_to_message_id: sentMsg.message_id,
-            reply_markup: JSON.stringify({
-                force_reply: true
-            })
-        };
-    } catch (e){
-        await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
-        console.error(e)
-    }
+    const {data, message} = callbackQuery;
 
     try {
         const requestId = data.split('_')[1];
         const request = await Request.findById(requestId);
         if (!request) return console.log('No request ' + requestId);
 
-        const autoResponseType = data[2]
+        const autoResponseType = data[2];
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
         let messageText = message.text
