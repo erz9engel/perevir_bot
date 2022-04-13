@@ -488,17 +488,20 @@ async function getBannedChat(text) {
 }
 
 const onCloseOldRequests = async (msg, bot) => {
-    var timeoutDate = new Date();
-    timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
-    var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
-    for (var index = 0; index < oldRequests.length; index++) {
-        await closeRequestByTimeout(oldRequests[index], bot);
-        // Not sure about this, but in order not to be accused in spaming users added 1 second pause
-        await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
-        ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-        ' року та досі були в статусі #pending');
+    if (admins.includes(String(msg.from.id))) {
+        var timeoutDate = new Date();
+        timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
+        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
+        for (var index = 0; index < oldRequests.length; index++) {
+            await closeRequestByTimeout(oldRequests[index], bot);
+            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+            ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+            ' року та досі були в статусі #pending');
+
+    } else {console.log('not allowed')}
 }
 
 module.exports = {
