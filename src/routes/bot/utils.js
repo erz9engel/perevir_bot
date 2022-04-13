@@ -2,10 +2,8 @@ const {
     TrueMessageText,
     FakeMessageText,
     RejectMessageText,
-    AutoResponseClickbait,
-    AutoResponseZeroInfo,
-    AutoResponseHelpRequest,
-    TimeoutMessageText
+    AutoResponseTextMap,
+    TimeoutMessageText,
 } = require('./contstants')
 
 const mongoose = require("mongoose");
@@ -94,10 +92,7 @@ async function sendAutoResponse(foundRequest, autoReplyType, bot){
         reply_to_message_id: foundRequest.requesterMsgID
     };
 
-    let replyText
-    if (autoReplyType === '1') replyText = AutoResponseClickbait
-    else if (autoReplyType === '2') replyText = AutoResponseZeroInfo
-    else if (autoReplyType === '3') replyText = AutoResponseHelpRequest
+    let replyText = AutoResponseTextMap[autoReplyType]
 
     try {
         await bot.sendMessage(foundRequest.requesterTG, replyText, options);

@@ -1,6 +1,6 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName} = require("./utils");
 const {
-    NoCurrentFakes, AutoResponseMap, ByInterestRequestText
+    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
 } = require('./contstants')
 const mongoose = require("mongoose");
 require('dotenv').config();
@@ -76,7 +76,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
             inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
             inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
         } else {
-            messageText = messageText + "\n#autoresponse " + AutoResponseMap[autoResponseType]
+            messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
             await sendAutoResponse(request, autoResponseType, bot);
         }
 
