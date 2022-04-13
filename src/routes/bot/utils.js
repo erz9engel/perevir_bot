@@ -2,10 +2,8 @@ const {
     TrueMessageText,
     FakeMessageText,
     RejectMessageText,
-    AutoResponseClickbait,
-    AutoResponseZeroInfo,
-    AutoResponseHelpRequest,
-    TimeoutMessageText
+    AutoResponseTextMap,
+    TimeoutMessageText,
 } = require('./contstants')
 
 const mongoose = require("mongoose");
@@ -20,7 +18,7 @@ function getSubscriptionBtn(status, user_id) {
 
 function getUserName(user) {
     if (user.username) {
-        return user.username
+        return "@" + user.username
     }
     let fullname = user.first_name
     if (user.last_name) fullname = fullname + " " + user.last_name
@@ -89,18 +87,16 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
-async function sendAutoResponse(foundRequest, autoReplyType, bot){
+async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
     let options = {
         reply_to_message_id: foundRequest.requesterMsgID
     };
 
-    let replyText
-    if (autoReplyType === '1') replyText = AutoResponseClickbait
-    else if (autoReplyType === '2') replyText = AutoResponseZeroInfo
-    else if (autoReplyType === '3') replyText = AutoResponseHelpRequest
+    let replyText = AutoResponseTextMap[autoReplyType]
 
     try {
         await bot.sendMessage(foundRequest.requesterTG, replyText, options);
+        await bot.sendMessage(moderator, replyText, options);
     } catch (e) {
         console.log(e)
     }

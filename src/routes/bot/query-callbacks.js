@@ -1,6 +1,6 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName} = require("./utils");
 const {
-    NoCurrentFakes, AutoResponseMap, ByInterestRequestText
+    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
 } = require('./contstants')
 const mongoose = require("mongoose");
 require('dotenv').config();
@@ -28,7 +28,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
             if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
         }
 
-        await bot.editMessageText("#resolved | " + status + "\nМодератор: @" + moderator, {
+        await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -45,6 +45,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 
 const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
+
     try {
         const requestId = data.split('_')[1];
         const request = await Request.findById(requestId);
@@ -52,16 +53,18 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
 
         const autoResponseType = data[2];
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
         let messageText = message.text
 
         if (autoResponseType === '_') {
             inline_keyboard.push([{ text: 'Клікбейт', callback_data: 'AR1_' + requestId }]);
             inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
             inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
+            inline_keyboard.push([{ text: 'Посилання недоступне', callback_data: 'AR4_' + requestId }]);
+            inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
         } else {
-            messageText = messageText + "\n#autoresponse " + AutoResponseMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, bot);
+            messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
+            await sendAutoResponse(request, autoResponseType, moderator, bot);
         }
 
         await bot.editMessageText(messageText, {
