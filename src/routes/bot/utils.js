@@ -20,7 +20,7 @@ function getSubscriptionBtn(status, user_id) {
 
 function getUserName(user) {
     if (user.username) {
-        return user.username
+        return "@" + user.username
     }
     let fullname = user.first_name
     if (user.last_name) fullname = fullname + " " + user.last_name

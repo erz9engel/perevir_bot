@@ -28,7 +28,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
             if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
         }
 
-        await bot.editMessageText("#resolved | " + status + "\nМодератор: @" + moderator, {
+        await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
