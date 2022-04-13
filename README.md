@@ -12,4 +12,8 @@
 
 *TGMAINCHAT=*ID чату модераторрів*
 
+*ADMINS=*ID адмінів через кому (для \forbidrequests i \allowrequests)*
+
+Крім того слід додати у колекцію 'datas', об'єкт {name: "requestStatus", value: "true"}
+
 Логіка бота - ../src/routes/bot.js
