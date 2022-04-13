@@ -101,6 +101,7 @@ async function sendAutoResponse(foundRequest, autoReplyType, bot){
 
     try {
         await bot.sendMessage(foundRequest.requesterTG, replyText, options);
+        await bot.sendMessage(foundRequest.moderatorMsgID, replyText, options);
     } catch (e) {
         console.log(e)
     }

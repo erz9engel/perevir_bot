@@ -47,7 +47,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const moderator = callbackQuery.from.id;
     const request = await Request.findById(data.split('_')[1])
-
+    let options = {}
     try {
         let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
         options = {
