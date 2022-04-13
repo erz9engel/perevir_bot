@@ -160,6 +160,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const moderator = callbackQuery.from.id;
     const request = await Request.findById(requestId);
+    if (!request) return
     let options = {}
     //Send message to moderator (forwarded + action)
     try {

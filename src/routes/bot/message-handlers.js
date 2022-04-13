@@ -39,7 +39,9 @@ const onStart = async (msg, bot) => {
         }
     };
 
-    await bot.sendMessage(msg.chat.id, 'Перевір - інформаційний бот для перевірки даних та повідомлення сумнівних новин.\n\nПовідомляй дані, які хочеш перевірити:\n-пости в соціальних мережах\n-посилання\n-медіафайли або фото\n\nЦей контент перевіриться вручну та алгоритмами і ми дамо тобі відповідь.\n\nПеревіряють інформацію журналісти @gwaramedia, медіаволонтери та громадські активісти.', replyOptions);
+    try {
+        await bot.sendMessage(msg.chat.id, 'Перевір - інформаційний бот для перевірки даних та повідомлення сумнівних новин.\n\nПовідомляй дані, які хочеш перевірити:\n-пости в соціальних мережах\n-посилання\n-медіафайли або фото\n\nЦей контент перевіриться вручну та алгоритмами і ми дамо тобі відповідь.\n\nПеревіряють інформацію журналісти @gwaramedia, медіаволонтери та громадські активісти.', replyOptions);
+    } catch (e) { console.log(e) }
     //Check if user registerd
     let newUser = new TelegramUser({
         _id: new mongoose.Types.ObjectId(),
@@ -52,7 +54,9 @@ const onStart = async (msg, bot) => {
 }
 
 const onCheckContent = async (msg, bot) => {
-    await bot.sendMessage(msg.chat.id, CheckContentAnswerText);
+    try {
+        await bot.sendMessage(msg.chat.id, CheckContentAnswerText);
+    } catch (e) { console.log(e) }
 }
 
 const onSubscription = async (msg, bot) => {
@@ -85,7 +89,9 @@ const onSetFakesRequest = async (msg, bot) => {
                 force_reply: true
             })
         };
-        await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
+        try {
+            await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
+        } catch (e) { console.log(e) }
     } else {console.log('not allowed')}
 }
 
@@ -96,7 +102,11 @@ const onSetSource = async (msg, bot, fake) => {
         const source = text.split(' ')[1];
         const description = text.split(' ').slice(2).join(' ');
         
-        if (!source || source.length < 5) return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
+        if (!source || source.length < 5) {
+            try {
+                return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
+            } catch (e) { console.log(e) }
+        }
         //Check if telegram channel
         if (source.startsWith('https://t.me/')) {
             const username = '@' + source.split('https://t.me/')[1];
@@ -110,10 +120,14 @@ const onSetSource = async (msg, bot, fake) => {
                 createdAt: new Date()
             });
             await newSourceTelegram.save().then(async () => {
-                await bot.sendMessage(msg.chat.id, "Чат @" + chatInfo.username + " успішно додано. Опис:\n" + description);
+                try {
+                    await bot.sendMessage(msg.chat.id, "Чат @" + chatInfo.username + " успішно додано. Опис:\n" + description);
+                } catch (e) { console.log(e) }
             }).catch(async () => {
                 await SourceTelegram.findOneAndUpdate({telegramId: chatInfo.id}, {fake: fake, description: description});
-                await bot.sendMessage(msg.chat.id, "Інформацію про чат оновлено");
+                try {
+                    await bot.sendMessage(msg.chat.id, "Інформацію про чат оновлено");
+                } catch (e) { console.log(e) }
             });
             
         } else {
@@ -122,7 +136,11 @@ const onSetSource = async (msg, bot, fake) => {
             try {
                 const { hostname } = new URL(source);
                 domain = hostname.replace('www.','');
-            } catch(e) { return await bot.sendMessage(msg.chat.id, 'Введений URL некоректний'); }
+            } catch(e) {
+                try {
+                    return await bot.sendMessage(msg.chat.id, 'Введений URL некоректний'); 
+                } catch (e) { console.log(e) }
+            }
 
             var newSourceDomain = new SourceDomain({
                 _id: new mongoose.Types.ObjectId(),
@@ -147,8 +165,10 @@ const onSetFakes = async (msg, bot) => {
     if (admins.includes(String(msg.from.id))) {
         const fakeNews = msg.message_id + '_' + msg.chat.id;
         Data.findOneAndUpdate({name: 'fakeNews'}, {value: fakeNews }, function(){});
-        await bot.sendMessage(msg.chat.id, 'Зміни збережено');
-        await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
+        try {
+            await bot.sendMessage(msg.chat.id, 'Зміни збережено');
+            await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
+        } catch (e) { console.log(e) }
     } else {console.log('not allowed')}
 }
 
@@ -160,7 +180,9 @@ const onSendFakes = async (msg, bot) => {
                 inline_keyboard
             })
         };
-        await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
+        try {
+            await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
+        } catch (e) { console.log(e) }
     } else {console.log('not allowed')}
 }
 
@@ -168,7 +190,9 @@ const onRequestStatus = async (msg, bot, status) => {
     if (admins.includes(String(msg.from.id))) {
         await Data.findOneAndUpdate({name: 'requestStatus'}, {value: status});
         const confirmMsg = status ? "Прийом запитів увімкнено" : "Прийом запитів вимкнено"
-        await bot.sendMessage(msg.chat.id, confirmMsg);
+        try {
+            await bot.sendMessage(msg.chat.id, confirmMsg);
+        } catch (e) { console.log(e) }
     } else {console.log('not allowed')}
 }
 
@@ -291,7 +315,9 @@ const onCheckRequest = async (msg, bot) => {
                 inline_keyboard
             })
         };
-        await bot.sendMessage(msg.chat.id, WhatReasonText, options);
+        try {
+            await bot.sendMessage(msg.chat.id, WhatReasonText, options);
+        } catch (e) { console.log(e) }
     
     } else {
         //Send message to moderation
@@ -348,7 +374,9 @@ const onCheckGroupRequest = async (msg, bot) => {
         if (msg.caption) mediaGroups[index].text += msg.caption;
     }
     //Send interactive action
-    bot.sendChatAction(msg.chat.id, 'typing');
+    try {
+        bot.sendChatAction(msg.chat.id, 'typing');
+    } catch (e) { console.log(e) }
 
     await sleep(2000).then(async () => { 
         const index = mediaGroups.findIndex(group => {
@@ -410,7 +438,9 @@ const onCheckGroupRequest = async (msg, bot) => {
 }
 
 const onUnsupportedContent = async (msg, bot) => {
-    await bot.sendMessage(msg.chat.id, 'Ми поки не обробляємо даний тип звернення.\n\nЯкщо ви хочете поділитись даною інформацією, надішліть на пошту hello@gwaramedia.com з темою ІНФОГРИЗ_Тема_Контекст про що мова. \n\nДодайте якомога більше супроводжуючої інформації:\n- дата матеріалів\n- локація\n- чому це важливо\n- для кого це\n\nЯкщо це важкі файли, краще завантажити їх в клауд з постійним зберіганням і надіслати нам посилання.');
+    try {
+        await bot.sendMessage(msg.chat.id, 'Ми поки не обробляємо даний тип звернення.\n\nЯкщо ви хочете поділитись даною інформацією, надішліть на пошту hello@gwaramedia.com з темою ІНФОГРИЗ_Тема_Контекст про що мова. \n\nДодайте якомога більше супроводжуючої інформації:\n- дата матеріалів\n- локація\n- чому це важливо\n- для кого це\n\nЯкщо це важкі файли, краще завантажити їх в клауд з постійним зберіганням і надіслати нам посилання.');
+    } catch (e) { console.log(e) }
 }
 
 async function sleep(ms) {
@@ -418,15 +448,20 @@ async function sleep(ms) {
 }
 
 async function unsupportedContent(msg, bot) {
-    await bot.sendMessage(msg.chat.id, UnsupportedContentText);
-    
+    try {
+        await bot.sendMessage(msg.chat.id, UnsupportedContentText);
+    } catch (e) { console.log(e) }
 }
 
 async function checkRequestStatus(msg, bot) {
     const {value} = await Data.findOne({name: 'requestStatus'});
     var requestStatus = false;
     if (value === 'true') requestStatus = true;
-    else bot.sendMessage(msg.chat.id, ForbiddenRequestText);    
+    else {
+        try {
+            bot.sendMessage(msg.chat.id, ForbiddenRequestText);  
+        } catch (e) { console.log(e) }  
+    }
 
     return requestStatus;
 }
@@ -496,9 +531,11 @@ const onCloseOldRequests = async (msg, bot) => {
         // Not sure about this, but in order not to be accused in spaming users added 1 second pause
         await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
-        ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-        ' року та досі були в статусі #pending');
+    try {
+        await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+            ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+            ' року та досі були в статусі #pending');
+    } catch (e) { console.log(e) }
 }
 
 module.exports = {
