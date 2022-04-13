@@ -87,7 +87,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
-async function sendAutoResponse(foundRequest, autoReplyType, bot){
+async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
     let options = {
         reply_to_message_id: foundRequest.requesterMsgID
     };
@@ -96,7 +96,7 @@ async function sendAutoResponse(foundRequest, autoReplyType, bot){
 
     try {
         await bot.sendMessage(foundRequest.requesterTG, replyText, options);
-        await bot.sendMessage(foundRequest.moderatorMsgID, replyText, options);
+        await bot.sendMessage(moderator, replyText, options);
     } catch (e) {
         console.log(e)
     }

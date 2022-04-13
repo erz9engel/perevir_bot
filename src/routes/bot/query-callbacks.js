@@ -68,16 +68,18 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
 
         const autoResponseType = data[2]
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
         let messageText = message.text
 
         if (autoResponseType === '_') {
             inline_keyboard.push([{ text: 'Клікбейт', callback_data: 'AR1_' + requestId }]);
             inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
             inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
+            inline_keyboard.push([{ text: 'Посилання недоступне', callback_data: 'AR4_' + requestId }]);
+            inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
         } else {
             messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, bot);
+            await sendAutoResponse(request, autoResponseType, moderator, bot);
         }
 
         await bot.editMessageText(messageText, {
