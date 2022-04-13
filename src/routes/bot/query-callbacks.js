@@ -1,4 +1,4 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus} = require("./utils");
 const {
     NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
 } = require('./contstants')
@@ -205,16 +205,18 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
 
 const onSendFakesQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
-
+    
     try { 
         await bot.deleteMessage(message.chat.id, message.message_id);
         const send = Boolean(parseInt(data.split('_')[1]));
         if (send) {
+            const allUsers = await TelegramUser.countDocuments();
             const users = await TelegramUser.find({subscribed: true});
             const fakeNews = await Data.findOne({name: 'fakeNews'});
             if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
             const message_id = fakeNews.value.split('_')[0];
             const chat_id = fakeNews.value.split('_')[1];
+            await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
             await sendFakes(users, message_id, chat_id, bot);
         }
     } catch (e) { console.log(e); }

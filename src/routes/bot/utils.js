@@ -135,11 +135,24 @@ async function closeRequestByTimeout(request, bot) {
     await Request.updateOne(request, {fakeStatus: "-3"});
 }
 
+async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
+    try {
+        const replyMsg = "🚀 Розсилка запущена\n\nЗагалом користувачів: <b>" + allUsers + "</b>\nПідписаних на розсилку: <b>" + subscribedUsers + '</b> (' + (subscribedUsers/allUsers*100).toFixed(2) + '%)';
+        const options = {
+            parse_mode: "HTML"
+        };
+        await bot.sendMessage(chat_id, replyMsg, options);
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
     sendAutoResponse,
     getUserName,
-    closeRequestByTimeout
+    closeRequestByTimeout,
+    sendFakesStatus
 }
