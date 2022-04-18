@@ -36,6 +36,12 @@ const AutoResponseTagMap = {
     "4": "посилання недоступне",
     "5": "оціночні судження"
 }
+const NotifyUserTextMap = {
+    "1": TrueMessageText,
+    "-1": FakeMessageText,
+    "-2": RejectMessageText,
+    "-3": TimeoutMessageText
+}
 const UnsupportedContentText = "Ми не обробляємо переслані повідомлення, проте можете надіслати посилання на інформацію, яку бажаєте перевірити";
 const WhatReasonText = "Чому важливо перевірити цю інформацію";
 const ByInterestRequestText = "На жаль, ми не обробляємо запити із такою причиною звернення.";
@@ -59,5 +65,6 @@ module.exports = {
     WhatReasonText,
     ByInterestRequestText,
     RequestTimeout,
-    TimeoutMessageText
+    TimeoutMessageText,
+    NotifyUserTextMap
 }

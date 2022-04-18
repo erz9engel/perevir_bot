@@ -45,7 +45,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 
 const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
-
+    const moderator = callbackQuery.from.id;
+    
     try {
         const requestId = data.split('_')[1];
         const request = await Request.findById(requestId);

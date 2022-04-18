@@ -4,6 +4,7 @@ const {
     RejectMessageText,
     AutoResponseTextMap,
     TimeoutMessageText,
+    NotifyUserTextMap
 } = require('./contstants')
 
 const mongoose = require("mongoose");
@@ -30,60 +31,17 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
         reply_to_message_id: foundRequest.requesterMsgID
     };
 
-    if (fakeStatus === '1') {
+    try {
+        await bot.sendMessage(foundRequest.requesterTG, NotifyUserTextMap[fakeStatus], options);
+    } catch (e){ console.log(e) }
+
+    for (let i in foundRequest.otherUsetsTG) {
+        const optionsR = {
+            reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
+        };
         try {
-            await bot.sendMessage(foundRequest.requesterTG, TrueMessageText, options);
+            await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, NotifyUserTextMap[fakeStatus], optionsR);
         } catch (e){ console.log(e) }
-
-        for (let i in foundRequest.otherUsetsTG) {
-            const optionsR = {
-                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
-            };
-            try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, TrueMessageText, optionsR);
-            } catch (e){ console.log(e) }
-        }
-
-    } else if (fakeStatus === '-1') {
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, FakeMessageText, options);
-        } catch (e){ console.log(e) }
-
-        for (let i in foundRequest.otherUsetsTG) {
-            const optionsR = {
-                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
-            };
-            try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, FakeMessageText, optionsR);
-            } catch (e){ console.log(e) }
-        }
-    
-    } else if (fakeStatus === '-2') {
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, RejectMessageText, options);
-        } catch (e){ console.log(e) }
-
-        for (let i in foundRequest.otherUsetsTG) {
-            const optionsR = {
-                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
-            };
-            try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, RejectMessageText, optionsR);
-            } catch (e){ console.log(e) }
-        }
-    } else if (fakeStatus === '-3') {
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, TimeoutMessageText, options);
-        } catch (e){ console.log(e) }
-
-        for (let i in foundRequest.otherUsetsTG) {
-            const optionsR = {
-                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
-            };
-            try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, TimeoutMessageText, optionsR);
-            } catch (e){ console.log(e) }
-        }
     }
 }
 
@@ -96,7 +54,6 @@ async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
 
     try {
         await bot.sendMessage(foundRequest.requesterTG, replyText, options);
-        await bot.sendMessage(moderator, replyText, options);
     } catch (e) {
         console.log(e)
     }
