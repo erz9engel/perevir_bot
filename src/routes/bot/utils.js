@@ -60,19 +60,20 @@ async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
 }
 
 async function sendFakes(users, message_id, chat_id, bot) {
+    const RPS = 10; //Requests per second
 
-    users.forEach(async function (user) {
+    for (var index = 0; index < users.length; index++) {
         try {
-            const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
+            const inline_keyboard = getSubscriptionBtn(users[index].subscribed, users[index]._id);
             var options = {
                 reply_markup: JSON.stringify({
                     inline_keyboard
                 })
             };
-            await bot.copyMessage(user.telegramID, chat_id, message_id, options);
+            await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
+            await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
         } catch (e) { console.log(e.response.body.description); }
-    });
-
+    }
 }
 
 async function closeRequestByTimeout(request, bot) {
