@@ -532,9 +532,11 @@ const onCloseOldRequests = async (msg, bot) => {
             // Not sure about this, but in order not to be accused in spaming users added 1 second pause
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
-            ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-            ' року та досі були в статусі #pending');
+        try {
+            await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+                ' року та досі були в статусі #pending');
+        } catch (e) { console.log(e); }
 
     } else {console.log('not allowed')}
 }

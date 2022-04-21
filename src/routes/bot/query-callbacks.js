@@ -89,7 +89,7 @@ const onRequestQuery = async (callbackQuery, bot) => {
     } catch (e) {console.log(e)};
 
     const request = await Request.findById(requestId);
-    if (!request) console.log('Request does not found');
+    if (!request) return console.log('Request is not found');
     //If reason is interest
     var options = {
         reply_to_message_id: request.requesterMsgID
@@ -195,12 +195,14 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
     //Update MSG
     const inline_keyboard = getSubscriptionBtn(status, user._id);
 
-    await bot.editMessageReplyMarkup({
-        inline_keyboard: inline_keyboard
-    }, {
-        chat_id: message.chat.id,
-        message_id: message.message_id
-    });
+    try {
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+    } catch (e) {console.log(e)}
 
 }
 
@@ -211,10 +213,10 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
         await bot.deleteMessage(message.chat.id, message.message_id);
         const send = Boolean(parseInt(data.split('_')[1]));
         if (send) {
-            const allUsers = await TelegramUser.countDocuments();
-            const users = await TelegramUser.find({subscribed: true});
             const fakeNews = await Data.findOne({name: 'fakeNews'});
             if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
+            const allUsers = await TelegramUser.countDocuments();
+            const users = await TelegramUser.find({$and: [{subscribed: true}, {lastFakeNews: {$ne: fakeNews.value}}]});
             const message_id = fakeNews.value.split('_')[0];
             const chat_id = fakeNews.value.split('_')[1];
             await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
