@@ -9,6 +9,7 @@ const {
 
 const mongoose = require("mongoose");
 const Request = mongoose.model('Request');
+const TelegramUser = mongoose.model('TelegramUser');
 
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
@@ -72,7 +73,8 @@ async function sendFakes(users, message_id, chat_id, bot) {
             };
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
-        } catch (e) { console.log(e.response.body.description); }
+            await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
+        } catch (e) { console.log(e); }
     }
 }
 

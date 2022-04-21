@@ -58,6 +58,7 @@ var telegramUserSchema = Schema({
     _id: Schema.Types.ObjectId, //User ID
     telegramID: {type: Number, unique: true}, //User's telegram ID
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
+    lastFakeNews: String, //Last sent fakeNews
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
