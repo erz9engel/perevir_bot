@@ -220,7 +220,7 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             const message_id = fakeNews.value.split('_')[0];
             const chat_id = fakeNews.value.split('_')[1];
             await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
-            await sendFakes(users, message_id, chat_id, bot);
+            await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
     } catch (e) { console.log(e); }
 
