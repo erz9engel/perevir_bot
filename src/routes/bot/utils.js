@@ -60,7 +60,7 @@ async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
     }
 }
 
-async function sendFakes(users, message_id, chat_id, bot) {
+async function sendFakes(users, message_id, chat_id, admin, bot) {
     const RPS = 5; //Requests per second
 
     for (var index = 0; index < users.length; index++) {
@@ -74,9 +74,15 @@ async function sendFakes(users, message_id, chat_id, bot) {
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
+            console.log(index + " - " + users.length );
         } catch (e) { 
             if (e.response.body && e.response.body.description) console.log(e.response.body.description);
             else console.log(e);
+        }
+        if (index == users.length - 1) {
+            //Notify admin about end result
+            const receivedUsers = await TelegramUser.find({lastFakeNews: message_id + "_" + chat_id}, '');
+            await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + receivedUsers.length);
         }
     }
 }
