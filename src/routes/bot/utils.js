@@ -61,7 +61,7 @@ async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
 }
 
 async function sendFakes(users, message_id, chat_id, bot) {
-    const RPS = 10; //Requests per second
+    const RPS = 5; //Requests per second
 
     for (var index = 0; index < users.length; index++) {
         try {
@@ -74,7 +74,10 @@ async function sendFakes(users, message_id, chat_id, bot) {
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
-        } catch (e) { console.log(e); }
+        } catch (e) { 
+            if (e.response.body && e.response.body.description) console.log(e.response.body.description);
+            else console.log(e);
+        }
     }
 }
 
