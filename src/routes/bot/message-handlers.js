@@ -305,10 +305,12 @@ const onCheckRequest = async (msg, bot) => {
     }
     
     if (!notified) {
-        var inline_keyboard = [[{ text: 'Від цього залежить моє життя', callback_data: 'REASON_0_' + requestId }]];
-        inline_keyboard.push([{ text: 'Це допоможе мені в прийнятті рішень', callback_data: 'REASON_1_' + requestId }]);
-        inline_keyboard.push([{ text: 'Важливо це знати ', callback_data: 'REASON_2_' + requestId }]);
-        inline_keyboard.push([{ text: 'Цікаво', callback_data: 'REASON_3_' + requestId }]);
+
+        var inline_keyboard = [[{ text: '🤓 Цікаво', callback_data: 'REASON_0_' + requestId }]];
+        inline_keyboard.push([{ text: '🧐 Це допоможе мені в прийнятті рішень', callback_data: 'REASON_1_' + requestId }]);
+        inline_keyboard.push([{ text: '😳 Від цього залежить моє життя', callback_data: 'REASON_2_' + requestId }]);
+        inline_keyboard.push([{ text: '🤔 Важливо це знати ', callback_data: 'REASON_3_' + requestId }]);
+        inline_keyboard.push([{ text: '❌ Скасувати', callback_data: 'REASON_4_' + requestId }]);
         var options = {
             reply_to_message_id: msg.message_id,
             reply_markup: JSON.stringify({
