@@ -18,6 +18,11 @@ function getSubscriptionBtn(status, user_id) {
     return inline_keyboard;
 }
 
+function getMailBtn () {
+    const inline_keyboard = [[{text: '🔎 Дізнатися більше', url: 'https://t.me/gwaramedia'}]];
+    return inline_keyboard;
+}
+
 function getUserName(user) {
     if (user.username) {
         return "@" + user.username
@@ -65,7 +70,7 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
 
     for (var index = 0; index < users.length; index++) {
         try {
-            const inline_keyboard = getSubscriptionBtn(users[index].subscribed, users[index]._id);
+            const inline_keyboard = getMailBtn();
             var options = {
                 reply_markup: JSON.stringify({
                     inline_keyboard
