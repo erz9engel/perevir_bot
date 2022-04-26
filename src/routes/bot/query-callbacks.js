@@ -94,9 +94,11 @@ const onRequestQuery = async (callbackQuery, bot) => {
     var options = {
         reply_to_message_id: request.requesterMsgID
     };
-    if (reason === 3) { 
+    if (reason === 0) { //Interesting
         await Request.findByIdAndDelete(requestId);
         return bot.sendMessage(request.requesterTG, ByInterestRequestText, options)
+    } else if (reason === 4) { //Cancel
+        return Request.findByIdAndDelete(requestId);
     }
     
     const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, request.requesterTG, request.requesterMsgID);
