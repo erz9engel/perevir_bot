@@ -219,7 +219,7 @@ const onDBCommentQuery = async (callbackQuery, bot) => {
     for (var index = 0; index < comments.length; index++) {
         inline_keyboard.push([{
             text: comments[index].tag,
-            callback_data: 'DB_RESPONSE_' + requestId + '_' + comments[index]._id}]);
+            callback_data: 'DBRESPONSE_' + requestId + '_' + comments[index]._id}]);
     }
 
     await bot.editMessageReplyMarkup({
@@ -228,6 +228,34 @@ const onDBCommentQuery = async (callbackQuery, bot) => {
         chat_id: message.chat.id,
         message_id: message.message_id
     });
+}
+
+const onDBResponseQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    let calback_data = data.split('_')
+    const requestId = calback_data[1];
+    const request = await Request.findById(requestId);
+    if (!request) return
+    const responseId = calback_data[2];
+    const commentResponse = await Comment.findById(responseId);
+
+    let messageText = message.text + "\n" + commentResponse.tag
+    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    await bot.editMessageText(messageText, {
+        chat_id: message.chat.id,
+        message_id: message.message_id,
+        reply_markup: JSON.stringify({inline_keyboard})
+    });
+    try {
+        await bot.sendMessage(
+            request.requesterTG,
+            commentResponse.comment,
+            {reply_to_message_id: request.requesterMsgID}
+        );
+    } catch (e) {
+        console.log(e)
+    }
+
 }
 
 const onSubscriptionQuery = async (callbackQuery, bot) => {
@@ -280,5 +308,6 @@ module.exports = {
     onSubscriptionQuery,
     onSendFakesQuery,
     onAutoResponseQuery,
-    onDBCommentQuery
+    onDBCommentQuery,
+    onDBResponseQuery
 }
