@@ -19,6 +19,7 @@ const {
 const {
     onFakeStatusQuery,
     onChangeStatusQuery,
+    onCommentSubmenuQuery,
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
@@ -83,6 +84,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     } else if (data.startsWith('CS_')) {
         await onChangeStatusQuery(callbackQuery, bot)
     } else if (data.startsWith('COMMENT_')) {
+        await onCommentSubmenuQuery(callbackQuery, bot)
+    } else if (data.startsWith('OWNCOMMENT_')) {
         await onCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('SUB_')) {
         await onSubscriptionQuery(callbackQuery, bot)
