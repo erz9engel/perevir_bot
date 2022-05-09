@@ -5,7 +5,6 @@ const {
     sendAutoResponse,
     getUserName,
     sendFakesStatus,
-    getDecisionButtons
 } = require("./utils");
 const {
     NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
@@ -30,12 +29,9 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
-
-        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        if (!request.commentChatId) {
-            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
-            if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
-        }
+        let inline_keyboard = message.reply_markup.inline_keyboard
+        inline_keyboard[0] = [{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }];
+        if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
 
         await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: message.chat.id,
@@ -63,7 +59,7 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
 
         const autoResponseType = data[2];
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
+        inline_keyboard.push([{ text: '✉️ Залишити додатковий коментар', callback_data: 'OWNCOMMENT_' + requestId }])
         let messageText = message.text
 
         if (autoResponseType === '_') {
@@ -137,8 +133,8 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: 0});
     if (!request) return console.log('No request ' + requestId);
-    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    inline_keyboard[0] = [{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }];
 
     try {
         await bot.editMessageText("#pending", {
@@ -158,7 +154,8 @@ const onCommentSubmenuQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const request = await Request.findById(requestId);
     if (!request) return
-    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    inline_keyboard.pop()
     inline_keyboard.push([{ text: '📝 Свій коментар', callback_data: 'OWNCOMMENT_' + requestId }]);
     inline_keyboard.push([{ text: '#️⃣ Коментар з бази', callback_data: 'DBCOMMENT_' + requestId }]);
     await bot.editMessageReplyMarkup({
@@ -196,14 +193,19 @@ const onCommentQuery = async (callbackQuery, bot) => {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
     } catch (e){ console.error(e) }
     //Update moderators action message
-    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    if (inline_keyboard.length === 3) {
+        inline_keyboard.pop()
+        inline_keyboard.pop()
+        inline_keyboard.push([{text: '✉️ Залишити додатковий коментар', callback_data: 'OWNCOMMENT_' + requestId}])
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+    }
 
-    await bot.editMessageReplyMarkup({
-        inline_keyboard: inline_keyboard
-    }, {
-        chat_id: message.chat.id,
-        message_id: message.message_id
-    });
     //Set moderator for the comment
     await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
 }
@@ -211,10 +213,10 @@ const onCommentQuery = async (callbackQuery, bot) => {
 const onDBCommentQuery = async (callbackQuery, bot) => {
         const {data, message} = callbackQuery
     const requestId = data.split('_')[1];
-    const request = await Request.findById(requestId);
-    if (!request) return
 
-    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    inline_keyboard.pop()
+    inline_keyboard.pop()
     var comments = await Comment.find().sort({"createdAt": -1}).limit(5);
     for (var index = 0; index < comments.length; index++) {
         inline_keyboard.push([{
@@ -240,7 +242,8 @@ const onDBResponseQuery = async (callbackQuery, bot) => {
     const commentResponse = await Comment.findById(responseId);
 
     let messageText = message.text + "\n" + commentResponse.tag
-    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    let inline_keyboard = [message.reply_markup.inline_keyboard[0]]
+    inline_keyboard.push([{text: '✉️ Залишити додатковий коментар', callback_data: 'OWNCOMMENT_' + requestId}])
     await bot.editMessageText(messageText, {
         chat_id: message.chat.id,
         message_id: message.message_id,
