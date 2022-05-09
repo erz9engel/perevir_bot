@@ -87,10 +87,18 @@ var sourceDomainSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
-mongoose.model('Request', requestSchema);  
-mongoose.model('Image', imageSchema);  
-mongoose.model('Video', videoSchema);  
-mongoose.model('TelegramUser', telegramUserSchema);  
-mongoose.model('Data', dataSchema);   
-mongoose.model('SourceTelegram', sourceTelegramSchema);  
-mongoose.model('SourceDomain', sourceDomainSchema);  
+var commentSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    tag: String,
+    comment: String,
+    createdAt: {type: Date, default: new Date()}
+})
+
+mongoose.model('Request', requestSchema);
+mongoose.model('Image', imageSchema);
+mongoose.model('Video', videoSchema);
+mongoose.model('TelegramUser', telegramUserSchema);
+mongoose.model('Data', dataSchema);
+mongoose.model('SourceTelegram', sourceTelegramSchema);
+mongoose.model('SourceDomain', sourceDomainSchema);
+mongoose.model('Comment', commentSchema);

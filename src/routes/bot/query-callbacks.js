@@ -16,6 +16,7 @@ require('dotenv').config();
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
+const Comment = mongoose.model('Comment');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -207,6 +208,28 @@ const onCommentQuery = async (callbackQuery, bot) => {
     await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
 }
 
+const onDBCommentQuery = async (callbackQuery, bot) => {
+        const {data, message} = callbackQuery
+    const requestId = data.split('_')[1];
+    const request = await Request.findById(requestId);
+    if (!request) return
+
+    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
+    var comments = await Comment.find().sort({"createdAt": -1}).limit(5);
+    for (var index = 0; index < comments.length; index++) {
+        inline_keyboard.push([{
+            text: comments[index].tag,
+            callback_data: 'DB_RESPONSE_' + requestId + '_' + comments[index]._id}]);
+    }
+
+    await bot.editMessageReplyMarkup({
+        inline_keyboard: inline_keyboard
+    }, {
+        chat_id: message.chat.id,
+        message_id: message.message_id
+    });
+}
+
 const onSubscriptionQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     //Change status back to pending
@@ -256,5 +279,6 @@ module.exports = {
     onCommentSubmenuQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onAutoResponseQuery
+    onAutoResponseQuery,
+    onDBCommentQuery
 }
