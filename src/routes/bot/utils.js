@@ -51,17 +51,13 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     }
 }
 
-async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
-    let options = {
-        reply_to_message_id: foundRequest.requesterMsgID
-    };
-
-    let replyText = AutoResponseTextMap[autoReplyType]
-
+async function notifyModerator(initialMsgId, forwardFromChat, moderator, response, bot){
     try {
-        await bot.sendMessage(foundRequest.requesterTG, replyText, options);
-    } catch (e) {
-        console.log(e)
+        let sentMsg = await bot.forwardMessage(moderator, forwardFromChat, initialMsgId);
+        await bot.sendMessage(moderator, response, {reply_to_message_id: sentMsg.message_id})
+    } catch (e){
+        await bot.sendMessage(forwardFromChat, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
+        console.error(e)
     }
 }
 
@@ -125,8 +121,8 @@ module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
-    sendAutoResponse,
     getUserName,
     closeRequestByTimeout,
-    sendFakesStatus
+    sendFakesStatus,
+    notifyModerator
 }

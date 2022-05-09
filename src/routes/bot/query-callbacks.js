@@ -1,13 +1,13 @@
 const {
     getSubscriptionBtn,
     notifyUsers,
+    notifyModerator,
     sendFakes,
-    sendAutoResponse,
     getUserName,
     sendFakesStatus,
 } = require("./utils");
 const {
-    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
+    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText, AutoResponseTextMap
 } = require('./contstants')
 const mongoose = require("mongoose");
 require('dotenv').config();
@@ -50,7 +50,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 
 const onAutoResponseQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
-    const moderator = callbackQuery.from.id;
 
     try {
         const requestId = data.split('_')[1];
@@ -70,7 +69,9 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
             inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
         } else {
             messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, moderator, bot);
+            let replyText = AutoResponseTextMap[autoResponseType]
+            await bot.sendMessage(request.requesterTG, replyText, {reply_to_message_id: request.requesterMsgID});
+            await notifyModerator(request.moderatorMsgID, message.chat.id, callbackQuery.from.id, replyText, bot)
         }
 
         await bot.editMessageText(messageText, {
@@ -258,6 +259,7 @@ const onDBResponseQuery = async (callbackQuery, bot) => {
     } catch (e) {
         console.log(e)
     }
+    await notifyModerator(request.moderatorMsgID, message.chat.id, callbackQuery.from.id, commentResponse.comment, bot)
 
 }
 
