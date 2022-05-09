@@ -32,6 +32,16 @@ function getUserName(user) {
     return fullname
 }
 
+function getDecisionButtons(fakeStatus, requestId) {
+    let inline_keyboard;
+    if (fakeStatus === 0) {
+        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+    } else {
+        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+    }
+    return inline_keyboard
+}
+
 async function notifyUsers(foundRequest, fakeStatus, bot) {
     let options = {
         reply_to_message_id: foundRequest.requesterMsgID
@@ -128,5 +138,6 @@ module.exports = {
     sendAutoResponse,
     getUserName,
     closeRequestByTimeout,
-    sendFakesStatus
+    sendFakesStatus,
+    getDecisionButtons
 }

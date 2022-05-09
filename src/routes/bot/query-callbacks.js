@@ -1,4 +1,12 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus} = require("./utils");
+const {
+    getSubscriptionBtn,
+    notifyUsers,
+    sendFakes,
+    sendAutoResponse,
+    getUserName,
+    sendFakesStatus,
+    getDecisionButtons
+} = require("./utils");
 const {
     NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
 } = require('./contstants')
@@ -144,19 +152,12 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     }
 }
 
-
 const onCommentSubmenuQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const requestId = data.split('_')[1];
     const request = await Request.findById(requestId);
     if (!request) return
-
-    let inline_keyboard;
-    if (request.fakeStatus === 0) {
-        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    } else {
-        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-    }
+    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
     inline_keyboard.push([{ text: '📝 Свій коментар', callback_data: 'OWNCOMMENT_' + requestId }]);
     inline_keyboard.push([{ text: '#️⃣ Коментар з бази', callback_data: 'DBCOMMENT_' + requestId }]);
     await bot.editMessageReplyMarkup({
@@ -194,12 +195,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
     } catch (e){ console.error(e) }
     //Update moderators action message
-    let inline_keyboard;
-    if (request.fakeStatus === 0) {
-        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    } else {
-        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-    }
+    let inline_keyboard = getDecisionButtons(request.fakeStatus, requestId)
 
     await bot.editMessageReplyMarkup({
         inline_keyboard: inline_keyboard
