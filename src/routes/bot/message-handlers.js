@@ -8,6 +8,7 @@ const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
 const SourceTelegram = mongoose.model('SourceTelegram');
 const SourceDomain = mongoose.model('SourceDomain');
+const Comment = mongoose.model('Comment');
 
 const {
     CheckContentText,
@@ -543,6 +544,21 @@ const onCloseOldRequests = async (msg, bot) => {
     } else {console.log('not allowed')}
 }
 
+async function saveCommentToDB(message, bot) {
+    let tag = message.text.split("\n", 1)[0]
+    if (tag.startsWith('#')) {
+        let comment = new Comment({
+            _id: new mongoose.Types.ObjectId(),
+            tag: tag,
+            comment: message.text.slice(tag.length).trim(),
+            createdAt: new Date()
+        });
+        await comment.save()
+        await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+    }
+
+}
+
 module.exports = {
     onStart,
     onCheckContent,
@@ -556,5 +572,6 @@ module.exports = {
     onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent,
-    onCloseOldRequests
+    onCloseOldRequests,
+    saveCommentToDB
 }

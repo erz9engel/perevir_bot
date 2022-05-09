@@ -13,7 +13,8 @@ const {
     onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent,
-    onCloseOldRequests
+    onCloseOldRequests,
+    saveCommentToDB
 } = require('./message-handlers');
 
 const {
@@ -30,6 +31,7 @@ const {
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
+const commentGroup = process.env.TGCOMMENTSGROUP;
 
 const {
     CheckContentText,
@@ -39,8 +41,10 @@ const {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-
-    if (text === '/start') {
+    console.log(msg)
+    if (msg.chat.id == commentGroup){
+        await saveCommentToDB(msg, bot)
+    } else if (text === '/start') {
         await onStart(msg, bot);
     } else if (text === CheckContentText) {
         await onCheckContent(msg, bot)
