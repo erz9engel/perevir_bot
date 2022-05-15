@@ -87,10 +87,10 @@ var sourceDomainSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
-mongoose.model('Request', requestSchema);  
-mongoose.model('Image', imageSchema);  
-mongoose.model('Video', videoSchema);  
-mongoose.model('TelegramUser', telegramUserSchema);  
-mongoose.model('Data', dataSchema);   
-mongoose.model('SourceTelegram', sourceTelegramSchema);  
-mongoose.model('SourceDomain', sourceDomainSchema);  
+mongoose.model('Request', requestSchema);
+mongoose.model('Image', imageSchema);
+mongoose.model('Video', videoSchema);
+mongoose.model('TelegramUser', telegramUserSchema);
+mongoose.model('Data', dataSchema);
+mongoose.model('SourceTelegram', sourceTelegramSchema);
+mongoose.model('SourceDomain', sourceDomainSchema);
