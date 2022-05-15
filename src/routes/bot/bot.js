@@ -27,6 +27,8 @@ const {
     onRequestQuery
 } = require('./query-callbacks')
 
+const {answerInlineQuery} = require("./inline-query")
+
 //TELEGRAM BOT
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
@@ -96,6 +98,13 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onAutoResponseQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
         await onRequestQuery(callbackQuery, bot)
+    }
+});
+
+bot.on("inline_query", async function onCallbackQuery(inlineQuery) {
+    const {query} = inlineQuery;
+    if (query.length > 3) {
+        await answerInlineQuery(inlineQuery, bot)
     }
 });
 
