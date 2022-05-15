@@ -1,9 +1,4 @@
 const {
-    TrueMessageText,
-    FakeMessageText,
-    RejectMessageText,
-    AutoResponseTextMap,
-    TimeoutMessageText,
     NotifyUserTextMap
 } = require('./contstants')
 
@@ -48,20 +43,6 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
         try {
             await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, NotifyUserTextMap[fakeStatus], optionsR);
         } catch (e){ console.log(e) }
-    }
-}
-
-async function sendAutoResponse(foundRequest, autoReplyType, moderator, bot){
-    let options = {
-        reply_to_message_id: foundRequest.requesterMsgID
-    };
-
-    let replyText = AutoResponseTextMap[autoReplyType]
-
-    try {
-        await bot.sendMessage(foundRequest.requesterTG, replyText, options);
-    } catch (e) {
-        console.log(e)
     }
 }
 
@@ -125,7 +106,6 @@ module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
-    sendAutoResponse,
     getUserName,
     closeRequestByTimeout,
     sendFakesStatus

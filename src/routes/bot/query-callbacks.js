@@ -1,6 +1,6 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus} = require("./utils");
 const {
-    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
+    NoCurrentFakes, ByInterestRequestText
 } = require('./contstants')
 const mongoose = require("mongoose");
 require('dotenv').config();
@@ -25,7 +25,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         if (!request.commentChatId) {
             inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
-            if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
         }
 
         await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
@@ -37,42 +36,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         });
 
         await notifyUsers(request, fakeStatus, bot);
-
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-const onAutoResponseQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery;
-    const moderator = callbackQuery.from.id;
-
-    try {
-        const requestId = data.split('_')[1];
-        const request = await Request.findById(requestId);
-        if (!request) return console.log('No request ' + requestId);
-
-        const autoResponseType = data[2];
-        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
-        let messageText = message.text
-
-        if (autoResponseType === '_') {
-            inline_keyboard.push([{ text: 'Клікбейт', callback_data: 'AR1_' + requestId }]);
-            inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
-            inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
-            inline_keyboard.push([{ text: 'Посилання недоступне', callback_data: 'AR4_' + requestId }]);
-            inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
-        } else {
-            messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, moderator, bot);
-        }
-
-        await bot.editMessageText(messageText, {
-            chat_id: message.chat.id,
-            message_id: message.message_id,
-            reply_markup: JSON.stringify({inline_keyboard})
-        });
 
     } catch (err) {
         console.error(err);
@@ -234,6 +197,5 @@ module.exports = {
     onRequestQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery,
-    onAutoResponseQuery
+    onSendFakesQuery
 }

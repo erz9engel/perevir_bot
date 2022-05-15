@@ -23,7 +23,6 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onAutoResponseQuery,
     onRequestQuery
 } = require('./query-callbacks')
 
@@ -94,8 +93,6 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onSubscriptionQuery(callbackQuery, bot)
     } else if (data.startsWith('SENDFAKES_')) {
         await onSendFakesQuery(callbackQuery, bot)
-    } else if (data.startsWith('AR')) {
-        await onAutoResponseQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
         await onRequestQuery(callbackQuery, bot)
     }
