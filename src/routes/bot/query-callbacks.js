@@ -1,4 +1,5 @@
 const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus} = require("./utils");
+const {informRequestersWithComment} = require("./message-handlers");
 const {
     NoCurrentFakes, ByInterestRequestText
 } = require('./contstants')
@@ -191,11 +192,33 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
 
 }
 
+const onConfirmCommentQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    if (data === 'CONFIRM_') {
+        await bot.deleteMessage(message.chat.id, message.message_id);
+    } else {
+        await bot.editMessageReplyMarkup({}, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        })
+        const requestId = data.split('_')[1];
+        const commentMsgId = message.message_id;
+        const request = await Request.findByIdAndUpdate(
+            requestId,
+            {commentMsgId: commentMsgId, commentChatId: message.chat.id }
+        );
+        if (!request) return
+        await informRequestersWithComment(request, message.chat.id, commentMsgId, bot);
+    }
+}
+
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onRequestQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery
+    onSendFakesQuery,
+    onConfirmCommentQuery
 }

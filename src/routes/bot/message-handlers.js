@@ -559,6 +559,27 @@ async function saveCommentToDB(message, bot) {
 
 }
 
+async function confirmComment(message, bot) {
+    if (!message.reply_to_message) {
+        await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
+    }
+    let requestId = message.reply_to_message.text.split("_")[1]
+    let comment = await Comment.findOne({"tag": message.text});
+    let inline_keyboard = [[
+        { text: '✅️ Відправити', callback_data: 'CONFIRM_' + requestId},
+        { text: '❌️ Скасувати', callback_data: 'CONFIRM_'}
+    ]];
+    let options = {
+        reply_to_message_id: message.message_id,
+        reply_markup: JSON.stringify({inline_keyboard})
+    };
+    await bot.sendMessage(
+        message.chat.id,
+        comment.comment,
+        options
+    );
+}
+
 module.exports = {
     onStart,
     onCheckContent,
@@ -573,5 +594,7 @@ module.exports = {
     onCheckRequest,
     onUnsupportedContent,
     onCloseOldRequests,
-    saveCommentToDB
+    saveCommentToDB,
+    confirmComment,
+    informRequestersWithComment
 }

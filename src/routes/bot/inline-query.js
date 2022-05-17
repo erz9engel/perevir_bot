@@ -11,8 +11,8 @@ async function answerInlineQuery(inlineQuery, bot) {
                 "type": "article",
                 "title": comments[index].tag,
                 "input_message_content": {
-                    "message_text": comments[index].comment
-                }
+                    "message_text": comments[index].tag
+                },
             });
         }
         await bot.answerInlineQuery(inlineQuery.id, inlineResults)

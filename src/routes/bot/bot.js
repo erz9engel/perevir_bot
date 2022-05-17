@@ -14,7 +14,8 @@ const {
     onCheckRequest,
     onUnsupportedContent,
     onCloseOldRequests,
-    saveCommentToDB
+    saveCommentToDB,
+    confirmComment
 } = require('./message-handlers');
 
 const {
@@ -23,7 +24,8 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onRequestQuery
+    onRequestQuery,
+    onConfirmCommentQuery
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -45,6 +47,8 @@ bot.on('message', async (msg) => {
     console.log(msg)
     if (msg.chat.id == commentGroup){
         await saveCommentToDB(msg, bot)
+    } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
+        await confirmComment(msg, bot)
     } else if (text === '/start') {
         await onStart(msg, bot);
     } else if (text === CheckContentText) {
@@ -95,6 +99,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onSendFakesQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
         await onRequestQuery(callbackQuery, bot)
+    } else if (data.startsWith('CONFIRM_')) {
+        await onConfirmCommentQuery(callbackQuery, bot)
     }
 });
 
