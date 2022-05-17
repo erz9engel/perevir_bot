@@ -546,17 +546,21 @@ const onCloseOldRequests = async (msg, bot) => {
 
 async function saveCommentToDB(message, bot) {
     let tag = message.text.split("\n", 1)[0]
-    if (tag.startsWith('#')) {
-        let comment = new Comment({
-            _id: new mongoose.Types.ObjectId(),
-            tag: tag,
-            comment: message.text.slice(tag.length).trim(),
-            createdAt: new Date()
-        });
-        await comment.save()
-        await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+    let comment = await Comment.findOne({"tag": tag});
+    if (comment) {
+        await bot.sendMessage(message.chat.id, 'Тег ' + tag + ' вже існує в базі, виберіть інший тег');
+    } else {
+        if (tag.startsWith('#')) {
+            let comment = new Comment({
+                _id: new mongoose.Types.ObjectId(),
+                tag: tag,
+                comment: message.text.slice(tag.length).trim(),
+                createdAt: new Date()
+            });
+            await comment.save()
+            await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+        }
     }
-
 }
 
 async function confirmComment(message, bot) {
