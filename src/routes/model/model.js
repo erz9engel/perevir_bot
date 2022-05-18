@@ -1,5 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
@@ -7,6 +9,7 @@ var requestSchema = Schema({
     requesterMsgID: Number, //Telegram message ID
     moderatorMsgID: Number, //Telegram message ID of resent message
     moderatorActionMsgID: Number, //Telegram message ID of action message
+    moderator: { type: mongoose.Schema.Types.ObjectId, ref: 'Moderator' }, //Moderator
     otherUsetsTG: [{
         requesterTG: Number,
         requesterMsgID: Number
@@ -81,10 +84,21 @@ var sourceTelegramSchema = Schema({
 var sourceDomainSchema = Schema({
     _id: Schema.Types.ObjectId, 
     domain: {type: String, unique: true},
+    hostname: String,
+    username: String, //For SoMe pages
     fake: Boolean,
     description: String,
     requestsAmount: {type: Number, default: 0},
     createdAt: {type: Date, default: new Date()}
+});
+
+var moderatorSchema = Schema({
+    _id: Schema.Types.ObjectId, 
+    telegramID: {type: Number, unique: true}, //Moderator's telegram ID
+    name: String, //Username or name
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Requests' }], //Involved requests
+    lastAction: Date, //Time of the last action,
+    createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
 var commentSchema = Schema({
@@ -94,11 +108,53 @@ var commentSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 })
 
-mongoose.model('Request', requestSchema);
-mongoose.model('Image', imageSchema);
-mongoose.model('Video', videoSchema);
-mongoose.model('TelegramUser', telegramUserSchema);
-mongoose.model('Data', dataSchema);
-mongoose.model('SourceTelegram', sourceTelegramSchema);
-mongoose.model('SourceDomain', sourceDomainSchema);
+var adminSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    username: { type: String, required: true, index: { unique: true } }, //Login
+    lastLogin: Date,
+    lastAction: Date,
+    hash: String,
+    salt: String,
+    createdAt: {type: Date, default: new Date()} //Time of the creation
+});
+
+adminSchema.methods.setPassword = function (password) {
+    this.salt = crypto.randomBytes(16).toString('hex');
+    this.hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
+};
+
+adminSchema.methods.validatePassword = function (password) {
+    const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
+    return this.hash === hash;
+};
+
+adminSchema.methods.generateJWT = function () {
+    const today = new Date();
+    const expirationDate = new Date(today);
+    expirationDate.setDate(today.getDate() + 60);
+
+    return jwt.sign({
+        username: this.username,
+        id: this._id,
+        exp: parseInt(expirationDate.getTime() / 1000, 10),
+    }, 'secret');
+};
+
+adminSchema.methods.toAuthJSON = function () {
+    return {
+        _id: this._id,
+        username: this.username,
+        token: this.generateJWT(),
+    };
+};
+
+mongoose.model('Admin', adminSchema);
+mongoose.model('Request', requestSchema);  
+mongoose.model('Image', imageSchema);  
+mongoose.model('Video', videoSchema);  
+mongoose.model('TelegramUser', telegramUserSchema);  
+mongoose.model('Data', dataSchema);   
+mongoose.model('SourceTelegram', sourceTelegramSchema);  
+mongoose.model('SourceDomain', sourceDomainSchema);   
+mongoose.model('Moderator', moderatorSchema);  
 mongoose.model('Comment', commentSchema);

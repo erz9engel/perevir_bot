@@ -1,10 +1,10 @@
-const {
-    NotifyUserTextMap
-} = require('./contstants')
-
 const mongoose = require("mongoose");
+const { getText } = require('./localisation');
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
+const Moderator = mongoose.model('Moderator');
+const SourceTelegram = mongoose.model('SourceTelegram');
+const SourceDomain = mongoose.model('SourceDomain');
 
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
@@ -28,22 +28,32 @@ function getUserName(user) {
 }
 
 async function notifyUsers(foundRequest, fakeStatus, bot) {
-    let options = {
-        reply_to_message_id: foundRequest.requesterMsgID
-    };
 
-    try {
-        await bot.sendMessage(foundRequest.requesterTG, NotifyUserTextMap[fakeStatus], options);
-    } catch (e){ console.log(e) }
+    var textArg;
+    if (fakeStatus == "1") textArg = 'true_status';
+    else if (fakeStatus == "-1") textArg = 'fake_status';
+    else if (fakeStatus == "-2") textArg = 'reject_status';
+    else if (fakeStatus == "-3") textArg = 'timeout_request';
 
-    for (let i in foundRequest.otherUsetsTG) {
-        const optionsR = {
-            reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
+    await getText(textArg, 'ua', async function(err, text){
+        if (err) return console.log(err);
+        let options = {
+            reply_to_message_id: foundRequest.requesterMsgID
         };
+    
         try {
-            await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, NotifyUserTextMap[fakeStatus], optionsR);
+            await bot.sendMessage(foundRequest.requesterTG, text, options);
         } catch (e){ console.log(e) }
-    }
+    
+        for (let i in foundRequest.otherUsetsTG) {
+            const optionsR = {
+                reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
+            };
+            try {
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text, optionsR);
+            } catch (e){ console.log(e) }
+        }
+    });
 }
 
 async function sendFakes(users, message_id, chat_id, admin, bot) {
@@ -62,13 +72,14 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             console.log(index + " - " + users.length );
         } catch (e) { 
-            if (e.response.body && e.response.body.description) console.log(e.response.body.description);
+            if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
             else console.log(e);
         }
         if (index == users.length - 1) {
             //Notify admin about end result
             const receivedUsers = await TelegramUser.find({lastFakeNews: message_id + "_" + chat_id}, '');
             await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+            await bot.sendMessage(394717645, "Результат розсилки\nДоставлено: " + receivedUsers.length);
         }
     }
 }
@@ -102,11 +113,120 @@ async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
     }
 }
 
+async function involveModerator (requestId, moderatorTg) {
+
+    const request = await Request.findById(requestId, 'moderator');
+    if (!request) return console.log('There is no request to assign moderator');
+    else if (request.moderator) return console.log('Second assignment of moderator to request');
+
+    const moderatorTgId = moderatorTg.id;
+    var moderator = await Moderator.findOneAndUpdate({telegramID: moderatorTgId}, {$push: {requests: requestId}, lastAction: new Date()});
+    const now = new Date();
+    if (!moderator) {
+        const name = getUserName(moderatorTg);
+        let newModerator = new Moderator({
+            _id: new mongoose.Types.ObjectId(),
+            telegramID: moderatorTgId,
+            name: name,
+            requests: [request._id],
+            lastAction: now,
+            createdAt: now
+        });
+        await newModerator.save().then((md) => {
+            moderator = md;
+        }).catch(() => {});
+    }
+    
+    await Request.findByIdAndUpdate(requestId, {moderator: moderator._id, lastUpdate: now});
+
+}
+
+const getDomainWithoutSubdomain = hostname => {
+    const urlParts = hostname.split('.');
+  
+    return urlParts
+      .slice(urlParts.length - 2)
+      .join('.')
+}
+
+async function newFacebookSource (url) {
+    const { hostname, pathname, searchParams } = url;
+    const host = getDomainWithoutSubdomain(hostname);
+    const decoded = decodeURI(pathname);
+    var username = decoded.split('/')[1];
+    if (username == 'groups') return false
+    else if (username == 'profile.php' && searchParams.get('id')) {
+       username = searchParams.get('id');
+    }
+    if (username == '') return null;
+
+    return { hostname: host, username: username }
+}
+
+async function newTwitterSource (url) {
+    const { hostname, pathname } = url;
+    const host = getDomainWithoutSubdomain(hostname);
+    const decoded = decodeURI(pathname);
+    const username = decoded.split('/')[1];
+    if (username == '') return null;
+
+    return { hostname: host, username: username }
+}
+
+async function newYoutubeSource (url) {
+    const { hostname, pathname } = url;
+    const host = getDomainWithoutSubdomain(hostname);
+    const decoded = decodeURI(pathname);
+    var username = decoded.split('/')[2];
+    if (!username || username == '') {
+        username = decoded.split('/')[1];
+    }
+    if (username == '') return null;
+
+    return { hostname: host, username: username }
+}
+
+async function getLabeledSource (text){
+    try {
+        const { hostname, pathname, searchParams} = new URL(text);
+        const host = getDomainWithoutSubdomain(hostname);
+        const decoded = decodeURI(pathname);
+        var username;
+        
+        if (host == 'facebook.com' || host == 'twitter.com') {
+            username = decoded.split('/')[1];
+            if (searchParams.get('id')) {
+                username = searchParams.get('id');
+            } else if (!username || username == '') return null
+            return await SourceDomain.findOneAndUpdate({$and: [ {hostname: host}, {username: username} ]}, { $inc: { requestsAmount: 1 }});
+
+        } else if (host == 'youtube.com') {
+            username = decoded.split('/')[2];
+            if (!username || username == '') {
+                username = decoded.split('/')[1];
+            }
+            if (!username || username == '') return null
+            return await SourceDomain.findOneAndUpdate({$and: [ {hostname: host}, {username: username} ]}, { $inc: { requestsAmount: 1 }});
+
+        } else {
+            return await SourceDomain.findOneAndUpdate({ domain: host }, { $inc: { requestsAmount: 1 }});
+        }
+        
+    } catch(e) { return null }    
+}
+
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
     getUserName,
     closeRequestByTimeout,
-    sendFakesStatus
+    sendFakesStatus,
+    involveModerator,
+    getDomainWithoutSubdomain,
+    newFacebookSource,
+    newTwitterSource,
+    newYoutubeSource,
+    getLabeledSource,
 }

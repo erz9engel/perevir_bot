@@ -15,18 +15,19 @@ const {
     SubscribtionText,
     SetFakesRequestText,
     NoCurrentFakes,
-    TrueMessageText,
-    FakeMessageText,
-    RejectMessageText,
-    BlackSourceText,
-    WhiteSourceText,
-    ForbiddenRequestText,
     UnsupportedContentText,
-    CheckContentAnswerText,
-    WhatReasonText,
     RequestTimeout
-} = require('./contstants')
-const {getSubscriptionBtn, closeRequestByTimeout} = require("./utils");
+} = require('./contstants');
+const { getText } = require('./localisation');
+const {
+    getSubscriptionBtn,
+    closeRequestByTimeout,
+    getDomainWithoutSubdomain,
+    newFacebookSource,
+    newTwitterSource,
+    newYoutubeSource,
+    getLabeledSource
+} = require("./utils");
 
 const onStart = async (msg, bot) => {
     let replyOptions = {
@@ -41,7 +42,10 @@ const onStart = async (msg, bot) => {
     };
 
     try {
-        await bot.sendMessage(msg.chat.id, 'Перевір - інформаційний бот для перевірки даних та повідомлення сумнівних новин.\n\nПовідомляй дані, які хочеш перевірити:\n-пости в соціальних мережах\n-посилання\n-медіафайли або фото\n\nЦей контент перевіриться вручну та алгоритмами і ми дамо тобі відповідь.\n\nПеревіряють інформацію журналісти @gwaramedia, медіаволонтери та громадські активісти.', replyOptions);
+        await getText('welcome', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            await bot.sendMessage(msg.chat.id, text, replyOptions);
+        });
     } catch (e) { console.log(e) }
     //Check if user registerd
     let newUser = new TelegramUser({
@@ -56,7 +60,10 @@ const onStart = async (msg, bot) => {
 
 const onCheckContent = async (msg, bot) => {
     try {
-        await bot.sendMessage(msg.chat.id, CheckContentAnswerText);
+        await getText('check_content', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            await bot.sendMessage(msg.chat.id, text);
+        });
     } catch (e) { console.log(e) }
 }
 
@@ -111,7 +118,14 @@ const onSetSource = async (msg, bot, fake) => {
         //Check if telegram channel
         if (source.startsWith('https://t.me/')) {
             const username = '@' + source.split('https://t.me/')[1];
-            const chatInfo = await bot.getChat(username);
+            var chatInfo;
+            try {
+                chatInfo = await bot.getChat(username);
+            } catch (e) {
+                try {
+                    return await bot.sendMessage(msg.chat.id, "Такого ресурсу не знайдено");
+                } catch (e) { console.log(e) }
+            }
             var newSourceTelegram = new SourceTelegram({
                 _id: new mongoose.Types.ObjectId(),
                 telegramId: chatInfo.id,
@@ -132,29 +146,50 @@ const onSetSource = async (msg, bot, fake) => {
             });
             
         } else {
-
-            var domain;
+            var hostname, username, params, url, host;
             try {
-                const { hostname } = new URL(source);
-                domain = hostname.replace('www.','');
-            } catch(e) {
+                url = new URL(source);
+                host = getDomainWithoutSubdomain(url.hostname);
+            } catch (e) {
+                console.log(e)
                 try {
-                    return await bot.sendMessage(msg.chat.id, 'Введений URL некоректний'); 
+                    await bot.sendMessage(msg.chat.id, 'Некоректний URL'); 
+                    return false
                 } catch (e) { console.log(e) }
             }
 
+            console.log(host);
+            if (host == 'facebook.com') params = await newFacebookSource(url);
+            else if (host == 'twitter.com') params = await newTwitterSource(url);
+            else if (host == 'youtube.com') params = await newYoutubeSource(url);
+            else hostname = host;
+
+            if (params) {
+                hostname = params.hostname;
+                username = params.username;
+            }
+            if (!hostname) {
+                try {
+                    await bot.sendMessage(msg.chat.id, 'На жаль такий формат поки не підтримується.'); 
+                    return false
+                } catch (e) { console.log(e) }
+            }
+            const domain = username ? hostname + '/' + username : hostname;
             var newSourceDomain = new SourceDomain({
                 _id: new mongoose.Types.ObjectId(),
                 domain: domain,
+                hostname: hostname,
+                username: username,
                 fake: fake,
                 description: description,
                 createdAt: new Date()
             });
             await newSourceDomain.save().then(async () => {
-                await bot.sendMessage(msg.chat.id, "Домен " + domain + " успішно додано. Опис:\n" + description);
+                if (!username) await bot.sendMessage(msg.chat.id, "Ресурс " + hostname + " успішно додано. Опис:\n" + description);
+                else bot.sendMessage(msg.chat.id, "Профіль " + username + " на ресурсі " + hostname + " успішно додано. Опис:\n" + description);
             }).catch(async () => {
-                await SourceDomain.findOneAndUpdate({domain: domain}, {fake: fake, description: description});
-                await bot.sendMessage(msg.chat.id, "Інформацію про домен оновлено");
+                await SourceDomain.findOneAndUpdate({domain: domain}, {fake: fake, hostname: hostname, username: username, description: description});
+                await bot.sendMessage(msg.chat.id, "Інформацію про ресурс оновлено");
             });
 
         }
@@ -232,16 +267,20 @@ const onCheckRequest = async (msg, bot) => {
             if (foundRequest.fakeStatus === 0) return addToWaitlist(msg, foundRequest, bot);
             return reportStatus(msg, foundRequest, bot, foundRequest);
         } else if (bannedChat) {
-            const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+            const sourceText = bannedChat.fake ? 'black_source' : 'white_source';
             request.fakeStatus = bannedChat.fake ? -3 : 2;
             try {
                 const description = bannedChat.description ? bannedChat.description : '';
-                await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                await getText(sourceText, 'ua', async function(err, text){
+                    if (err) return console.log(err);
+                    await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                });
                 notified = true;
+                
             } catch (e) {console.log(e)}
-        } else {
-            return unsupportedContent(msg, bot);
         }
+        //If block redirect msgs
+        //else { return unsupportedContent(msg, bot); }  
     } 
 
     if (msg.photo) {
@@ -283,21 +322,23 @@ const onCheckRequest = async (msg, bot) => {
     } 
 
     if (msg.text) { //Get text data
-        const bannedChat = await getBannedChat(msg.text);
-
+        const labeledSource = await getLabeledSource(msg.text);
         const foundText = await Request.findOne({text: msg.text}, '_id fakeStatus commentChatId commentMsgId');
         if (foundText) {
             if (foundText.fakeStatus === 0) return addToWaitlist(msg, foundText, bot);
-            return reportStatus(msg, foundText, bot, bannedChat);
+            return reportStatus(msg, foundText, bot, labeledSource);
             
-        } else if (bannedChat) {
-            const text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
-            request.fakeStatus = bannedChat.fake ? -3 : 2;
+        } else if (labeledSource) {
+            const sourceText = labeledSource.fake ? 'black_source' : 'white_source';
+            request.fakeStatus = labeledSource.fake ? -3 : 2;
             try {
-                const description = bannedChat.description ? bannedChat.description : '';
-                await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                const description = labeledSource.description ? labeledSource.description : '';
+                await getText(sourceText, 'ua', async function(err, text){
+                    if (err) return console.log(err);
+                    await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                });
                 notified = true;
-            } catch(e) { console.log(e) }
+            } catch (e) {console.log(e)}
         } 
 
         request.text = msg.text;
@@ -308,10 +349,9 @@ const onCheckRequest = async (msg, bot) => {
     if (!notified) {
 
         var inline_keyboard = [[{ text: '🤓 Цікаво', callback_data: 'REASON_0_' + requestId }]];
-        inline_keyboard.push([{ text: '🧐 Це допоможе мені в прийнятті рішень', callback_data: 'REASON_1_' + requestId }]);
         inline_keyboard.push([{ text: '😳 Від цього залежить моє життя', callback_data: 'REASON_2_' + requestId }]);
         inline_keyboard.push([{ text: '🤔 Важливо це знати ', callback_data: 'REASON_3_' + requestId }]);
-        inline_keyboard.push([{ text: '❌ Скасувати', callback_data: 'REASON_4_' + requestId }]);
+        inline_keyboard.push([{ text: '❌ Скасувати запит на перевірку', callback_data: 'REASON_4_' + requestId }]);
         var options = {
             reply_to_message_id: msg.message_id,
             reply_markup: JSON.stringify({
@@ -319,7 +359,11 @@ const onCheckRequest = async (msg, bot) => {
             })
         };
         try {
-            await bot.sendMessage(msg.chat.id, WhatReasonText, options);
+            await getText('request_reason', 'ua', async function(err, text){
+                if (err) return console.log(err);
+                await bot.sendMessage(msg.chat.id, text, options);
+            });
+            
         } catch (e) { console.log(e) }
     
     } else {
@@ -389,9 +433,6 @@ const onCheckGroupRequest = async (msg, bot) => {
             mediaGroups[index].sent = true; 
             const requestStatus = await checkRequestStatus(msg, bot);
             if (!requestStatus) return
-            if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
-                return unsupportedContent(msg, bot);
-            } 
             var mediaFiles = [];
             for (var i in mediaGroups[index].mediaFiles) {
                 const mediaFile = mediaGroups[index].mediaFiles[i];
@@ -434,15 +475,21 @@ const onCheckGroupRequest = async (msg, bot) => {
             var options = {
                 disable_web_page_preview: true
             };
-            await bot.sendMessage(msg.chat.id, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',options);
-
+            await getText('new_requests', 'ua', async function(err, text){
+                if (err) return console.log(err);
+                await bot.sendMessage(msg.chat.id, text, options);
+            });
+            
         } else return
     });
 }
 
 const onUnsupportedContent = async (msg, bot) => {
     try {
-        await bot.sendMessage(msg.chat.id, 'Ми поки не обробляємо даний тип звернення.\n\nЯкщо ви хочете поділитись даною інформацією, надішліть на пошту hello@gwaramedia.com з темою ІНФОГРИЗ_Тема_Контекст про що мова. \n\nДодайте якомога більше супроводжуючої інформації:\n- дата матеріалів\n- локація\n- чому це важливо\n- для кого це\n\nЯкщо це важкі файли, краще завантажити їх в клауд з постійним зберіганням і надіслати нам посилання.');
+        await getText('unsupported_request', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            await bot.sendMessage(msg.chat.id, text);
+        });
     } catch (e) { console.log(e) }
 }
 
@@ -462,7 +509,10 @@ async function checkRequestStatus(msg, bot) {
     if (value === 'true') requestStatus = true;
     else {
         try {
-            bot.sendMessage(msg.chat.id, ForbiddenRequestText);  
+            await getText('stopped_requests', 'ua', async function(err, text){
+                if (err) return console.log(err);
+                bot.sendMessage(msg.chat.id, text);  
+            });
         } catch (e) { console.log(e) }  
     }
 
@@ -471,7 +521,10 @@ async function checkRequestStatus(msg, bot) {
 
 async function addToWaitlist(msg, foundRequest, bot ) {
     try {
-        await bot.sendMessage(msg.chat.id, 'Команда вже обробляє даний запит. Повідомимо про результат згодом');
+        await getText('waitlist', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            bot.sendMessage(msg.chat.id, text);  
+        });
     } catch (e){ console.log(e) }
 
     await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}});
@@ -479,17 +532,23 @@ async function addToWaitlist(msg, foundRequest, bot ) {
 
 async function reportStatus(msg, foundRequest, bot, bannedChat) {
 
-    var text = '', description = '';
+    var description = '', textArg = '';
     if (bannedChat) {
-        text = bannedChat.fake ? BlackSourceText : WhiteSourceText;
+        textArg = bannedChat.fake ? 'black_source' : 'white_source';
         description = bannedChat.description ? bannedChat.description : '';
+    } else {
+        if (foundRequest.fakeStatus === 1) textArg = "true_status"
+        else if (foundRequest.fakeStatus === -1) textArg = "fake_status"
+        else if (foundRequest.fakeStatus === -2) textArg = "reject_status"
     }
 
     try {
-        if (foundRequest.fakeStatus === 1) await bot.sendMessage(msg.chat.id, TrueMessageText);
-        else if (foundRequest.fakeStatus === -1) await bot.sendMessage(msg.chat.id, FakeMessageText);
-        else if (foundRequest.fakeStatus === -2) await bot.sendMessage(msg.chat.id, RejectMessageText);
-        else if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+        await getText(textArg, 'ua', async function(err, text){
+            if (err) return console.log(err);
+            if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+            else await bot.sendMessage(msg.chat.id, text);
+        });
+        
     } catch (e){ console.log(e) }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
@@ -515,14 +574,6 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
         } catch (e){ console.log(e) }
     }
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
-}
-
-async function getBannedChat(text) {
-    try {
-        const { hostname } = new URL(text);
-        domain = hostname.replace('www.','');
-        return await SourceDomain.findOneAndUpdate({ domain: domain }, { $inc: { requestsAmount: 1 }});
-    } catch(e) { return null }    
 }
 
 const onCloseOldRequests = async (msg, bot) => {

@@ -1,0 +1,8 @@
+.texts textarea {
+    border: none;
+    border-bottom: solid 1px #dee2e6;
+}
+
+.card .card-body {
+    margin-bottom: 20px;
+}
