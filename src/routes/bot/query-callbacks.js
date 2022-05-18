@@ -6,8 +6,9 @@ const {
     getUserName,
     sendFakesStatus,
 } = require("./utils");
+const {informRequestersWithComment} = require("./message-handlers");
 const {
-    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
+    NoCurrentFakes, ByInterestRequestText
 } = require('./contstants')
 const mongoose = require("mongoose");
 require('dotenv').config();
@@ -28,9 +29,11 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
-        let inline_keyboard = message.reply_markup.inline_keyboard
-        inline_keyboard[0] = [{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }];
-        if (fakeStatus === '-2') inline_keyboard.push([{ text: '🖨 Шаблонна відповідь', callback_data: 'AR_' + requestId }]);
+        
+        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        if (!request.commentChatId) {
+            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
+        }
 
         await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: message.chat.id,
@@ -41,42 +44,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         });
 
         await notifyUsers(request, fakeStatus, bot);
-
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-const onAutoResponseQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery;
-    const moderator = callbackQuery.from.id;
-
-    try {
-        const requestId = data.split('_')[1];
-        const request = await Request.findById(requestId);
-        if (!request) return console.log('No request ' + requestId);
-
-        const autoResponseType = data[2];
-        let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
-        let messageText = message.text
-
-        if (autoResponseType === '_') {
-            inline_keyboard.push([{ text: 'Клікбейт', callback_data: 'AR1_' + requestId }]);
-            inline_keyboard.push([{ text: 'Нема фактів для перевірки', callback_data: 'AR2_' + requestId }]);
-            inline_keyboard.push([{ text: 'Прохання про допомогу', callback_data: 'AR3_' + requestId }]);
-            inline_keyboard.push([{ text: 'Посилання недоступне', callback_data: 'AR4_' + requestId }]);
-            inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
-        } else {
-            messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, moderator, bot);
-        }
-
-        await bot.editMessageText(messageText, {
-            chat_id: message.chat.id,
-            message_id: message.message_id,
-            reply_markup: JSON.stringify({inline_keyboard})
-        });
 
     } catch (err) {
         console.error(err);
@@ -230,12 +197,32 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
 
 }
 
+const onConfirmCommentQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    if (data === 'CONFIRM_') {
+        await bot.deleteMessage(message.chat.id, message.message_id);
+    } else {
+        await bot.editMessageReplyMarkup({}, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        })
+        const requestId = data.split('_')[1];
+        const commentMsgId = message.message_id;
+        const request = await Request.findByIdAndUpdate(
+            requestId,
+            {commentMsgId: commentMsgId, commentChatId: message.chat.id }
+        );
+        if (!request) return
+        await informRequestersWithComment(request, message.chat.id, commentMsgId, bot);
+    }
+}
+
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onRequestQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery,
-    onAutoResponseQuery
+    onSendFakesQuery,onConfirmCommentQuery
 }
