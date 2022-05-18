@@ -1,0 +1,46 @@
+﻿doctype html
+head
+  meta(charset='utf-8')
+  meta(name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no')
+  link(rel='apple-touch-icon' sizes='76x76' href='../assets/img/apple-icon.png')
+  link(rel='icon' type='image/png' href='../assets/img/favicon.png')
+  title
+    | &Acy;&vcy;&tcy;&ocy;&rcy;&icy;&zcy;&acy;&tscy;&iukcy;&yacy;
+  // Fonts and icons
+  link(href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet')
+  // Nucleo Icons
+  link(href='../assets/css/nucleo-icons.css' rel='stylesheet')
+  link(href='../assets/css/nucleo-svg.css' rel='stylesheet')
+  // Font Awesome Icons
+  script(src='https://kit.fontawesome.com/42d5adcbca.js' crossorigin='anonymous')
+  link(href='../assets/css/nucleo-svg.css' rel='stylesheet')
+  // CSS Files
+  link#pagestyle(href='../assets/css/soft-ui-dashboard.css?v=1.0.5' rel='stylesheet')
+main.main-content.mt-0
+  section.min-vh-100.mb-8
+    .page-header.align-items-start.min-vh-50.pt-5.pb-11.m-3.border-radius-lg(style="background-image: url('../assets/img/curved-images/curved14.jpg');")
+      span.mask.bg-gradient-dark.opacity-6
+      .container
+        .row.justify-content-center
+          .col-lg-5.text-center.mx-auto
+            h1.text-white.mb-2.mt-5 &Vcy;&iukcy;&tcy;&acy;&yucy;!
+    .container
+      .row.mt-lg-n10.mt-md-n11.mt-n10
+        .col-xl-4.col-lg-5.col-md-7.mx-auto
+          .card.z-index-0
+            .card-header.text-center.pt-4
+              h5 &Acy;&vcy;&tcy;&ocy;&rcy;&icy;&zcy;&ucy;&jcy;&tcy;&iecy;&scy;&yacy;
+            .card-body
+              form#auth(role='form text-left' action='/authAPI/login' method='post')
+                .mb-3
+                  input.form-control(name='username' type='email' placeholder='Email' required='')
+                .mb-3
+                  input.form-control(name='password' type='password' placeholder='Password' required='')
+              .text-center
+                button.btn.bg-gradient-dark.w-100.my-4.mb-2(type='submit' form='auth' value='Submit') &Acy;&vcy;&tcy;&ocy;&rcy;&icy;&zcy;&ucy;&vcy;&acy;&tcy;&icy;&scy;&yacy;
+              p.text-sm.mt-3.mb-0
+                | &Ncy;&iecy;&mcy;&acy;&jukcy; &pcy;&rcy;&ocy;&fcy;&iukcy;&lcy;&yacy;? 
+                a.text-dark.font-weight-bolder(href='./sign-up') &Zcy;&acy;&rcy;&iecy;&jukcy;&scy;&tcy;&rcy;&ucy;&jcy;&tcy;&iecy;&scy;&yacy;
+// Core JS Files
+script(src='../assets/js/core/popper.min.js')
+script(src='../assets/js/core/bootstrap.min.js')

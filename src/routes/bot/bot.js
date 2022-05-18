@@ -30,6 +30,7 @@ const {
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
+const admins = String(process.env.ADMINS).split(',');
 
 const {
     CheckContentText,
@@ -37,9 +38,17 @@ const {
     SetFakesRequestText
 } = require('./contstants');
 
+setTimeout(function () {
+    try {
+        bot.sendMessage(admins[0], 'Bot reloaded');
+    } catch (e) {
+        console.log(e);
+    }
+}, 10000); //Notify about reloading
+
 bot.on('message', async (msg) => {
     const text = msg.text;
-
+    
     if (text === '/start') {
         await onStart(msg, bot);
     } else if (text === CheckContentText) {
@@ -102,6 +111,12 @@ module.exports = {
         try {
             const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg, options);
             if (pin) await bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
+        } catch (e){ console.log(e) }
+    },
+    messageId: async function (id, msg, pin, options) {
+        try {
+            const sentMsg = await bot.sendMessage(id, msg, options);
+            if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
         } catch (e){ console.log(e) }
     }
 };

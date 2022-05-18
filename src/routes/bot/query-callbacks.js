@@ -1,8 +1,9 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus, involveModerator} = require("./utils");
 const {
-    NoCurrentFakes, AutoResponseTagMap, ByInterestRequestText
+    NoCurrentFakes
 } = require('./contstants')
 const mongoose = require("mongoose");
+const { getText } = require("./localisation");
 require('dotenv').config();
 
 const Request = mongoose.model('Request');
@@ -36,6 +37,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
             })
         });
 
+        await involveModerator(requestId, callbackQuery.from);
+
         await notifyUsers(request, fakeStatus, bot);
 
     } catch (err) {
@@ -64,8 +67,8 @@ const onAutoResponseQuery = async (callbackQuery, bot) => {
             inline_keyboard.push([{ text: 'Посилання недоступне', callback_data: 'AR4_' + requestId }]);
             inline_keyboard.push([{ text: 'Оціночні судження', callback_data: 'AR5_' + requestId }]);
         } else {
-            messageText = messageText + "\n#autoresponse " + AutoResponseTagMap[autoResponseType]
-            await sendAutoResponse(request, autoResponseType, moderator, bot);
+            messageText = messageText + "\n#autoresponse"
+            await sendAutoResponse(request, autoResponseType, bot);
         }
 
         await bot.editMessageText(messageText, {
@@ -94,9 +97,12 @@ const onRequestQuery = async (callbackQuery, bot) => {
     var options = {
         reply_to_message_id: request.requesterMsgID
     };
-    if (reason === 0) { //Interesting
+    if (reason === 0) { //Interesting interest_request
         await Request.findByIdAndDelete(requestId);
-        return bot.sendMessage(request.requesterTG, ByInterestRequestText, options)
+        return await getText('interest_request', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            await bot.sendMessage(request.requesterTG, text, options)
+        });
     } else if (reason === 4) { //Cancel
         return Request.findByIdAndDelete(requestId);
     }
@@ -118,7 +124,10 @@ const onRequestQuery = async (callbackQuery, bot) => {
     var informOptions = {
         disable_web_page_preview: true
     };
-    await bot.sendMessage(request.requesterTG, 'Ми нічого не знайшли або не бачили такого. Почали опрацьовувати цей запит\n\nЗ початком війни журналісти @gwaramedia запустила бот для перевірки новин на фейки — @perevir_bot\n\nНам надходить дуууже багато повідомлень. Тому відповіді можуть сильно затримуватись.\n\nМи дуже раді, що ви не вірите всьому, що гуляє в мережі, і надсилаєте інфо на перевірку, але нам потрібні додаткові руки. \n\nЯкщо хочеш стати бійцем інфо фронту — заповнюй анкету за лінком:\nhttps://bit.ly/3Cilv7a',informOptions);
+    await getText('new_requests', 'ua', async function(err, text){
+        if (err) return console.log(err);
+        await bot.sendMessage(request.requesterTG, text, informOptions);
+    });
     
 }
 
@@ -140,7 +149,8 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             })
         });
     } catch (e) {
-        console.error(e)
+        if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
+        else console.log(e);
     }
 }
 
@@ -177,14 +187,18 @@ const onCommentQuery = async (callbackQuery, bot) => {
         inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
     }
 
-    await bot.editMessageReplyMarkup({
-        inline_keyboard: inline_keyboard
-    }, {
-        chat_id: message.chat.id,
-        message_id: message.message_id
-    });
-    //Set moderator for the comment
-    await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
+    try {
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+        //Set moderator for the comment
+        await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 const onSubscriptionQuery = async (callbackQuery, bot) => {
