@@ -8,6 +8,7 @@ const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
 const SourceTelegram = mongoose.model('SourceTelegram');
 const SourceDomain = mongoose.model('SourceDomain');
+const Comment = mongoose.model('Comment');
 
 const {
     CheckContentText,
@@ -594,6 +595,46 @@ const onCloseOldRequests = async (msg, bot) => {
     } else {console.log('not allowed')}
 }
 
+async function saveCommentToDB(message, bot) {
+    let tag = message.text.split("\n", 1)[0]
+    let comment = await Comment.findOne({"tag": tag});
+    if (comment) {
+        await bot.sendMessage(message.chat.id, 'Тег ' + tag + ' вже існує в базі, виберіть інший тег');
+    } else {
+        if (tag.startsWith('#')) {
+            let comment = new Comment({
+                _id: new mongoose.Types.ObjectId(),
+                tag: tag,
+                comment: message.text.slice(tag.length).trim(),
+                createdAt: new Date()
+            });
+            await comment.save()
+            await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+        }
+    }
+}
+
+async function confirmComment(message, bot) {
+    if (!message.reply_to_message) {
+        await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
+    }
+    let requestId = message.reply_to_message.text.split("_")[1]
+    let comment = await Comment.findOne({"tag": message.text});
+    let inline_keyboard = [[
+        { text: '✅️ Відправити', callback_data: 'CONFIRM_' + requestId},
+        { text: '❌️ Скасувати', callback_data: 'CONFIRM_'}
+    ]];
+    let options = {
+        reply_to_message_id: message.message_id,
+        reply_markup: JSON.stringify({inline_keyboard})
+    };
+    await bot.sendMessage(
+        message.chat.id,
+        comment.comment,
+        options
+    );
+}
+
 module.exports = {
     onStart,
     onCheckContent,
@@ -607,5 +648,8 @@ module.exports = {
     onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent,
-    onCloseOldRequests
+    onCloseOldRequests,
+    saveCommentToDB,
+    confirmComment,
+    informRequestersWithComment
 }

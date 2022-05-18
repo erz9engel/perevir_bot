@@ -56,29 +56,6 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     });
 }
 
-async function sendAutoResponse(foundRequest, autoReplyType, bot){
-
-    var textArg;
-    if (autoReplyType == "1") textArg = 'auto_clickbait';
-    else if (autoReplyType == "2") textArg = 'auto_zeroinfo';
-    else if (autoReplyType == "3") textArg = 'auto_helprequest';
-    else if (autoReplyType == "4") textArg = 'auto_noaccess';
-    else if (autoReplyType == "5") textArg = 'auto_imho';
-
-    await getText(textArg, 'ua', async function(err, text){
-        if (err) return console.log(err);
-        let options = {
-            reply_to_message_id: foundRequest.requesterMsgID
-        };
-    
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, text, options);
-        } catch (e) {
-            console.log(e)
-        }
-    });
-}
-
 async function sendFakes(users, message_id, chat_id, admin, bot) {
     const RPS = 5; //Requests per second
 
@@ -243,7 +220,6 @@ module.exports = {
     getSubscriptionBtn,
     notifyUsers,
     sendFakes,
-    sendAutoResponse,
     getUserName,
     closeRequestByTimeout,
     sendFakesStatus,

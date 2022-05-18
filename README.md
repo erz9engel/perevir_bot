@@ -12,7 +12,12 @@
 
 *TGMAINCHAT=*ID чату модераторрів*
 
+*TGCOMMENTSGROUP=*ID групи для бази коментарів*
+
 *ADMINS=*ID адмінів через кому (для \forbidrequests i \allowrequests)*
+
+Для того, щоб бот коректно міг зберігати коментарі до бази його треба додати до відповідної групи, а також через Botfather вимкнути Group Privacy в Bot Settings
+Для роботи в inline режимі слід включити цю опцію через /setinlinemode в https://t.me/BotFather
 
 Крім того слід додати у колекцію 'datas', об'єкт {name: "requestStatus", value: "true"}
 

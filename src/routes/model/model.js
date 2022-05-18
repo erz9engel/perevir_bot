@@ -101,6 +101,13 @@ var moderatorSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
+var commentSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    tag: String,
+    comment: String,
+    createdAt: {type: Date, default: new Date()}
+})
+
 var adminSchema = Schema({
     _id: Schema.Types.ObjectId,
     username: { type: String, required: true, index: { unique: true } }, //Login
@@ -150,3 +157,4 @@ mongoose.model('Data', dataSchema);
 mongoose.model('SourceTelegram', sourceTelegramSchema);  
 mongoose.model('SourceDomain', sourceDomainSchema);   
 mongoose.model('Moderator', moderatorSchema);  
+mongoose.model('Comment', commentSchema);

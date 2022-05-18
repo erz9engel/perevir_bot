@@ -13,7 +13,9 @@ const {
     onCheckGroupRequest,
     onCheckRequest,
     onUnsupportedContent,
-    onCloseOldRequests
+    onCloseOldRequests,
+    saveCommentToDB,
+    confirmComment
 } = require('./message-handlers');
 
 const {
@@ -22,15 +24,18 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onAutoResponseQuery,
-    onRequestQuery
+    onRequestQuery,
+    onConfirmCommentQuery
 } = require('./query-callbacks')
+
+const {answerInlineQuery} = require("./inline-query")
 
 //TELEGRAM BOT
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const admins = String(process.env.ADMINS).split(',');
+const commentGroup = process.env.TGCOMMENTSGROUP;
 
 const {
     CheckContentText,
@@ -48,8 +53,12 @@ setTimeout(function () {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    
-    if (text === '/start') {
+    console.log(msg)
+    if (msg.chat.id == commentGroup){
+        await saveCommentToDB(msg, bot)
+    } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
+        await confirmComment(msg, bot)
+    } else if (text === '/start') {
         await onStart(msg, bot);
     } else if (text === CheckContentText) {
         await onCheckContent(msg, bot)
@@ -97,10 +106,17 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onSubscriptionQuery(callbackQuery, bot)
     } else if (data.startsWith('SENDFAKES_')) {
         await onSendFakesQuery(callbackQuery, bot)
-    } else if (data.startsWith('AR')) {
-        await onAutoResponseQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
         await onRequestQuery(callbackQuery, bot)
+    } else if (data.startsWith('CONFIRM_')) {
+        await onConfirmCommentQuery(callbackQuery, bot)
+    }
+});
+
+bot.on("inline_query", async function onCallbackQuery(inlineQuery) {
+    const {query} = inlineQuery;
+    if (query.length > 3) {
+        await answerInlineQuery(inlineQuery, bot)
     }
 });
 
