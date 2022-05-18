@@ -24,7 +24,6 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onRequestQuery,
     onConfirmCommentQuery
 } = require('./query-callbacks')
 
@@ -53,8 +52,8 @@ setTimeout(function () {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    console.log(msg)
-    if (msg.chat.id == commentGroup){
+    
+    if (msg.chat.id == commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
@@ -107,7 +106,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     } else if (data.startsWith('SENDFAKES_')) {
         await onSendFakesQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
-        await onRequestQuery(callbackQuery, bot)
+        console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
     }
