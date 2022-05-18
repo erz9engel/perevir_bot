@@ -1,4 +1,11 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus} = require("./utils");
+const {
+    getSubscriptionBtn,
+    notifyUsers,
+    sendFakes,
+    sendAutoResponse,
+    getUserName,
+    sendFakesStatus,
+} = require("./utils");
 const {informRequestersWithComment} = require("./message-handlers");
 const {
     NoCurrentFakes, ByInterestRequestText
@@ -22,7 +29,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
-
+        
         let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         if (!request.commentChatId) {
             inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }])
@@ -92,8 +99,8 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     const requestId = data.split('_')[1];
     const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: 0});
     if (!request) return console.log('No request ' + requestId);
-    let inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    if (!request.commentChatId) inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    inline_keyboard[0] = [{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }];
 
     try {
         await bot.editMessageText("#pending", {
@@ -134,19 +141,17 @@ const onCommentQuery = async (callbackQuery, bot) => {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
     } catch (e){ console.error(e) }
     //Update moderators action message
-    let inline_keyboard;
-    if (request.fakeStatus === 0) {
-        inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    } else {
-        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+    let inline_keyboard = message.reply_markup.inline_keyboard
+    if (inline_keyboard[1][0].text === '✉️ Залишити коментар') {
+        inline_keyboard[1] = [{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}];
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
     }
 
-    await bot.editMessageReplyMarkup({
-        inline_keyboard: inline_keyboard
-    }, {
-        chat_id: message.chat.id,
-        message_id: message.message_id
-    });
     //Set moderator for the comment
     await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
 }
@@ -219,6 +224,5 @@ module.exports = {
     onRequestQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery,
-    onConfirmCommentQuery
+    onSendFakesQuery,onConfirmCommentQuery
 }
