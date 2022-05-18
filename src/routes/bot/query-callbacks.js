@@ -46,55 +46,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     }
 }
 
-const onRequestQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery;
-    const requestId = data.split('_')[2];
-    const reason = parseInt(data.split('_')[1]);
-
-    try {
-        await bot.deleteMessage(message.chat.id, message.message_id);
-    } catch (e) {console.log(e)};
-
-    const request = await Request.findById(requestId);
-    if (!request) return console.log('Request is not found');
-    //If reason is interest
-    var options = {
-        reply_to_message_id: request.requesterMsgID
-    };
-    if (reason === 0) { //Interesting interest_request
-        await Request.findByIdAndDelete(requestId);
-        return await getText('interest_request', 'ua', async function(err, text){
-            if (err) return console.log(err);
-            await bot.sendMessage(request.requesterTG, text, options)
-        });
-    } else if (reason === 4) { //Cancel
-        return Request.findByIdAndDelete(requestId);
-    }
-    
-    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, request.requesterTG, request.requesterMsgID);
-    
-    var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-    inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
-    var options = {
-        reply_to_message_id: sentMsg.message_id,
-        reply_markup: JSON.stringify({
-            inline_keyboard
-        })
-    };
-    const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, '#pending', options);
-    await Request.findByIdAndUpdate(requestId, {moderatorMsgID: sentMsg.message_id, moderatorActionMsgID: sentActionMsg.message_id, requestReason: reason});
-
-    //Inform user
-    var informOptions = {
-        disable_web_page_preview: true
-    };
-    await getText('new_requests', 'ua', async function(err, text){
-        if (err) return console.log(err);
-        await bot.sendMessage(request.requesterTG, text, informOptions);
-    });
-    
-}
-
 const onChangeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     //Change status back to pending
@@ -147,26 +98,20 @@ const onCommentQuery = async (callbackQuery, bot) => {
     let inline_keyboard = message.reply_markup.inline_keyboard
     if (inline_keyboard[1][0].text === '✉️ Залишити коментар') {
         inline_keyboard[1] = [{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}];
-        await bot.editMessageReplyMarkup({
-            inline_keyboard: inline_keyboard
-        }, {
-            chat_id: message.chat.id,
-            message_id: message.message_id
-        });
+        try {
+            await bot.editMessageReplyMarkup({
+                inline_keyboard: inline_keyboard
+            }, {
+                chat_id: message.chat.id,
+                message_id: message.message_id
+            });
+            //Set moderator for the comment
+            await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
+        } catch (e) {
+            console.log(e);
+        }
     }
-
-    try {
-        await bot.editMessageReplyMarkup({
-            inline_keyboard: inline_keyboard
-        }, {
-            chat_id: message.chat.id,
-            message_id: message.message_id
-        });
-        //Set moderator for the comment
-        await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
-    } catch (e) {
-        console.log(e);
-    }
+    
 }
 
 const onSubscriptionQuery = async (callbackQuery, bot) => {
@@ -234,7 +179,6 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
-    onRequestQuery,
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,onConfirmCommentQuery

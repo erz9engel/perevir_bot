@@ -158,7 +158,6 @@ const onSetSource = async (msg, bot, fake) => {
                 } catch (e) { console.log(e) }
             }
 
-            console.log(host);
             if (host == 'facebook.com') params = await newFacebookSource(url);
             else if (host == 'twitter.com') params = await newTwitterSource(url);
             else if (host == 'youtube.com') params = await newYoutubeSource(url);
@@ -346,29 +345,32 @@ const onCheckRequest = async (msg, bot) => {
         request.text = msg.caption;
     }
     
+    //Send message to moderation
+    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
+    
     if (!notified) {
-
-        var inline_keyboard = [[{ text: '🤓 Цікаво', callback_data: 'REASON_0_' + requestId }]];
-        inline_keyboard.push([{ text: '😳 Від цього залежить моє життя', callback_data: 'REASON_2_' + requestId }]);
-        inline_keyboard.push([{ text: '🤔 Важливо це знати ', callback_data: 'REASON_3_' + requestId }]);
-        inline_keyboard.push([{ text: '❌ Скасувати запит на перевірку', callback_data: 'REASON_4_' + requestId }]);
+    
+        var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
-            reply_to_message_id: msg.message_id,
+            reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
                 inline_keyboard
             })
         };
-        try {
-            await getText('request_reason', 'ua', async function(err, text){
-                if (err) return console.log(err);
-                await bot.sendMessage(msg.chat.id, text, options);
-            });
-            
-        } catch (e) { console.log(e) }
+        const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, '#pending', options);
+        request.moderatorMsgID = sentMsg.message_id;
+        request.moderatorActionMsgID = sentActionMsg.message_id;
+        //Inform user
+        var informOptions = {
+            disable_web_page_preview: true
+        };
+        await getText('new_requests', 'ua', async function(err, text){
+            if (err) return console.log(err);
+            await bot.sendMessage(msg.chat.id, text, informOptions);
+        });
     
     } else {
-        //Send message to moderation
-        const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
 
         var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
@@ -596,16 +598,23 @@ const onCloseOldRequests = async (msg, bot) => {
 }
 
 async function saveCommentToDB(message, bot) {
-    let tag = message.text.split("\n", 1)[0]
-    let comment = await Comment.findOne({"tag": tag});
+    if (!message.text) return
+    let tag = message.text.split("\n", 1)[0].split(' ')[0];
+    let comment = await Comment.findOne({"tag": tag}, '');
+    let text = message.text.slice(tag.length).trim();
+
     if (comment) {
         await bot.sendMessage(message.chat.id, 'Тег ' + tag + ' вже існує в базі, виберіть інший тег');
     } else {
         if (tag.startsWith('#')) {
+            if (text.length < 10) {
+                return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
+            } 
+            
             let comment = new Comment({
                 _id: new mongoose.Types.ObjectId(),
                 tag: tag,
-                comment: message.text.slice(tag.length).trim(),
+                comment: text,
                 createdAt: new Date()
             });
             await comment.save()
@@ -616,9 +625,13 @@ async function saveCommentToDB(message, bot) {
 
 async function confirmComment(message, bot) {
     if (!message.reply_to_message) {
-        await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
+        return await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
     }
-    let requestId = message.reply_to_message.text.split("_")[1]
+
+    let requestId = message.reply_to_message.text.split("_")[1];
+    var request = await Request.findById(requestId, '');
+    if (!request) return await bot.sendMessage(message.chat.id, 'Коментар до нерозпізнаного запиту');
+    
     let comment = await Comment.findOne({"tag": message.text});
     let inline_keyboard = [[
         { text: '✅️ Відправити', callback_data: 'CONFIRM_' + requestId},
