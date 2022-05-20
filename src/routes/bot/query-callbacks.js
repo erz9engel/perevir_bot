@@ -1,4 +1,4 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, sendAutoResponse, getUserName, sendFakesStatus, involveModerator} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus, involveModerator, showErr} = require("./utils");
 const {
     NoCurrentFakes
 } = require('./contstants')
@@ -41,8 +41,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
 
         await notifyUsers(request, fakeStatus, bot);
 
-    } catch (err) {
-        console.error(err);
+    } catch (e) {
+        showErr(e);
     }
 }
 
@@ -64,8 +64,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             })
         });
     } catch (e) {
-        if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
-        else console.log(e);
+        showErr(e);
     }
 }
 
@@ -88,12 +87,12 @@ const onCommentQuery = async (callbackQuery, bot) => {
         };
     } catch (e){
         await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
-        console.error(e)
+        showErr(e);
     }
 
     try {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
-    } catch (e){ console.error(e) }
+    } catch (e){ showErr(e);}
     //Update moderators action message
     let inline_keyboard = message.reply_markup.inline_keyboard
     if (inline_keyboard[1][0].text === '✉️ Залишити коментар') {
@@ -108,7 +107,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
             //Set moderator for the comment
             await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
         } catch (e) {
-            console.log(e);
+            showErr(e);
         }
     }
     
@@ -131,7 +130,9 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
             chat_id: message.chat.id,
             message_id: message.message_id
         });
-    } catch (e) {console.log(e)}
+    } catch (e) {
+        showErr(e);
+    }
 
 }
 
@@ -151,19 +152,29 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
-    } catch (e) { console.log(e); }
+    } catch (e) { 
+        showErr(e);
+    }
 
 }
 
 const onConfirmCommentQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     if (data === 'CONFIRM_') {
-        await bot.deleteMessage(message.chat.id, message.message_id);
+        try {
+            await bot.deleteMessage(message.chat.id, message.message_id);
+        } catch (e) {
+            showErr(e);
+        }
     } else {
-        await bot.editMessageReplyMarkup({}, {
-            chat_id: message.chat.id,
-            message_id: message.message_id
-        })
+        try {
+            await bot.editMessageReplyMarkup({}, {
+                chat_id: message.chat.id,
+                message_id: message.message_id
+            })
+        } catch (e) {
+            return showErr(e);
+        }
         const requestId = data.split('_')[1];
         const commentMsgId = message.message_id;
         const request = await Request.findByIdAndUpdate(
