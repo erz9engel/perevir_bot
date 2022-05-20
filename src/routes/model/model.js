@@ -118,6 +118,21 @@ var adminSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
+var dailyStatsSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    stringDate: { type: String, required: true, index: { unique: true } }, //String date
+    subs: Number, //Total subsctiber
+    nSubs: Number, //Subscribed to newsletter
+    nRecived: Number, //Received newsletter
+    rTotal: Number, //Total requests
+    rFake: Number, //Total fake requests
+    rTrue: Number, //Total true requests
+    rToday: Number, //Today requests
+    rTodayFake: Number, //Today fake requests
+    rTodayTrue: Number, //Today true requests
+    createdAt: {type: Date, default: new Date()} //Time of colelction
+});
+
 adminSchema.methods.setPassword = function (password) {
     this.salt = crypto.randomBytes(16).toString('hex');
     this.hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
@@ -158,3 +173,4 @@ mongoose.model('SourceTelegram', sourceTelegramSchema);
 mongoose.model('SourceDomain', sourceDomainSchema);   
 mongoose.model('Moderator', moderatorSchema);  
 mongoose.model('Comment', commentSchema);
+mongoose.model('DailyStats', dailyStatsSchema);

@@ -4,6 +4,8 @@ var bot = require('./bot');
 
 const Request = mongoose.model('Request');
 const Moderator = mongoose.model('Moderator');
+const DailyStats = mongoose.model('DailyStats');
+const TelegramUser = mongoose.model('TelegramUser');
 
 const startTime = new Date(); startTime.setHours(8, 00);
 const now = new Date();
@@ -26,27 +28,43 @@ setTimeout(function(){
 
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
-        var now = new Date();
+        var now = new Date(), stats = {};
         var msg = "#СТАТИСТИКА запитів на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        //General
+        stats.rTotal = requests.length;
         msg += '\nВсього: <b>' + requests.length + '</b>';
-        msg += '\nФейк: ' + requests.filter(r => parseInt(r.fakeStatus) === -1).length;
-        msg += '\nПравда: ' + requests.filter(r => parseInt(r.fakeStatus) === 1).length;
+
+        stats.rFake = requests.filter(r => parseInt(r.fakeStatus) === -1).length;
+        msg += '\nФейк: ' + stats.rFake;
+
+        stats.rTrue = requests.filter(r => parseInt(r.fakeStatus) === 1).length;
+        msg += '\nПравда: ' + stats.rTrue;
+
         msg += '\nВідмовлено: ' + requests.filter(r => parseInt(r.fakeStatus) === -2).length;
         msg += '\nОчікує: ' + requests.filter(r => parseInt(r.fakeStatus) === 0).length;
         msg += '\nАвтовідмова: ' + requests.filter(r => parseInt(r.fakeStatus) === -3).length;
         msg += '\nАвтопідтвердження: ' + requests.filter(r => parseInt(r.fakeStatus) === 2).length;
         msg += '\n\n<b>Остання доба:</b>';
+        //Last 24 hours
         now.setDate(now.getDate() - 1);
         const lastrequests = requests.filter(r => new Date(r.createdAt) >= now);
+
+        stats.rToday = lastrequests.length;
         msg += '\nВсього: ' + lastrequests.length;
-        msg += '\nФейк: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length;
-        msg += '\nПравда: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
+
+        stats.rTodayFake = lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length
+        msg += '\nФейк: ' + stats.rTodayFake;
+
+        stats.rTodayTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
+        msg += '\nПравда: ' + stats.rTodayTrue;
+
         msg += '\nВідмовлено: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -2).length;
         msg += '\nОчікує: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 0).length;
         msg += '\nАвтовідмова: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -3).length;
         msg += '\nАвтопідтвердження: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 2).length;
 
         bot.message(msg, true, {parse_mode: 'HTML'});
+        collectStats(stats);
     });
 }
 
@@ -76,7 +94,7 @@ function sendModeratorDailyStats() {
             if (calculatedModerators.length == 0) return console.log('No moderators activity');
             calculatedModerators.sort((a, b) => a.requests < b.requests ? 1 : -1);
 
-            var msg = "#24H_LEADERBOARD на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>\nтоп-10';
+            var msg = "#24H_LEADERBOARD за <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>\nтоп-10';
             for (var m in calculatedModerators) {
                 if(m > 9) break;
                 const md = calculatedModerators[m];
@@ -103,6 +121,29 @@ function getAmounts(request) {
     if (request.commentMsgId) answer.comments = 1
 
     return answer;
+}
+
+async function collectStats(stats) {
+    const now = new Date();
+    const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
+    const allUsers = await TelegramUser.countDocuments();
+    const nSubs = await TelegramUser.countDocuments({subscribed: true});
+
+    let dailyStats = new DailyStats({
+        _id: new mongoose.Types.ObjectId(),
+        stringDate: stringDate,
+        subs: allUsers,
+        nSubs: nSubs,  
+        rTotal: stats.rTotal,
+        rFake: stats.rFake,
+        rTrue: stats.rTrue, 
+        rToday: stats.rToday, 
+        rTodayFake: stats.rTodayFake, 
+        rTodayTrue: stats.rTodayTrue
+    });
+    await dailyStats.save().then(() => {}).catch((error) => {
+        console.log("MongoErr on daily stats: " + error.code);
+    });
 }
 
 module.exports = {};
