@@ -313,6 +313,44 @@ const onEscalateQuery = async (callbackQuery, bot) => {
     }
 }
 
+const onChatModeQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery;
+    const requestId = data.split('_')[1];
+    const request = await Request.findById(requestId);
+    if (!request) return
+    const moderatorId = callbackQuery.from.id;
+    const requesterId = request.requesterTG;
+    let requester = await TelegramUser.findOne({telegramID: requesterId});
+    let moderator = await TelegramUser.findOne({telegramID: moderatorId});
+    if (requester.status && requester.status.startsWith('chat_')) {
+        let text = 'Чат вже зайнятий іншим модератором';
+        if (requester.status.split('_')[1] === moderatorId.toString()) {
+            text = 'Ви вже відкрили чат з цим користувачем. Для його закриття напишіть боту /close_chat'
+        }
+        await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
+    } else if (moderator.status && moderator.status.startsWith('chat_')) {
+        let text = 'Ви вже відкрили чат з іншим користувачем. Для його закриття напишіть боту /close_chat';
+        await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
+    } else {
+        moderator.status = 'chat_' + requesterId;
+        requester.status = 'chat_' + moderatorId;
+        await moderator.save()
+        await requester.save()
+        await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
+        await bot.sendMessage(moderatorId, 'За цим запитом розпочато діалог з ініціатором запиту.\n'
+            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу '
+            + getUserName(message.reply_to_message.from) + ' від імені бота')
+        await bot.sendMessage(moderatorId, 'Для того, щоб вийти з режиму діалогу напишіть /close_chat')
+        await bot.sendMessage(requesterId, 'З метою уточнення даних по вашому запиту до цього чату підключиться фактчекер')
+    }
+}
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
@@ -321,4 +359,5 @@ module.exports = {
     onSendFakesQuery,
     onConfirmCommentQuery,
     onEscalateQuery,
+    onChatModeQuery,
 }
