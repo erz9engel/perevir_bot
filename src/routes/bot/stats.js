@@ -139,7 +139,8 @@ async function collectStats(stats) {
         rTrue: stats.rTrue, 
         rToday: stats.rToday, 
         rTodayFake: stats.rTodayFake, 
-        rTodayTrue: stats.rTodayTrue
+        rTodayTrue: stats.rTodayTrue,
+        createdAt: new Date()
     });
     await dailyStats.save().then(() => {}).catch((error) => {
         console.log("MongoErr on daily stats: " + error.code);
