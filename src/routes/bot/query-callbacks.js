@@ -31,11 +31,13 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         if (fakeStatus === '1') status = "#true | Правда"
         else if (fakeStatus === '-1') status = "#false | Фейк"
         else if (fakeStatus === '-2') status = "#reject | Відмова"
+        else if (fakeStatus === '-3') status = "#manipulation | Маніпуляція"
+        else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
 
         let inline_keyboard = changeInlineKeyboard(
             message.reply_markup.inline_keyboard,
             'decision',
-            [{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]
+            [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
         )
 
         await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
@@ -64,7 +66,20 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     let inline_keyboard = changeInlineKeyboard(
         message.reply_markup.inline_keyboard,
         'decision',
-        [{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]
+        [
+            [
+                { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
+                { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
+            ],
+            [
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + requestId },
+                { text: '🔵 Нема доказів', callback_data: 'FS_-4_' + requestId },
+            ],
+            [
+                { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
+                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+            ]
+        ]
     )
 
     try {
@@ -111,7 +126,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
     let updated_inline_keyboard = changeInlineKeyboard(
         existing_inline_keyboard,
         'comment',
-        [{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]
+        [[{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]]
     )
     if (JSON.stringify(existing_inline_keyboard)!==JSON.stringify(updated_inline_keyboard)) {
         try {

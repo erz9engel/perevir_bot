@@ -347,10 +347,23 @@ const onCheckRequest = async (msg, bot) => {
     
     //Send message to moderation
     const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
-    
+    let inline_keyboard;
     if (!notified) {
     
-        var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        inline_keyboard = [
+            [
+                { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
+                { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
+            ],
+            [
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + requestId },
+                { text: '🔵 Нема доказів', callback_data: 'FS_-4_' + requestId },
+            ],
+            [
+                { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
+                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+            ]
+        ];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
             reply_to_message_id: sentMsg.message_id,
@@ -372,7 +385,7 @@ const onCheckRequest = async (msg, bot) => {
     
     } else {
 
-        var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
             reply_to_message_id: sentMsg.message_id,

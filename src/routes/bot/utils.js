@@ -33,7 +33,9 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     if (fakeStatus == "1") textArg = 'true_status';
     else if (fakeStatus == "-1") textArg = 'fake_status';
     else if (fakeStatus == "-2") textArg = 'reject_status';
-    else if (fakeStatus == "-3") textArg = 'timeout_request';
+    else if (fakeStatus == "-3") textArg = 'manipulation_status';
+    else if (fakeStatus == "-4") textArg = 'noproof_status';
+    else if (fakeStatus == "-5") textArg = 'timeout_request';
 
     await getText(textArg, 'ua', async function(err, text){
         if (err) return console.log(err);
@@ -235,7 +237,7 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
         while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
             inlineKeyboard.shift();
         }
-        newKeyboard.push(newBlock);
+        newKeyboard = newKeyboard.concat(newBlock);
     } else if (blockToChange === 'comment') {
         while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
             newKeyboard.push(inlineKeyboard.shift());
@@ -243,7 +245,7 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
         while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
             inlineKeyboard.shift();
         }
-        newKeyboard.push(newBlock);
+        newKeyboard = newKeyboard.concat(newBlock);
     } else {
         console.error(blockToChange + ' inline keyboard block is unknown');
         newKeyboard = inlineKeyboard;
