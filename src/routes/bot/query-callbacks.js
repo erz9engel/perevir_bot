@@ -22,18 +22,31 @@ const Escalation = mongoose.model('Escalation');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
-    const requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
+    let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
+    let messageChat = message.chat.id
     const moderator = getUserName(callbackQuery.from);
+    let status;
+    if (fakeStatus === '1') status = "#true | Правда"
+    else if (fakeStatus === '-1') status = "#false | Фейк"
+    else if (fakeStatus === '-2') status = "#reject | Відмова"
+    else if (fakeStatus === '-3') status = "#manipulation | Маніпуляція"
+    else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
+
+    if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
+        const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
+        requestId = escalation.request;
+        await bot.editMessageText("#resolved | " + status + "\nРедактор: " + moderator, {
+            chat_id: messageChat,
+            message_id: message.message_id,
+            reply_markup: JSON.stringify({
+                'inline_keyboard' : [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalation._id }]]
+            })
+        });
+        messageChat = process.env.TGMAINCHAT
+    }
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
-
-        let status;
-        if (fakeStatus === '1') status = "#true | Правда"
-        else if (fakeStatus === '-1') status = "#false | Фейк"
-        else if (fakeStatus === '-2') status = "#reject | Відмова"
-        else if (fakeStatus === '-3') status = "#manipulation | Маніпуляція"
-        else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
 
         let inline_keyboard = changeInlineKeyboard(
             message.reply_markup.inline_keyboard,
@@ -42,8 +55,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         )
 
         await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
-            chat_id: message.chat.id,
-            message_id: message.message_id,
+            chat_id: messageChat,
+            message_id: request.moderatorActionMsgID,
             reply_markup: JSON.stringify({
                 inline_keyboard
             })
