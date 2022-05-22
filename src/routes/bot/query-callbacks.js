@@ -112,15 +112,25 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
 
 const onCommentQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
-
-    const requestId = data.split('_')[1];
+    let requestId = data.split('_')[1];
     const moderator = callbackQuery.from.id;
+    let messageChat = message.chat.id
+    if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
+        const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
+        requestId = escalation.request;
+        await bot.editMessageReplyMarkup({}, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+        messageChat = process.env.TGMAINCHAT
+    }
+
     const request = await Request.findById(requestId);
     if (!request) return
     let options = {}
     //Send message to moderator (forwarded + action)
     try {
-        let sentMsg = await bot.forwardMessage(moderator, message.chat.id, request.moderatorMsgID);
+        let sentMsg = await bot.forwardMessage(moderator, messageChat, request.moderatorMsgID);
         options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -128,7 +138,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
             })
         };
     } catch (e){
-        await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
+        await bot.sendMessage(messageChat, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
         console.error(e)
     }
 
@@ -147,11 +157,11 @@ const onCommentQuery = async (callbackQuery, bot) => {
             await bot.editMessageReplyMarkup({
                 inline_keyboard: updated_inline_keyboard
             }, {
-                chat_id: message.chat.id,
-                message_id: message.message_id
+                chat_id: messageChat,
+                message_id: request.moderatorActionMsgID
             });
             //Set moderator for the comment
-            await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
+            await Request.findByIdAndUpdate(requestId, {commentChatId: messageChat });
         } catch (e) {
             console.log(e);
         }
