@@ -24,6 +24,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
     let messageChat = message.chat.id
+    let inline_keyboard = message.reply_markup.inline_keyboard
     const moderator = getUserName(callbackQuery.from);
     let status;
     if (fakeStatus === '1') status = "#true | Правда"
@@ -42,14 +43,15 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
                 'inline_keyboard' : [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalation._id }]]
             })
         });
+        inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
         messageChat = process.env.TGMAINCHAT
     }
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
 
-        let inline_keyboard = changeInlineKeyboard(
-            message.reply_markup.inline_keyboard,
+        inline_keyboard = changeInlineKeyboard(
+            inline_keyboard,
             'decision',
             [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
         )

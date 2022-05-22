@@ -56,7 +56,7 @@ bot.on('message', async (msg) => {
     const text = msg.text;
     
     if (msg.chat.id === escalationGroup) {
-        //pass
+        //ignore messages in escalation group
     } else if (msg.chat.id === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
