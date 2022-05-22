@@ -30,6 +30,14 @@ var requestSchema = Schema({
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
+var escalationSchema = Schema({
+    _id: Schema.Types.ObjectId, //Escalation ID
+    request: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Request' }], //Original request
+    actionMsgID: Number, //Telegram message ID of action message in escalation group
+    isResolved: {type: Boolean, default: false}, //Is escalation resolved or not
+    createdAt: {type: Date, default: new Date()} //Time of the creation
+});
+
 var imageSchema = Schema({
     _id: Schema.Types.ObjectId, //Image ID
     telegramFileId: String, //file_id of the photo from Telegram
@@ -158,3 +166,4 @@ mongoose.model('SourceTelegram', sourceTelegramSchema);
 mongoose.model('SourceDomain', sourceDomainSchema);   
 mongoose.model('Moderator', moderatorSchema);  
 mongoose.model('Comment', commentSchema);
+mongoose.model('Escalation', escalationSchema);
