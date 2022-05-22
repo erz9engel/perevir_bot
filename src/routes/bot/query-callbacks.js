@@ -206,11 +206,40 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
     }
 }
 
+const onEscalateQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const requestId = data.split('_')[1];
+    const moderator = getUserName(callbackQuery.from);
+    try {
+        const request = await Request.findById(requestId);
+        if (!request) return console.log('No request ' + requestId);
+
+        const sentMsg = await bot.forwardMessage(
+            process.env.TGESCALATIONGROUP,
+            request.requesterTG,
+            request.requesterMsgID,
+        );
+
+        let inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
+        await bot.editMessageText("#escalated | Запит направлено на ескалацію модератором: " + moderator, {
+            chat_id: message.chat.id,
+            message_id: message.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+}
 
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
     onCommentQuery,
     onSubscriptionQuery,
-    onSendFakesQuery,onConfirmCommentQuery
+    onSendFakesQuery,
+    onConfirmCommentQuery,
+    onEscalateQuery,
 }

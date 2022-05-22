@@ -24,7 +24,8 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onConfirmCommentQuery
+    onConfirmCommentQuery,
+    onEscalateQuery,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -35,6 +36,7 @@ const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const admins = String(process.env.ADMINS).split(',');
 const commentGroup = process.env.TGCOMMENTSGROUP;
+const escalationGroup = process.env.TGESCALATIONGROUP;
 
 const {
     CheckContentText,
@@ -53,7 +55,9 @@ setTimeout(function () {
 bot.on('message', async (msg) => {
     const text = msg.text;
     
-    if (msg.chat.id == commentGroup && msg.text){
+    if (msg.chat.id === escalationGroup) {
+        //pass
+    } else if (msg.chat.id === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
@@ -109,6 +113,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('ESCALATE_')) {
+        await onEscalateQuery(callbackQuery, bot)
     }
 });
 
