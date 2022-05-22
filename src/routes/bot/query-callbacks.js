@@ -18,6 +18,7 @@ require('dotenv').config();
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
+const Escalation = mongoose.model('Escalation');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -73,7 +74,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + requestId },
-                { text: '🔵 Нема доказів', callback_data: 'FS_-4_' + requestId },
+                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [
                 { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
@@ -213,14 +214,44 @@ const onEscalateQuery = async (callbackQuery, bot) => {
     try {
         const request = await Request.findById(requestId);
         if (!request) return console.log('No request ' + requestId);
+        let escalationId = new mongoose.Types.ObjectId();
+        var escalation = new Escalation({
+            _id: escalationId,
+            request: requestId,
+            createdAt: new Date(),
+        });
 
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
             request.requesterTG,
             request.requesterMsgID,
         );
+        let inline_keyboard = [
+            [
+                { text: '⛔ Фейк', callback_data: 'FS_-1_' + escalationId },
+                { text: '🟢 Правда', callback_data: 'FS_1_' + escalationId }
+            ],
+            [
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + escalationId },
+                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + escalationId },
+            ],
+        ];
+        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalationId }]);
+        var options = {
+            reply_to_message_id: sentMsg.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        };
+        const actionMsg = await bot.sendMessage(
+            process.env.TGESCALATIONGROUP,
+            '#pending\nЕскалацію прислав ' + moderator,
+            options,
+        )
+        escalation.actionMsgID = actionMsg.message_id
+        await escalation.save()
 
-        let inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
+        inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
         await bot.editMessageText("#escalated | Запит направлено на ескалацію модератором: " + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
