@@ -20,6 +20,7 @@ fs.readdirSync(__dirname + '/model').forEach(function (filename) {
 });
 
 var Admin = mongoose.model('Admin');
+var DailyStats = mongoose.model('DailyStats');
 
 require('./bot/bot');
 //router.use(require('./api'));
@@ -33,7 +34,38 @@ router.get('/', auth.optional, async (req, res) => {
         const id = req.auth.id;
         const admin = await Admin.findById(id, 'username');
         if (!admin) return res.render('sign-in'); 
-        else return res.render('dashboard'); 
+        else {
+            DailyStats.find({}).sort('-_id').limit(14).exec(function(err, stats){
+                stats = stats.reverse();
+                var data = {
+                    days: [],
+                    rTotal: [],
+                    rTrue: [],
+                    rFake: [],
+                    rToday: [],
+                    rTodayTrue: [],
+                    rTodayFake: [],
+                    subs: [],
+                    nSubs: [],
+                    nRecived: []
+                };
+                for (var i in stats) {
+                    const dateParts = stats[i].stringDate.split('-');
+                    const date = dateParts[0] + '.' + dateParts[1];
+                    data.days.push(date);
+                    data.rTotal.push(stats[i].rTotal);
+                    data.rTrue.push(stats[i].rTrue);
+                    data.rFake.push(stats[i].rFake);
+                    data.rToday.push(stats[i].rToday);
+                    data.rTodayTrue.push(stats[i].rTodayTrue);
+                    data.rTodayFake.push(stats[i].rTodayFake);
+                    data.subs.push(stats[i].subs);
+                    data.nSubs.push(stats[i].nSubs);
+                    data.nRecived.push(stats[i].nRecived);
+                }
+                return res.render('dashboard', {data: data}); 
+            });
+        } 
     } else {
         return res.render('sign-in');
     }

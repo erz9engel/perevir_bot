@@ -122,7 +122,7 @@ const onSetSource = async (msg, bot, fake) => {
             var chatInfo;
             try {
                 chatInfo = await bot.getChat(username);
-            } catch (e) {
+            } catch (i) {
                 try {
                     return await bot.sendMessage(msg.chat.id, "Такого ресурсу не знайдено");
                 } catch (e) { safeErrorLog(e) }
@@ -275,9 +275,9 @@ const onCheckRequest = async (msg, bot) => {
                     if (err) return safeErrorLog(err);
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
-                notified = true;
-                
+                notified = true;           
             } catch (e) {safeErrorLog(e)}
+
         }
         //If block redirect msgs
         //else { return unsupportedContent(msg, bot); }  
@@ -655,11 +655,15 @@ async function confirmComment(message, bot) {
         reply_to_message_id: message.message_id,
         reply_markup: JSON.stringify({inline_keyboard})
     };
-    await bot.sendMessage(
-        message.chat.id,
-        comment.comment,
-        options
-    );
+    try {
+        await bot.sendMessage(
+            message.chat.id,
+            comment.comment,
+            options
+        );
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 module.exports = {

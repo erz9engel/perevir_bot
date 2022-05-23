@@ -8,6 +8,7 @@ const {
     changeInlineKeyboard,
     safeErrorLog
 } = require("./utils");
+
 const {
     NoCurrentFakes
 } = require('./contstants')
@@ -147,6 +148,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
     try {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
     } catch (e){ safeErrorLog(e); }
+
     //Update moderators action message
     let existing_inline_keyboard = message.reply_markup.inline_keyboard
     let updated_inline_keyboard = changeInlineKeyboard(
@@ -215,12 +217,20 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
 const onConfirmCommentQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     if (data === 'CONFIRM_') {
-        await bot.deleteMessage(message.chat.id, message.message_id);
+        try {
+            await bot.deleteMessage(message.chat.id, message.message_id);
+        } catch (e) {
+            console.log(e);
+        }
     } else {
-        await bot.editMessageReplyMarkup({}, {
-            chat_id: message.chat.id,
-            message_id: message.message_id
-        })
+        try {
+            await bot.editMessageReplyMarkup({}, {
+                chat_id: message.chat.id,
+                message_id: message.message_id
+            })
+        } catch (e) {
+            return console.log(e);
+        }
         const requestId = data.split('_')[1];
         const commentMsgId = message.message_id;
         const request = await Request.findByIdAndUpdate(
