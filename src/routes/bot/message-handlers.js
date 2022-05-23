@@ -356,7 +356,7 @@ const onCheckRequest = async (msg, bot) => {
                 { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
             ],
             [
-                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + requestId },
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + requestId },
                 { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [

@@ -30,6 +30,8 @@ function sendStats() {
         var msg = "#СТАТИСТИКА запитів на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
         msg += '\nВсього: <b>' + requests.length + '</b>';
         msg += '\nФейк: ' + requests.filter(r => parseInt(r.fakeStatus) === -1).length;
+        msg += '\nМаніпуляція: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
         msg += '\nПравда: ' + requests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nВідмовлено: ' + requests.filter(r => parseInt(r.fakeStatus) === -2).length;
         msg += '\nОчікує: ' + requests.filter(r => parseInt(r.fakeStatus) === 0).length;
@@ -40,6 +42,8 @@ function sendStats() {
         const lastrequests = requests.filter(r => new Date(r.createdAt) >= now);
         msg += '\nВсього: ' + lastrequests.length;
         msg += '\nФейк: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length;
+        msg += '\nМаніпуляція: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
         msg += '\nПравда: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nВідмовлено: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -2).length;
         msg += '\nОчікує: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 0).length;

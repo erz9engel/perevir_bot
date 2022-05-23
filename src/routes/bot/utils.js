@@ -33,9 +33,9 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     if (fakeStatus == "1") textArg = 'true_status';
     else if (fakeStatus == "-1") textArg = 'fake_status';
     else if (fakeStatus == "-2") textArg = 'reject_status';
-    else if (fakeStatus == "-3") textArg = 'manipulation_status';
     else if (fakeStatus == "-4") textArg = 'noproof_status';
-    else if (fakeStatus == "-5") textArg = 'timeout_request';
+    else if (fakeStatus == "-5") textArg = 'manipulation_status';
+    else if (fakeStatus == "-6") textArg = 'timeout_request';
 
     await getText(textArg, 'ua', async function(err, text){
         if (err) return console.log(err);
@@ -99,8 +99,8 @@ async function closeRequestByTimeout(request, bot) {
             inline_keyboard
         })
     });
-    await notifyUsers(request, "-3", bot)
-    await Request.updateOne(request, {fakeStatus: "-3"});
+    await notifyUsers(request, "-6", bot)
+    await Request.updateOne(request, {fakeStatus: "-6"});
 }
 
 async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {

@@ -30,8 +30,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     if (fakeStatus === '1') status = "#true | Правда"
     else if (fakeStatus === '-1') status = "#false | Фейк"
     else if (fakeStatus === '-2') status = "#reject | Відмова"
-    else if (fakeStatus === '-3') status = "#manipulation | Маніпуляція"
     else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
+    else if (fakeStatus === '-5') status = "#manipulation | Маніпуляція"
 
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
@@ -88,7 +88,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
                 { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
             ],
             [
-                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + requestId },
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + requestId },
                 { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [
@@ -257,7 +257,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                 { text: '🟢 Правда', callback_data: 'FS_1_' + escalationId }
             ],
             [
-                { text: '🟠 Маніпуляція', callback_data: 'FS_-3_' + escalationId },
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + escalationId },
                 { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + escalationId },
             ],
         ];
