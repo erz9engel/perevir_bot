@@ -213,6 +213,43 @@ async function getLabeledSource (text){
         
     } catch(e) { return null }    
 }
+function getCallbackDataFromKeyboard(inlineKeyboard) {
+    try {
+        return inlineKeyboard[0][0].callback_data;
+    } catch (e) {
+        return '';
+    }
+}
+
+function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
+    /*
+    We have different logical blocks in inline keyboard: decision block, comment block,
+    more might be added in the future. These blocks are pretty independent of one another
+    and since they might take more than one row changing one of these blocks separately
+    might be tricky. This method defines which lines relate to which block and allows
+    making changes to one block and not affect others.
+    */
+    let newKeyboard = [];
+    if (blockToChange === 'decision'){
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            inlineKeyboard.shift();
+        }
+        newKeyboard.push(newBlock);
+    } else if (blockToChange === 'comment') {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            newKeyboard.push(inlineKeyboard.shift());
+        }
+        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            inlineKeyboard.shift();
+        }
+        newKeyboard.push(newBlock);
+    } else {
+        console.error(blockToChange + ' inline keyboard block is unknown');
+        newKeyboard = inlineKeyboard;
+    }
+    newKeyboard = newKeyboard.concat(inlineKeyboard)
+    return newKeyboard;
+}
 
 
 function safeErrorLog(error) {
@@ -241,4 +278,5 @@ module.exports = {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
+    changeInlineKeyboard
 }
