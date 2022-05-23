@@ -26,7 +26,8 @@ const {
     newFacebookSource,
     newTwitterSource,
     newYoutubeSource,
-    getLabeledSource
+    getLabeledSource,
+    safeErrorLog,
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
@@ -43,11 +44,11 @@ const onStart = async (msg, bot) => {
 
     try {
         await getText('welcome', 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text, replyOptions);
         });
-    } catch (e) { console.log(e); }
-    //Check if user registerd
+    } catch (e) { safeErrorLog(e) }
+    //Check if user registered
     let newUser = new TelegramUser({
         _id: new mongoose.Types.ObjectId(),
         telegramID: msg.chat.id,
@@ -61,12 +62,10 @@ const onStart = async (msg, bot) => {
 const onCheckContent = async (msg, bot) => {
     try {
         await getText('check_content', 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text);
         });
-    } catch (e) { 
-        console.log(e);
-    }
+    } catch (e) { safeErrorLog(e) }
 }
 
 const onSubscription = async (msg, bot) => {
@@ -82,17 +81,13 @@ const onSubscription = async (msg, bot) => {
     if (!fakeNews) { 
         try {
             return await bot.sendMessage(message.chat.id, NoCurrentFakes);
-        } catch (e) { 
-            console.log(e);
-        }
+        } catch (e) { return safeErrorLog(e) }
     }
     const message_id = fakeNews.value.split('_')[0];
     const chat_id = fakeNews.value.split('_')[1];
     try {
         await bot.copyMessage(msg.chat.id, chat_id, message_id, options);
-    } catch (e) { 
-        console.log(e);
-    }
+    } catch (e) { safeErrorLog(e) }
 }
 
 const onSetFakesRequest = async (msg, bot) => {
@@ -105,7 +100,7 @@ const onSetFakesRequest = async (msg, bot) => {
         };
         try {
             await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
-        } catch (e) { console.log(e); }
+        } catch (e) { safeErrorLog(e) }
     } else {console.log('not allowed')}
 }
 
@@ -119,7 +114,7 @@ const onSetSource = async (msg, bot, fake) => {
         if (!source || source.length < 5) {
             try {
                 return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
-            } catch (e) { console.log(e); }
+            } catch (e) { safeErrorLog(e) }
         }
         //Check if telegram channel
         if (source.startsWith('https://t.me/')) {
@@ -130,7 +125,7 @@ const onSetSource = async (msg, bot, fake) => {
             } catch (i) {
                 try {
                     return await bot.sendMessage(msg.chat.id, "Такого ресурсу не знайдено");
-                } catch (e) { console.log(e); }
+                } catch (e) { safeErrorLog(e) }
             }
             var newSourceTelegram = new SourceTelegram({
                 _id: new mongoose.Types.ObjectId(),
@@ -143,12 +138,12 @@ const onSetSource = async (msg, bot, fake) => {
             await newSourceTelegram.save().then(async () => {
                 try {
                     await bot.sendMessage(msg.chat.id, "Чат @" + chatInfo.username + " успішно додано. Опис:\n" + description);
-                } catch (e) {console.log(e); }
+                } catch (e) { safeErrorLog(e) }
             }).catch(async () => {
                 await SourceTelegram.findOneAndUpdate({telegramId: chatInfo.id}, {fake: fake, description: description});
                 try {
                     await bot.sendMessage(msg.chat.id, "Інформацію про чат оновлено");
-                } catch (e) { console.log(e);}
+                } catch (e) { safeErrorLog(e) }
             });
             
         } else {
@@ -157,11 +152,11 @@ const onSetSource = async (msg, bot, fake) => {
                 url = new URL(source);
                 host = getDomainWithoutSubdomain(url.hostname);
             } catch (e) {
-                console.log(e);
+                safeErrorLog(e)
                 try {
                     await bot.sendMessage(msg.chat.id, 'Некоректний URL'); 
                     return false
-                } catch (e) { console.log(e); }
+                } catch (e) { safeErrorLog(e) }
             }
 
             if (host == 'facebook.com') params = await newFacebookSource(url);
@@ -177,7 +172,7 @@ const onSetSource = async (msg, bot, fake) => {
                 try {
                     await bot.sendMessage(msg.chat.id, 'На жаль такий формат поки не підтримується.'); 
                     return false
-                } catch (e) { console.log(e); }
+                } catch (e) { safeErrorLog(e) }
             }
             const domain = username ? hostname + '/' + username : hostname;
             var newSourceDomain = new SourceDomain({
@@ -209,7 +204,7 @@ const onSetFakes = async (msg, bot) => {
         try {
             await bot.sendMessage(msg.chat.id, 'Зміни збережено');
             await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
-        } catch (e) { console.log(e); }
+        } catch (e) { safeErrorLog(e) }
     } else {console.log('not allowed')}
 }
 
@@ -223,7 +218,7 @@ const onSendFakes = async (msg, bot) => {
         };
         try {
             await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
-        } catch (e) { console.log(e); }
+        } catch (e) { safeErrorLog(e) }
     } else {console.log('not allowed')}
 }
 
@@ -233,7 +228,7 @@ const onRequestStatus = async (msg, bot, status) => {
         const confirmMsg = status ? "Прийом запитів увімкнено" : "Прийом запитів вимкнено"
         try {
             await bot.sendMessage(msg.chat.id, confirmMsg);
-        } catch (e) { console.log(e); }
+        } catch (e) { safeErrorLog(e) }
     } else {console.log('not allowed')}
 }
 
@@ -277,12 +272,12 @@ const onCheckRequest = async (msg, bot) => {
             try {
                 const description = bannedChat.description ? bannedChat.description : '';
                 await getText(sourceText, 'ua', async function(err, text){
-                    if (err) return console.log(err);
+                    if (err) return safeErrorLog(err);
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
-                notified = true;
-                
-            } catch (e) { console.log(e); }
+                notified = true;           
+            } catch (e) {safeErrorLog(e)}
+
         }
         //If block redirect msgs
         //else { return unsupportedContent(msg, bot); }  
@@ -339,11 +334,11 @@ const onCheckRequest = async (msg, bot) => {
             try {
                 const description = labeledSource.description ? labeledSource.description : '';
                 await getText(sourceText, 'ua', async function(err, text){
-                    if (err) return console.log(err);
+                    if (err) return safeErrorLog(err);
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
                 notified = true;
-            } catch (e) { console.log(e); }
+            } catch (e) {safeErrorLog(e)}
         } 
 
         request.text = msg.text;
@@ -353,10 +348,23 @@ const onCheckRequest = async (msg, bot) => {
     
     //Send message to moderation
     const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
-    
+    let inline_keyboard;
     if (!notified) {
     
-        var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
+        inline_keyboard = [
+            [
+                { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
+                { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
+            ],
+            [
+                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + requestId },
+                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+            ],
+            [
+                { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
+                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+            ]
+        ];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
             reply_to_message_id: sentMsg.message_id,
@@ -372,13 +380,13 @@ const onCheckRequest = async (msg, bot) => {
             disable_web_page_preview: true
         };
         await getText('new_requests', 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text, informOptions);
         });
     
     } else {
 
-        var inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
+        inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
         var options = {
             reply_to_message_id: sentMsg.message_id,
@@ -431,7 +439,7 @@ const onCheckGroupRequest = async (msg, bot) => {
     //Send interactive action
     try {
         bot.sendChatAction(msg.chat.id, 'typing');
-    } catch (e) { console.log(e); }
+    } catch (e) { safeErrorLog(e) }
 
     await sleep(2000).then(async () => { 
         const index = mediaGroups.findIndex(group => {
@@ -484,7 +492,7 @@ const onCheckGroupRequest = async (msg, bot) => {
                 disable_web_page_preview: true
             };
             await getText('new_requests', 'ua', async function(err, text){
-                if (err) return console.log(err);
+                if (err) return safeErrorLog(err);
                 await bot.sendMessage(msg.chat.id, text, options);
             });
             
@@ -495,10 +503,10 @@ const onCheckGroupRequest = async (msg, bot) => {
 const onUnsupportedContent = async (msg, bot) => {
     try {
         await getText('unsupported_request', 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text);
         });
-    } catch (e) { console.log(e); }
+    } catch (e) { safeErrorLog(e) }
 }
 
 async function sleep(ms) {
@@ -508,7 +516,7 @@ async function sleep(ms) {
 async function unsupportedContent(msg, bot) {
     try {
         await bot.sendMessage(msg.chat.id, UnsupportedContentText);
-    } catch (e) { console.log(e); }
+    } catch (e) { safeErrorLog(e) }
 }
 
 async function checkRequestStatus(msg, bot) {
@@ -518,10 +526,10 @@ async function checkRequestStatus(msg, bot) {
     else {
         try {
             await getText('stopped_requests', 'ua', async function(err, text){
-                if (err) return console.log(err);
+                if (err) return safeErrorLog(err);
                 bot.sendMessage(msg.chat.id, text);  
             });
-        } catch (e) { console.log(e);}  
+        } catch (e) { safeErrorLog(e) }
     }
 
     return requestStatus;
@@ -530,10 +538,10 @@ async function checkRequestStatus(msg, bot) {
 async function addToWaitlist(msg, foundRequest, bot ) {
     try {
         await getText('waitlist', 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             bot.sendMessage(msg.chat.id, text);  
         });
-    } catch (e){ console.log(e); }
+    } catch (e){ safeErrorLog(e) }
 
     await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}});
 }
@@ -552,15 +560,15 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
 
     try {
         await getText(textArg, 'ua', async function(err, text){
-            if (err) return console.log(err);
+            if (err) return safeErrorLog(err);
             if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
             else await bot.sendMessage(msg.chat.id, text);
         });
         
-    } catch (e){ console.log(e); }
+    } catch (e){ safeErrorLog(e) }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
-    } catch (e){ console.log(e); }
+    } catch (e){ safeErrorLog(e) }
 }
 
 async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
@@ -571,7 +579,7 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
 
     try {
         await bot.copyMessage(request.requesterTG, chatId , commentMsgId, options);
-    } catch (e){ console.log(e); }
+    } catch (e){ safeErrorLog(e) }
 
     for (var i in request.otherUsetsTG) {
         const optionsR = {
@@ -579,7 +587,7 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
         };
         try {
             await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId , commentMsgId, optionsR);
-        } catch (e){ console.log(e); }
+        } catch (e){ safeErrorLog(e) }
     }
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }
@@ -598,7 +606,7 @@ const onCloseOldRequests = async (msg, bot) => {
             await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
                 ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
                 ' року та досі були в статусі #pending');
-        } catch (e) { console.log(e); }
+        } catch (e) { safeErrorLog(e); }
 
     } else {console.log('not allowed')}
 }

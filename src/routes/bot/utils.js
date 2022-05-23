@@ -33,17 +33,19 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     if (fakeStatus == "1") textArg = 'true_status';
     else if (fakeStatus == "-1") textArg = 'fake_status';
     else if (fakeStatus == "-2") textArg = 'reject_status';
-    else if (fakeStatus == "-3") textArg = 'timeout_request';
+    else if (fakeStatus == "-4") textArg = 'noproof_status';
+    else if (fakeStatus == "-5") textArg = 'manipulation_status';
+    else if (fakeStatus == "-6") textArg = 'timeout_request';
 
     await getText(textArg, 'ua', async function(err, text){
-        if (err) return console.log(err);
+        if (err) return safeErrorLog(err);
         let options = {
             reply_to_message_id: foundRequest.requesterMsgID
         };
     
         try {
             await bot.sendMessage(foundRequest.requesterTG, text, options);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     
         for (let i in foundRequest.otherUsetsTG) {
             const optionsR = {
@@ -51,7 +53,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             };
             try {
                 await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text, optionsR);
-            } catch (e){ console.log(e) }
+            } catch (e){ safeErrorLog(e) }
         }
     });
 }
@@ -72,8 +74,7 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             console.log(index + " - " + users.length );
         } catch (e) { 
-            if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
-            else console.log(e);
+            safeErrorLog(e);
         }
         if (index == users.length - 1) {
             //Notify admin about end result
@@ -107,8 +108,8 @@ async function closeRequestByTimeout(request, bot) {
             inline_keyboard
         })
     });
-    await notifyUsers(request, "-3", bot)
-    await Request.updateOne(request, {fakeStatus: "-3"});
+    await notifyUsers(request, "-6", bot)
+    await Request.updateOne(request, {fakeStatus: "-6"});
 }
 
 async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
@@ -119,7 +120,7 @@ async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
         };
         await bot.sendMessage(chat_id, replyMsg, options);
     } catch (e) {
-        console.log(e)
+        safeErrorLog(e)
     }
 }
 
@@ -224,6 +225,56 @@ async function getLabeledSource (text){
         
     } catch(e) { return null }    
 }
+function getCallbackDataFromKeyboard(inlineKeyboard) {
+    try {
+        return inlineKeyboard[0][0].callback_data;
+    } catch (e) {
+        return '';
+    }
+}
+
+function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
+    /*
+    We have different logical blocks in inline keyboard: decision block, comment block,
+    more might be added in the future. These blocks are pretty independent of one another
+    and since they might take more than one row changing one of these blocks separately
+    might be tricky. This method defines which lines relate to which block and allows
+    making changes to one block and not affect others.
+    */
+    let newKeyboard = [];
+    if (blockToChange === 'decision'){
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            inlineKeyboard.shift();
+        }
+        newKeyboard = newKeyboard.concat(newBlock);
+    } else if (blockToChange === 'comment') {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            newKeyboard.push(inlineKeyboard.shift());
+        }
+        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+            inlineKeyboard.shift();
+        }
+        newKeyboard = newKeyboard.concat(newBlock);
+    } else {
+        console.error(blockToChange + ' inline keyboard block is unknown');
+        newKeyboard = inlineKeyboard;
+    }
+    newKeyboard = newKeyboard.concat(inlineKeyboard)
+    return newKeyboard;
+}
+
+
+function safeErrorLog(error) {
+    try {
+        console.log(error.response.body.description)
+    } catch (error) {
+        if (error.message) {
+            console.log(error.message)
+        } else {
+            console.log(error);
+        }
+    }
+}
 
 module.exports = {
     getSubscriptionBtn,
@@ -237,5 +288,7 @@ module.exports = {
     newFacebookSource,
     newTwitterSource,
     newYoutubeSource,
-    getLabeledSource
+    getLabeledSource,
+    safeErrorLog,
+    changeInlineKeyboard
 }

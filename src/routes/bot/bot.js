@@ -24,7 +24,8 @@ const {
     onCommentQuery,
     onSubscriptionQuery,
     onSendFakesQuery,
-    onConfirmCommentQuery
+    onConfirmCommentQuery,
+    onEscalateQuery,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -35,25 +36,29 @@ const token = process.env.TGTOKEN;
 const bot = new TelegramBot(token, { polling: true });
 const admins = String(process.env.ADMINS).split(',');
 const commentGroup = process.env.TGCOMMENTSGROUP;
+const escalationGroup = process.env.TGESCALATIONGROUP;
 
 const {
     CheckContentText,
     SubscribtionText,
     SetFakesRequestText
 } = require('./contstants');
+const {safeErrorLog} = require("./utils");
 
 setTimeout(function () {
     try {
         bot.sendMessage(admins[0], 'Bot reloaded');
     } catch (e) {
-        console.log(e);
+        safeErrorLog(e);
     }
 }, 10000); //Notify about reloading
 
 bot.on('message', async (msg) => {
     const text = msg.text;
     
-    if (msg.chat.id == commentGroup && msg.text){
+    if (msg.chat.id === escalationGroup) {
+        //ignore messages in escalation group
+    } else if (msg.chat.id === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
@@ -109,6 +114,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('ESCALATE_')) {
+        await onEscalateQuery(callbackQuery, bot)
     }
 });
 
@@ -119,19 +126,19 @@ bot.on("inline_query", async function onCallbackQuery(inlineQuery) {
     }
 });
 
-bot.on("polling_error", (err) => console.log(err.message));
+bot.on("polling_error", (err) => safeErrorLog(err));
 
 module.exports = {
     message: async function (msg, pin, options) {
         try {
             const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg, options);
             if (pin) await bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     },
     messageId: async function (id, msg, pin, options) {
         try {
             const sentMsg = await bot.sendMessage(id, msg, options);
             if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     }
 };
