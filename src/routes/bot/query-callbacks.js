@@ -5,7 +5,8 @@ const {
     getUserName,
     sendFakesStatus,
     involveModerator,
-    changeInlineKeyboard
+    changeInlineKeyboard,
+    safeErrorLog
 } = require("./utils");
 const {
     NoCurrentFakes
@@ -69,7 +70,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         await notifyUsers(request, fakeStatus, bot);
 
     } catch (err) {
-        console.error(err);
+        safeErrorLog(err);
     }
 }
 
@@ -107,8 +108,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             })
         });
     } catch (e) {
-        if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
-        else console.log(e);
+        safeErrorLog(e);
     }
 }
 
@@ -141,12 +141,12 @@ const onCommentQuery = async (callbackQuery, bot) => {
         };
     } catch (e){
         await bot.sendMessage(messageChat, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
-        console.error(e)
+        safeErrorLog(e);
     }
 
     try {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
-    } catch (e){ console.error(e) }
+    } catch (e){ safeErrorLog(e); }
     //Update moderators action message
     let existing_inline_keyboard = message.reply_markup.inline_keyboard
     let updated_inline_keyboard = changeInlineKeyboard(
@@ -165,7 +165,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
             //Set moderator for the comment
             await Request.findByIdAndUpdate(requestId, {commentChatId: messageChat });
         } catch (e) {
-            console.log(e);
+            safeErrorLog(e);
         }
     }
     
@@ -188,7 +188,7 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
             chat_id: message.chat.id,
             message_id: message.message_id
         });
-    } catch (e) {console.log(e)}
+    } catch (e) {safeErrorLog(e);}
 
 }
 
@@ -208,7 +208,7 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
-    } catch (e) { console.log(e); }
+    } catch (e) { safeErrorLog(e); }
 
 }
 

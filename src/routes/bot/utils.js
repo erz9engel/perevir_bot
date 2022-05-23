@@ -38,14 +38,14 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     else if (fakeStatus == "-6") textArg = 'timeout_request';
 
     await getText(textArg, 'ua', async function(err, text){
-        if (err) return console.log(err);
+        if (err) return safeErrorLog(err);
         let options = {
             reply_to_message_id: foundRequest.requesterMsgID
         };
     
         try {
             await bot.sendMessage(foundRequest.requesterTG, text, options);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     
         for (let i in foundRequest.otherUsetsTG) {
             const optionsR = {
@@ -53,7 +53,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             };
             try {
                 await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text, optionsR);
-            } catch (e){ console.log(e) }
+            } catch (e){ safeErrorLog(e) }
         }
     });
 }
@@ -74,8 +74,7 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             console.log(index + " - " + users.length );
         } catch (e) { 
-            if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
-            else console.log(e);
+            safeErrorLog(e);
         }
         if (index == users.length - 1) {
             //Notify admin about end result
@@ -111,7 +110,7 @@ async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
         };
         await bot.sendMessage(chat_id, replyMsg, options);
     } catch (e) {
-        console.log(e)
+        safeErrorLog(e)
     }
 }
 
@@ -255,6 +254,18 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
 }
 
 
+function safeErrorLog(error) {
+    try {
+        console.log(error.response.body.description)
+    } catch (error) {
+        if (error.message) {
+            console.log(error.message)
+        } else {
+            console.log(error);
+        }
+    }
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -268,5 +279,6 @@ module.exports = {
     newTwitterSource,
     newYoutubeSource,
     getLabeledSource,
-    changeInlineKeyboard,
+    safeErrorLog,
+    changeInlineKeyboard
 }

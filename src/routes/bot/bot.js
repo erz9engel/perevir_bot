@@ -43,12 +43,13 @@ const {
     SubscribtionText,
     SetFakesRequestText
 } = require('./contstants');
+const {safeErrorLog} = require("./utils");
 
 setTimeout(function () {
     try {
         bot.sendMessage(admins[0], 'Bot reloaded');
     } catch (e) {
-        console.log(e);
+        safeErrorLog(e);
     }
 }, 10000); //Notify about reloading
 
@@ -125,19 +126,19 @@ bot.on("inline_query", async function onCallbackQuery(inlineQuery) {
     }
 });
 
-bot.on("polling_error", (err) => console.log(err.message));
+bot.on("polling_error", (err) => safeErrorLog(err));
 
 module.exports = {
     message: async function (msg, pin, options) {
         try {
             const sentMsg = await bot.sendMessage(process.env.TGMAINCHAT, msg, options);
             if (pin) await bot.pinChatMessage(process.env.TGMAINCHAT, sentMsg.message_id);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     },
     messageId: async function (id, msg, pin, options) {
         try {
             const sentMsg = await bot.sendMessage(id, msg, options);
             if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
-        } catch (e){ console.log(e) }
+        } catch (e){ safeErrorLog(e) }
     }
 };
