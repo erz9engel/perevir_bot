@@ -134,6 +134,7 @@ async function collectStats(stats) {
         stringDate: stringDate,
         subs: allUsers,
         nSubs: nSubs,  
+        nRecived : 0,
         rTotal: stats.rTotal,
         rFake: stats.rFake,
         rTrue: stats.rTrue, 
