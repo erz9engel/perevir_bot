@@ -1,4 +1,4 @@
-const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus, involveModerator, showErr} = require("./utils");
+const {getSubscriptionBtn, notifyUsers, sendFakes, getUserName, sendFakesStatus, involveModerator} = require("./utils");
 const {
     NoCurrentFakes
 } = require('./contstants')
@@ -42,7 +42,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         await notifyUsers(request, fakeStatus, bot);
 
     } catch (e) {
-        showErr(e);
+        console.log(e);
     }
 }
 
@@ -64,7 +64,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             })
         });
     } catch (e) {
-        showErr(e);
+        console.log(e);
     }
 }
 
@@ -87,12 +87,12 @@ const onCommentQuery = async (callbackQuery, bot) => {
         };
     } catch (e){
         await bot.sendMessage(message.chat.id, 'Необхідно стартанути бота @perevir_bot\n@' + callbackQuery.from.username + '\n\n' + "FYI @betabitter43 \n" );
-        showErr(e);
+        console.log(e);
     }
 
     try {
         await bot.sendMessage(moderator, '#comment_' + requestId , options);
-    } catch (e){ showErr(e);}
+    } catch (e){ console.log(e);}
     //Update moderators action message
     let inline_keyboard = message.reply_markup.inline_keyboard
     if (inline_keyboard[1][0].text === '✉️ Залишити коментар') {
@@ -107,7 +107,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
             //Set moderator for the comment
             await Request.findByIdAndUpdate(requestId, {commentChatId: message.chat.id });
         } catch (e) {
-            showErr(e);
+            console.log(e);
         }
     }
     
@@ -131,7 +131,7 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
             message_id: message.message_id
         });
     } catch (e) {
-        showErr(e);
+        console.log(e);
     }
 
 }
@@ -153,7 +153,7 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
     } catch (e) { 
-        showErr(e);
+        console.log(e);
     }
 
 }
@@ -164,7 +164,7 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
         try {
             await bot.deleteMessage(message.chat.id, message.message_id);
         } catch (e) {
-            showErr(e);
+            console.log(e);
         }
     } else {
         try {
@@ -173,7 +173,7 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
                 message_id: message.message_id
             })
         } catch (e) {
-            return showErr(e);
+            return console.log(e);
         }
         const requestId = data.split('_')[1];
         const commentMsgId = message.message_id;

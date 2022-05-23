@@ -26,8 +26,7 @@ const {
     newFacebookSource,
     newTwitterSource,
     newYoutubeSource,
-    getLabeledSource,
-    showErr
+    getLabeledSource
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
@@ -47,7 +46,7 @@ const onStart = async (msg, bot) => {
             if (err) return console.log(err);
             await bot.sendMessage(msg.chat.id, text, replyOptions);
         });
-    } catch (e) { showErr(e);}
+    } catch (e) { console.log(e); }
     //Check if user registerd
     let newUser = new TelegramUser({
         _id: new mongoose.Types.ObjectId(),
@@ -66,7 +65,7 @@ const onCheckContent = async (msg, bot) => {
             await bot.sendMessage(msg.chat.id, text);
         });
     } catch (e) { 
-        showErr(e);
+        console.log(e);
     }
 }
 
@@ -84,7 +83,7 @@ const onSubscription = async (msg, bot) => {
         try {
             return await bot.sendMessage(message.chat.id, NoCurrentFakes);
         } catch (e) { 
-            showErr(e);
+            console.log(e);
         }
     }
     const message_id = fakeNews.value.split('_')[0];
@@ -92,7 +91,7 @@ const onSubscription = async (msg, bot) => {
     try {
         await bot.copyMessage(msg.chat.id, chat_id, message_id, options);
     } catch (e) { 
-        showErr(e);
+        console.log(e);
     }
 }
 
@@ -106,7 +105,7 @@ const onSetFakesRequest = async (msg, bot) => {
         };
         try {
             await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
-        } catch (e) { showErr(e); }
+        } catch (e) { console.log(e); }
     } else {console.log('not allowed')}
 }
 
@@ -120,7 +119,7 @@ const onSetSource = async (msg, bot, fake) => {
         if (!source || source.length < 5) {
             try {
                 return await bot.sendMessage(msg.chat.id, 'Введені дані некоректні');
-            } catch (e) { showErr(e); }
+            } catch (e) { console.log(e); }
         }
         //Check if telegram channel
         if (source.startsWith('https://t.me/')) {
@@ -131,7 +130,7 @@ const onSetSource = async (msg, bot, fake) => {
             } catch (i) {
                 try {
                     return await bot.sendMessage(msg.chat.id, "Такого ресурсу не знайдено");
-                } catch (e) { showErr(e); }
+                } catch (e) { console.log(e); }
             }
             var newSourceTelegram = new SourceTelegram({
                 _id: new mongoose.Types.ObjectId(),
@@ -144,12 +143,12 @@ const onSetSource = async (msg, bot, fake) => {
             await newSourceTelegram.save().then(async () => {
                 try {
                     await bot.sendMessage(msg.chat.id, "Чат @" + chatInfo.username + " успішно додано. Опис:\n" + description);
-                } catch (e) {showErr(e); }
+                } catch (e) {console.log(e); }
             }).catch(async () => {
                 await SourceTelegram.findOneAndUpdate({telegramId: chatInfo.id}, {fake: fake, description: description});
                 try {
                     await bot.sendMessage(msg.chat.id, "Інформацію про чат оновлено");
-                } catch (e) { showErr(e);}
+                } catch (e) { console.log(e);}
             });
             
         } else {
@@ -158,11 +157,11 @@ const onSetSource = async (msg, bot, fake) => {
                 url = new URL(source);
                 host = getDomainWithoutSubdomain(url.hostname);
             } catch (e) {
-                showErr(e);
+                console.log(e);
                 try {
                     await bot.sendMessage(msg.chat.id, 'Некоректний URL'); 
                     return false
-                } catch (e) { showErr(e); }
+                } catch (e) { console.log(e); }
             }
 
             if (host == 'facebook.com') params = await newFacebookSource(url);
@@ -178,7 +177,7 @@ const onSetSource = async (msg, bot, fake) => {
                 try {
                     await bot.sendMessage(msg.chat.id, 'На жаль такий формат поки не підтримується.'); 
                     return false
-                } catch (e) { showErr(e); }
+                } catch (e) { console.log(e); }
             }
             const domain = username ? hostname + '/' + username : hostname;
             var newSourceDomain = new SourceDomain({
@@ -210,7 +209,7 @@ const onSetFakes = async (msg, bot) => {
         try {
             await bot.sendMessage(msg.chat.id, 'Зміни збережено');
             await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
-        } catch (e) { showErr(e); }
+        } catch (e) { console.log(e); }
     } else {console.log('not allowed')}
 }
 
@@ -224,7 +223,7 @@ const onSendFakes = async (msg, bot) => {
         };
         try {
             await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
-        } catch (e) { showErr(e); }
+        } catch (e) { console.log(e); }
     } else {console.log('not allowed')}
 }
 
@@ -234,7 +233,7 @@ const onRequestStatus = async (msg, bot, status) => {
         const confirmMsg = status ? "Прийом запитів увімкнено" : "Прийом запитів вимкнено"
         try {
             await bot.sendMessage(msg.chat.id, confirmMsg);
-        } catch (e) { showErr(e); }
+        } catch (e) { console.log(e); }
     } else {console.log('not allowed')}
 }
 
@@ -283,7 +282,7 @@ const onCheckRequest = async (msg, bot) => {
                 });
                 notified = true;
                 
-            } catch (e) {showErr(e);}
+            } catch (e) { console.log(e); }
         }
         //If block redirect msgs
         //else { return unsupportedContent(msg, bot); }  
@@ -344,7 +343,7 @@ const onCheckRequest = async (msg, bot) => {
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
                 notified = true;
-            } catch (e) {showErr(e);}
+            } catch (e) { console.log(e); }
         } 
 
         request.text = msg.text;
@@ -432,7 +431,7 @@ const onCheckGroupRequest = async (msg, bot) => {
     //Send interactive action
     try {
         bot.sendChatAction(msg.chat.id, 'typing');
-    } catch (e) { showErr(e); }
+    } catch (e) { console.log(e); }
 
     await sleep(2000).then(async () => { 
         const index = mediaGroups.findIndex(group => {
@@ -499,7 +498,7 @@ const onUnsupportedContent = async (msg, bot) => {
             if (err) return console.log(err);
             await bot.sendMessage(msg.chat.id, text);
         });
-    } catch (e) { showErr(e); }
+    } catch (e) { console.log(e); }
 }
 
 async function sleep(ms) {
@@ -509,7 +508,7 @@ async function sleep(ms) {
 async function unsupportedContent(msg, bot) {
     try {
         await bot.sendMessage(msg.chat.id, UnsupportedContentText);
-    } catch (e) { showErr(e); }
+    } catch (e) { console.log(e); }
 }
 
 async function checkRequestStatus(msg, bot) {
@@ -522,7 +521,7 @@ async function checkRequestStatus(msg, bot) {
                 if (err) return console.log(err);
                 bot.sendMessage(msg.chat.id, text);  
             });
-        } catch (e) { showErr(e);}  
+        } catch (e) { console.log(e);}  
     }
 
     return requestStatus;
@@ -534,7 +533,7 @@ async function addToWaitlist(msg, foundRequest, bot ) {
             if (err) return console.log(err);
             bot.sendMessage(msg.chat.id, text);  
         });
-    } catch (e){ showErr(e); }
+    } catch (e){ console.log(e); }
 
     await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}});
 }
@@ -558,10 +557,10 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
             else await bot.sendMessage(msg.chat.id, text);
         });
         
-    } catch (e){ showErr(e); }
+    } catch (e){ console.log(e); }
     try {
         if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
-    } catch (e){ showErr(e); }
+    } catch (e){ console.log(e); }
 }
 
 async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
@@ -572,7 +571,7 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
 
     try {
         await bot.copyMessage(request.requesterTG, chatId , commentMsgId, options);
-    } catch (e){ showErr(e); }
+    } catch (e){ console.log(e); }
 
     for (var i in request.otherUsetsTG) {
         const optionsR = {
@@ -580,7 +579,7 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
         };
         try {
             await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId , commentMsgId, optionsR);
-        } catch (e){ showErr(e); }
+        } catch (e){ console.log(e); }
     }
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }
@@ -599,7 +598,7 @@ const onCloseOldRequests = async (msg, bot) => {
             await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
                 ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
                 ' року та досі були в статусі #pending');
-        } catch (e) { showErr(e); }
+        } catch (e) { console.log(e); }
 
     } else {console.log('not allowed')}
 }
@@ -655,7 +654,7 @@ async function confirmComment(message, bot) {
             options
         );
     } catch (e) {
-        showErr(e);
+        console.log(e);
     }
 }
 

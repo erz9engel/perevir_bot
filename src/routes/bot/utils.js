@@ -225,12 +225,6 @@ async function getLabeledSource (text){
     } catch(e) { return null }    
 }
 
-async function showErr (e) {
-    if (e.response && e.response.body && e.response.body.description) console.log(e.response.body.description);
-    else console.log(e);
-}
-
-
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -243,6 +237,5 @@ module.exports = {
     newFacebookSource,
     newTwitterSource,
     newYoutubeSource,
-    getLabeledSource,
-    showErr
+    getLabeledSource
 }
