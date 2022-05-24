@@ -150,13 +150,13 @@ const onCommentQuery = async (callbackQuery, bot) => {
     } catch (e){ safeErrorLog(e); }
 
     //Update moderators action message
-    let existing_inline_keyboard = message.reply_markup.inline_keyboard
+    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard)
     let updated_inline_keyboard = changeInlineKeyboard(
-        existing_inline_keyboard,
+        message.reply_markup.inline_keyboard,
         'comment',
         [[{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]]
     )
-    if (JSON.stringify(existing_inline_keyboard)!==JSON.stringify(updated_inline_keyboard)) {
+    if (existing_inline_keyboard!==JSON.stringify(updated_inline_keyboard)) {
         try {
             await bot.editMessageReplyMarkup({
                 inline_keyboard: updated_inline_keyboard
