@@ -256,6 +256,19 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             createdAt: new Date(),
         });
 
+        await getText('request_escalated', 'ua', async function(err, text) {
+            if (err) return safeErrorLog(err);
+            let options = {
+                reply_to_message_id: request.requesterMsgID
+            };
+
+            try {
+                await bot.sendMessage(request.requesterTG, text, options);
+            } catch (e) {
+                safeErrorLog(e)
+            }
+        });
+
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
             request.requesterTG,

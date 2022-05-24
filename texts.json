@@ -145,5 +145,12 @@
        "en":"IMHO",
        "rows":5,
        "description": "Причина відмови ІМХО"
+    },
+    {
+       "name": "request_escalated",
+       "ua": "Ваше звернення містить дані, які потребують дещо глибшої перевірки, це може зайняти трохи більше часу ніж перевірка звичайного запиту. Дякуємо за очікування",
+       "en": "Your request contains facts that require deeper check, this might be a bit longer than regular request. Thank you for waiting",
+       "rows": "4",
+       "description": "Запит ескальовано"
     }
  ]
