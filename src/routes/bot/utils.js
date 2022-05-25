@@ -258,7 +258,7 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
 function safeErrorLog(error) {
     try {
         console.log(error.response.body.description)
-    } catch (error) {
+    } catch (e) {
         if (error.message) {
             console.log(error.message)
         } else {
