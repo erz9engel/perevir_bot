@@ -315,7 +315,8 @@ const onCheckRequest = async (msg, bot) => {
                 const description = bannedChat.description ? bannedChat.description : '';
                 await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
-                    await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                    if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                    else await bot.sendMessage(msg.chat.id, text);
                 });
                 notified = true;           
             } catch (e) {safeErrorLog(e)}
@@ -377,7 +378,8 @@ const onCheckRequest = async (msg, bot) => {
                 const description = labeledSource.description ? labeledSource.description : '';
                 await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
-                    await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                    if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                    else await bot.sendMessage(msg.chat.id, text);
                 });
                 notified = true;
             } catch (e) {safeErrorLog(e)}
