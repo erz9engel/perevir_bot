@@ -13,11 +13,13 @@ const Comment = mongoose.model('Comment');
 const {
     CheckContentText,
     SubscribtionText,
-    SetFakesRequestText,
+    ChangeLanguage,
     NoCurrentFakes,
     UnsupportedContentText,
+    SetFakesRequestText,
     RequestTimeout
 } = require('./contstants');
+const { obj } = require('./contstants')
 const { getText } = require('./localisation');
 const {
     getSubscriptionBtn,
@@ -31,16 +33,8 @@ const {
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
-    let replyOptions = {
-        reply_markup: {
-            resize_keyboard: true,
-            one_time_keyboard: false,
-            keyboard: [
-                [{ text: CheckContentText }],
-                [{ text: SubscribtionText }]
-            ]
-        }
-    };
+
+    const replyOptions = await getReplyOptions('ua');
 
     try {
         await getText('welcome', 'ua', async function(err, text){
@@ -59,9 +53,33 @@ const onStart = async (msg, bot) => {
     });
 }
 
+const getReplyOptions = async (lang) => {
+
+    var keyboard = [
+        [{ text: CheckContentText[`${lang}`] }],
+        [{ text: SubscribtionText[`${lang}`] }],
+        [{ text: ChangeLanguage[`${lang}`] }]
+    ];
+    if (lang == 'en') keyboard.splice(1,1)
+
+    return {
+        reply_markup: {
+            resize_keyboard: true,
+            one_time_keyboard: false,
+            keyboard: keyboard
+        }
+    };
+}
+
+const getLanguage = async (tgId) => {
+    const user = await TelegramUser.findOne({telegramID: tgId}, 'language');
+    return user;
+}
+
 const onCheckContent = async (msg, bot) => {
+    const {language} = await getLanguage(msg.chat.id);
     try {
-        await getText('check_content', 'ua', async function(err, text){
+        await getText('check_content', language, async function(err, text){
             if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text);
         });
@@ -88,6 +106,28 @@ const onSubscription = async (msg, bot) => {
     try {
         await bot.copyMessage(msg.chat.id, chat_id, message_id, options);
     } catch (e) { safeErrorLog(e) }
+}
+
+const onChangeLanguage = async (msg, bot) => {
+    const user = await TelegramUser.findOne({telegramID: msg.chat.id});
+    if (!user) return console.log("User not found 1.1");
+
+    var lang = user.language;
+    if (!lang) return console.log("User has no language");
+
+    if (lang == 'en') lang = 'ua';
+    else if (lang == 'ua') lang = 'en';
+    
+    await TelegramUser.findByIdAndUpdate(user._id, {language: lang});
+    const replyOptions = await getReplyOptions(lang);
+    
+    try {
+        await getText('change_lang', lang, async function(err, text){
+            if (err) return safeErrorLog(err);
+            await bot.sendMessage(msg.chat.id, text, replyOptions);
+        });
+    } catch (e) { safeErrorLog(e) }
+
 }
 
 const onSetFakesRequest = async (msg, bot) => {
@@ -247,9 +287,11 @@ const onCheckRequest = async (msg, bot) => {
     //Check any input message
     const requestId = new mongoose.Types.ObjectId();
     var mediaId, newImage, newVideo, notified = false;
+    const {language, id} = await getLanguage(msg.chat.id);
     var request = new Request({
         _id: requestId,
         requesterTG: msg.chat.id,
+        requesterId: id,
         requesterMsgID: msg.message_id,
         requesterUsername: msg.from.username,
         createdAt: new Date(),
@@ -271,7 +313,7 @@ const onCheckRequest = async (msg, bot) => {
             request.fakeStatus = bannedChat.fake ? -3 : 2;
             try {
                 const description = bannedChat.description ? bannedChat.description : '';
-                await getText(sourceText, 'ua', async function(err, text){
+                await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
@@ -333,7 +375,7 @@ const onCheckRequest = async (msg, bot) => {
             request.fakeStatus = labeledSource.fake ? -3 : 2;
             try {
                 const description = labeledSource.description ? labeledSource.description : '';
-                await getText(sourceText, 'ua', async function(err, text){
+                await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
                     await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
                 });
@@ -347,7 +389,11 @@ const onCheckRequest = async (msg, bot) => {
     }
     
     //Send message to moderation
-    const sentMsg = await bot.forwardMessage(process.env.TGMAINCHAT, msg.chat.id, msg.message_id);
+    var moderatorsChanel;
+    if (language == 'en') moderatorsChanel = process.env.TGENGLISHCHAT;
+    else moderatorsChanel = process.env.TGMAINCHAT;
+
+    const sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
     let inline_keyboard;
     if (!notified) {
     
@@ -372,14 +418,14 @@ const onCheckRequest = async (msg, bot) => {
                 inline_keyboard
             })
         };
-        const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, '#pending', options);
+        const sentActionMsg = await bot.sendMessage(moderatorsChanel, '#pending', options);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
         //Inform user
         var informOptions = {
             disable_web_page_preview: true
         };
-        await getText('new_requests', 'ua', async function(err, text){
+        await getText('new_requests', language, async function(err, text){
             if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text, informOptions);
         });
@@ -397,7 +443,7 @@ const onCheckRequest = async (msg, bot) => {
         var status = "#autoDecline"
         if (request.fakeStatus == 2) status = "#autoConfirm";
 
-        const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT, status ,options);
+        const sentActionMsg = await bot.sendMessage(moderatorsChanel, status ,options);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
 
@@ -445,6 +491,7 @@ const onCheckGroupRequest = async (msg, bot) => {
         const index = mediaGroups.findIndex(group => {
             return group.groupId === msg.media_group_id;
         });
+        const {language, id} = await getLanguage(msg.chat.id);
         if (!mediaGroups[index].sent) {
             mediaGroups[index].sent = true; 
             const requestStatus = await checkRequestStatus(msg, bot);
@@ -454,15 +501,19 @@ const onCheckGroupRequest = async (msg, bot) => {
                 const mediaFile = mediaGroups[index].mediaFiles[i];
                 mediaFiles.push({type: mediaFile.mediaType, media: mediaFile.mediaFileId})
             }
-            var sentMsg;
+            var sentMsg, moderatorsChanel;
+            if (language == 'en') moderatorsChanel = process.env.TGENGLISHCHAT;
+            else moderatorsChanel = process.env.TGMAINCHAT;
+
+
             if (mediaGroups[index].text) {
-                const textpart = await bot.sendMessage(process.env.TGMAINCHAT, mediaGroups[index].text);
+                const textpart = await bot.sendMessage(moderatorsChanel, mediaGroups[index].text);
                 const options = {
                     reply_to_message_id: textpart.message_id
                 };
-                sentMsg = await bot.sendMediaGroup(process.env.TGMAINCHAT, mediaFiles, options);
+                sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles, options);
             } else {
-                sentMsg = await bot.sendMediaGroup(process.env.TGMAINCHAT, mediaFiles);
+                sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles);
             }
             const requestId = new mongoose.Types.ObjectId();
 
@@ -474,10 +525,11 @@ const onCheckGroupRequest = async (msg, bot) => {
                     inline_keyboard
                 })
             };
-            const sentActionMsg = await bot.sendMessage(process.env.TGMAINCHAT,'#pending',options);
+            const sentActionMsg = await bot.sendMessage(moderatorsChanel,'#pending',options);
             var request = new Request({
                 _id: requestId,
                 requesterTG: msg.chat.id,
+                requesterId: id,
                 requesterMsgID: msg.message_id,
                 requesterUsername: msg.from.username,
                 createdAt: new Date(),
@@ -491,7 +543,7 @@ const onCheckGroupRequest = async (msg, bot) => {
             var options = {
                 disable_web_page_preview: true
             };
-            await getText('new_requests', 'ua', async function(err, text){
+            await getText('new_requests', language, async function(err, text){
                 if (err) return safeErrorLog(err);
                 await bot.sendMessage(msg.chat.id, text, options);
             });
@@ -502,7 +554,8 @@ const onCheckGroupRequest = async (msg, bot) => {
 
 const onUnsupportedContent = async (msg, bot) => {
     try {
-        await getText('unsupported_request', 'ua', async function(err, text){
+        const {language} = await getLanguage(msg.chat.id);
+        await getText('unsupported_request', language, async function(err, text){
             if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text);
         });
@@ -524,8 +577,9 @@ async function checkRequestStatus(msg, bot) {
     var requestStatus = false;
     if (value === 'true') requestStatus = true;
     else {
+        const {language} = await getLanguage(msg.chat.id);
         try {
-            await getText('stopped_requests', 'ua', async function(err, text){
+            await getText('stopped_requests', language, async function(err, text){
                 if (err) return safeErrorLog(err);
                 bot.sendMessage(msg.chat.id, text);  
             });
@@ -536,14 +590,15 @@ async function checkRequestStatus(msg, bot) {
 }
 
 async function addToWaitlist(msg, foundRequest, bot ) {
+    const {language, id} = await getLanguage(msg.chat.id);
     try {
-        await getText('waitlist', 'ua', async function(err, text){
+        await getText('waitlist', language, async function(err, text){
             if (err) return safeErrorLog(err);
             bot.sendMessage(msg.chat.id, text);  
         });
     } catch (e){ safeErrorLog(e) }
 
-    await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterMsgID: msg.message_id }}});
+    await Request.findByIdAndUpdate(foundRequest._id, {$push: { "otherUsetsTG": {requesterTG: msg.chat.id, requesterId: id, requesterMsgID: msg.message_id }}});
 }
 
 async function reportStatus(msg, foundRequest, bot, bannedChat) {
@@ -559,7 +614,8 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
     }
 
     try {
-        await getText(textArg, 'ua', async function(err, text){
+        const {language} = await getLanguage(msg.chat.id);
+        await getText(textArg, language, async function(err, text){
             if (err) return safeErrorLog(err);
             if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
             else await bot.sendMessage(msg.chat.id, text);
@@ -670,6 +726,7 @@ module.exports = {
     onStart,
     onCheckContent,
     onSubscription,
+    onChangeLanguage,
     onSetFakesRequest,
     onSetSource,
     onSetFakes,

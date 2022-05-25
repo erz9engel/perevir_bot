@@ -3,7 +3,6 @@ const {
     notifyUsers,
     sendFakes,
     getUserName,
-    sendFakesStatus,
     involveModerator,
     changeInlineKeyboard,
     safeErrorLog
@@ -14,7 +13,6 @@ const {
 } = require('./contstants')
 const {informRequestersWithComment} = require("./message-handlers");
 const mongoose = require("mongoose");
-const { getText } = require("./localisation");
 require('dotenv').config();
 
 const Request = mongoose.model('Request');
@@ -203,11 +201,10 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
         if (send) {
             const fakeNews = await Data.findOne({name: 'fakeNews'});
             if (!fakeNews) return await bot.sendMessage(message.chat.id, NoCurrentFakes);
-            const allUsers = await TelegramUser.countDocuments();
-            const users = await TelegramUser.find({$and: [{subscribed: true}, {lastFakeNews: {$ne: fakeNews.value}}]});
+            const users = await TelegramUser.find({$and: [{language: 'ua'}, {subscribed: true}, {lastFakeNews: {$ne: fakeNews.value}}]});
             const message_id = fakeNews.value.split('_')[0];
             const chat_id = fakeNews.value.split('_')[1];
-            await sendFakesStatus (allUsers, users.length, message.chat.id, bot);
+            await bot.sendMessage(message.chat.id, "🚀 Розсилка запущена");
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
     } catch (e) { safeErrorLog(e); }

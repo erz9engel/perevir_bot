@@ -29,6 +29,9 @@ function getUserName(user) {
 
 async function notifyUsers(foundRequest, fakeStatus, bot) {
 
+    foundRequest = await TelegramUser.populate(foundRequest,{ path: 'requesterId' });
+    foundRequest = await TelegramUser.populate(foundRequest,{ path: 'otherUsetsTG.requesterId' });
+
     var textArg;
     if (fakeStatus == "1") textArg = 'true_status';
     else if (fakeStatus == "-1") textArg = 'fake_status';
@@ -37,14 +40,14 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     else if (fakeStatus == "-5") textArg = 'manipulation_status';
     else if (fakeStatus == "-6") textArg = 'timeout_request';
 
-    await getText(textArg, 'ua', async function(err, text){
+    await getText(textArg, null, async function(err, text){
         if (err) return safeErrorLog(err);
         let options = {
             reply_to_message_id: foundRequest.requesterMsgID
         };
     
         try {
-            await bot.sendMessage(foundRequest.requesterTG, text, options);
+            await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
         } catch (e){ safeErrorLog(e) }
     
         for (let i in foundRequest.otherUsetsTG) {
@@ -52,7 +55,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
             try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text, optionsR);
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text[foundRequest.otherUsetsTG[i].requesterId.language], optionsR);
             } catch (e){ safeErrorLog(e) }
         }
     });
@@ -110,18 +113,6 @@ async function closeRequestByTimeout(request, bot) {
     });
     await notifyUsers(request, "-6", bot)
     await Request.updateOne(request, {fakeStatus: "-6"});
-}
-
-async function sendFakesStatus (allUsers, subscribedUsers, chat_id, bot) {
-    try {
-        const replyMsg = "🚀 Розсилка запущена\n\nЗагалом користувачів: <b>" + allUsers + "</b>\nПідписаних на розсилку: <b>" + subscribedUsers + '</b> (' + (subscribedUsers/allUsers*100).toFixed(2) + '%)';
-        const options = {
-            parse_mode: "HTML"
-        };
-        await bot.sendMessage(chat_id, replyMsg, options);
-    } catch (e) {
-        safeErrorLog(e)
-    }
 }
 
 async function involveModerator (requestId, moderatorTg) {
@@ -282,7 +273,6 @@ module.exports = {
     sendFakes,
     getUserName,
     closeRequestByTimeout,
-    sendFakesStatus,
     involveModerator,
     getDomainWithoutSubdomain,
     newFacebookSource,

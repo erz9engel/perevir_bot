@@ -12,6 +12,8 @@
 
 *TGMAINCHAT=*ID чату модераторрів*
 
+*TGENGLISHCHAT=*ID англійського чату модераторрів*
+
 *TGCOMMENTSGROUP=*ID групи для бази коментарів*
 
 *TGESCALATIONGROUP=*ID групи для ескалації запитів*
