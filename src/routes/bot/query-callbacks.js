@@ -31,7 +31,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     else if (fakeStatus === '-1') status = "#false | Фейк"
     else if (fakeStatus === '-2') status = "#reject | Відмова"
     else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
-    else if (fakeStatus === '-5') status = "#manipulation | Маніпуляція"
+    else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
 
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
@@ -88,7 +88,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
                 { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
             ],
             [
-                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + requestId },
+                { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
                 { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [
@@ -148,13 +148,13 @@ const onCommentQuery = async (callbackQuery, bot) => {
     } catch (e){ safeErrorLog(e); }
 
     //Update moderators action message
-    let existing_inline_keyboard = message.reply_markup.inline_keyboard
+    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard)
     let updated_inline_keyboard = changeInlineKeyboard(
-        existing_inline_keyboard,
+        message.reply_markup.inline_keyboard,
         'comment',
         [[{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]]
     )
-    if (JSON.stringify(existing_inline_keyboard)!==JSON.stringify(updated_inline_keyboard)) {
+    if (existing_inline_keyboard!==JSON.stringify(updated_inline_keyboard)) {
         try {
             await bot.editMessageReplyMarkup({
                 inline_keyboard: updated_inline_keyboard
@@ -253,6 +253,19 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             createdAt: new Date(),
         });
 
+        await getText('request_escalated', 'ua', async function(err, text) {
+            if (err) return safeErrorLog(err);
+            let options = {
+                reply_to_message_id: request.requesterMsgID
+            };
+
+            try {
+                await bot.sendMessage(request.requesterTG, text, options);
+            } catch (e) {
+                safeErrorLog(e)
+            }
+        });
+
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
             request.requesterTG,
@@ -264,7 +277,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                 { text: '🟢 Правда', callback_data: 'FS_1_' + escalationId }
             ],
             [
-                { text: '🟠 Маніпуляція', callback_data: 'FS_-5_' + escalationId },
+                { text: '🟠 Напівправда', callback_data: 'FS_-5_' + escalationId },
                 { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + escalationId },
             ],
         ];
