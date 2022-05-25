@@ -71,10 +71,10 @@
     },
     {
        "name":"manipulation_status",
-       "ua":"Дана інформація визначено як маніпуляцію. Частково викладені дані можуть бути правдивими, проте вони вирвані з контексту або ж викладені таким чином, що наштовхують на невірні висновки",
-       "en":"This information is a manipulation, which might be partially true but was taken out of context or presented in such a way that makes you make wrong conclusions",
+       "ua":"Дана інформація визначено як напівправду. Частково викладені дані можуть бути правдивими, проте вони вирвані з контексту або ж викладені таким чином, що наштовхують на невірні висновки",
+       "en":"This information is half-true. It might be partially true but was taken out of context or presented in such a way that makes you make wrong conclusions",
        "rows":4,
-       "description": "Запит визначили як МАНІПУЛЯЦІЯ"
+       "description": "Запит визначили як НАПІВПРАВДА"
     },
     {
        "name":"noproof_status",
@@ -145,5 +145,12 @@
        "en":"IMHO",
        "rows":5,
        "description": "Причина відмови ІМХО"
+    },
+    {
+       "name": "request_escalated",
+       "ua": "Ваше звернення містить дані, які потребують дещо глибшої перевірки, це може зайняти трохи більше часу ніж перевірка звичайного запиту. Дякуємо за очікування",
+       "en": "Your request contains facts that require deeper check, this might be a bit longer than regular request. Thank you for waiting",
+       "rows": "4",
+       "description": "Запит ескальовано"
     }
  ]

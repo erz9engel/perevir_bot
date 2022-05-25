@@ -36,7 +36,7 @@ function sendStats() {
       
         stats.rFake = requests.filter(r => parseInt(r.fakeStatus) === -1).length;
         msg += '\nФейк: ' + stats.rFake;
-        msg += '\nМаніпуляція: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
         msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
         stats.rTrue = requests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nПравда: ' + stats.rTrue;
@@ -55,7 +55,7 @@ function sendStats() {
 
         stats.rTodayFake = lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length
         msg += '\nФейк: ' + stats.rTodayFake;
-        msg += '\nМаніпуляція: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
         msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
         stats.rTodayTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nПравда: ' + stats.rTodayTrue;
