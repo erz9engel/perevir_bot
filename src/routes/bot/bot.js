@@ -4,6 +4,7 @@ const {
     onStart,
     onCheckContent,
     onSubscription,
+    onChangeLanguage,
     onSetFakesRequest,
     onSetSource,
     onSetFakes,
@@ -41,6 +42,7 @@ const escalationGroup = process.env.TGESCALATIONGROUP;
 const {
     CheckContentText,
     SubscribtionText,
+    ChangeLanguage,
     SetFakesRequestText
 } = require('./contstants');
 const {safeErrorLog} = require("./utils");
@@ -64,10 +66,12 @@ bot.on('message', async (msg) => {
         await confirmComment(msg, bot)
     } else if (text === '/start') {
         await onStart(msg, bot);
-    } else if (text === CheckContentText) {
+    } else if (text === CheckContentText['ua'] || text === CheckContentText['en']) {
         await onCheckContent(msg, bot)
-    } else if (text === SubscribtionText) {
+    } else if (text === SubscribtionText['ua'] || text === SubscribtionText['en']) {
         await onSubscription(msg, bot)
+    } else if (text === ChangeLanguage['ua'] || text === ChangeLanguage['en']) {
+        await onChangeLanguage(msg, bot)
     } else if (text == '/setfakes') { 
         await onSetFakesRequest(msg, bot);
     } else if (text && text.startsWith('/setblacksource')) { 

@@ -8,6 +8,7 @@ module.exports = {
                 const textsObj = JSON.parse(texts);
                 for (var i in textsObj) {
                     if (textsObj[i].name == name){
+                        if (lang == null) return callback(null, textsObj[i]);
                         return callback(null, textsObj[i][lang]);
                     } 
                 }
