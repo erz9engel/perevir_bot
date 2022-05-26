@@ -56,9 +56,9 @@ setTimeout(function () {
 bot.on('message', async (msg) => {
     const text = msg.text;
     
-    if (msg.chat.id === escalationGroup) {
+    if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
-    } else if (msg.chat.id === commentGroup && msg.text){
+    } else if (msg.chat.id.toString() === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
