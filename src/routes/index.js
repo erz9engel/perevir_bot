@@ -42,9 +42,17 @@ router.get('/', auth.optional, async (req, res) => {
                     rTotal: [],
                     rTrue: [],
                     rFake: [],
+                    rSemiTrue: [],
+                    rNoProofs: [],
+                    rReject: [],
+                    rPending: [],
                     rToday: [],
                     rTodayTrue: [],
                     rTodayFake: [],
+                    rTodaySemiTrue: [],
+                    rTodayNoProofs: [],
+                    rTodayReject: [],
+                    rTodayPending: [],
                     subs: [],
                     nSubs: [],
                     nRecived: []
@@ -56,9 +64,19 @@ router.get('/', auth.optional, async (req, res) => {
                     data.rTotal.push(stats[i].rTotal);
                     data.rTrue.push(stats[i].rTrue);
                     data.rFake.push(stats[i].rFake);
+                    data.rSemiTrue.push(stats[i].rSemiTrue);
+                    data.rNoProofs.push(stats[i].rNoProofs);
+                    data.rReject.push(stats[i].rReject);
+                    data.rPending.push(stats[i].rPending);
+
                     data.rToday.push(stats[i].rToday);
                     data.rTodayTrue.push(stats[i].rTodayTrue);
                     data.rTodayFake.push(stats[i].rTodayFake);
+                    data.rTodaySemiTrue.push(stats[i].rTodaySemiTrue);
+                    data.rTodayNoProofs.push(stats[i].rTodayNoProofs);
+                    data.rTodayReject.push(stats[i].rTodayReject);
+                    data.rTodayPending.push(stats[i].rTodayPending);
+
                     data.subs.push(stats[i].subs);
                     data.nSubs.push(stats[i].nSubs);
                     data.nRecived.push(stats[i].nRecived);
