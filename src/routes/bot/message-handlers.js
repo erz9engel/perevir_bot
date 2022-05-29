@@ -19,7 +19,6 @@ const {
     SetFakesRequestText,
     RequestTimeout
 } = require('./contstants');
-const { obj } = require('./contstants')
 const { getText } = require('./localisation');
 const {
     getSubscriptionBtn,
@@ -30,6 +29,7 @@ const {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
+    getLanguage
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
@@ -69,11 +69,6 @@ const getReplyOptions = async (lang) => {
             keyboard: keyboard
         }
     };
-}
-
-const getLanguage = async (tgId) => {
-    const user = await TelegramUser.findOne({telegramID: tgId}, 'language');
-    return user;
 }
 
 const onCheckContent = async (msg, bot) => {
@@ -479,7 +474,8 @@ const onCheckGroupRequest = async (msg, bot) => {
         return group.groupId === msg.media_group_id;
     });
     if (index < 0) {
-        mediaGroups.push({ groupId: msg.media_group_id, text: msg.caption, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
+        if (msg.caption) mediaGroups.push({ groupId: msg.media_group_id, text: msg.caption, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
+        else mediaGroups.push({ groupId: msg.media_group_id, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
     } else {
         mediaGroups[index].mediaFiles.push({mediaFileId: mediaFileId, mediaType: mediaType});
         if (msg.caption) mediaGroups[index].text += msg.caption;
@@ -555,13 +551,13 @@ const onCheckGroupRequest = async (msg, bot) => {
 }
 
 const onUnsupportedContent = async (msg, bot) => {
-    try {
-        const {language} = await getLanguage(msg.chat.id);
-        await getText('unsupported_request', language, async function(err, text){
-            if (err) return safeErrorLog(err);
+    const {language} = await getLanguage(msg.chat.id);
+    await getText('unsupported_request', language, async function(err, text){
+        if (err) return safeErrorLog(err);
+        try {
             await bot.sendMessage(msg.chat.id, text);
-        });
-    } catch (e) { safeErrorLog(e) }
+        } catch (e) { safeErrorLog(e) }
+    });
 }
 
 async function sleep(ms) {

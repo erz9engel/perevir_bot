@@ -267,6 +267,12 @@ function safeErrorLog(error) {
     }
 }
 
+const getLanguage = async (tgId) => {
+    const user = await TelegramUser.findOne({telegramID: tgId}, 'language');
+    if(!user) return {'language': 'ua'}
+    return user;
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -280,5 +286,6 @@ module.exports = {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
-    changeInlineKeyboard
+    changeInlineKeyboard,
+    getLanguage
 }

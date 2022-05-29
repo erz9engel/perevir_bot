@@ -9,7 +9,7 @@ const SubscribtionText = {
 }
 
 const ChangeLanguage = {
-    ua: "🇬🇧 Change Language",
+    ua: "🌍 Change Language",
     en: "🇺🇦 Змінити мову"
 }
 

@@ -5,13 +5,15 @@ const {
     getUserName,
     involveModerator,
     changeInlineKeyboard,
-    safeErrorLog
+    safeErrorLog,
+    getLanguage
 } = require("./utils");
 
 const {
     NoCurrentFakes
 } = require('./contstants')
 const {informRequestersWithComment} = require("./message-handlers");
+const { getText } = require('./localisation');
 const mongoose = require("mongoose");
 require('dotenv').config();
 
@@ -253,7 +255,8 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             createdAt: new Date(),
         });
 
-        await getText('request_escalated', 'ua', async function(err, text) {
+        const {language,id} = await getLanguage(request.requesterTG);
+        await getText('request_escalated', language, async function(err, text) {
             if (err) return safeErrorLog(err);
             let options = {
                 reply_to_message_id: request.requesterMsgID
