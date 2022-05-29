@@ -138,9 +138,18 @@ var dailyStatsSchema = Schema({
     rTotal: Number, //Total requests
     rFake: Number, //Total fake requests
     rTrue: Number, //Total true requests
+    rSemiTrue: Number, //Total semi-true requests
+    rNoProofs: Number, //Total no proofs requests
+    rReject: Number, //Total reject requests
+    rPending: Number, //Total pending requests
+    rTrue: Number, //Total true requests
     rToday: Number, //Today requests
     rTodayFake: Number, //Today fake requests
     rTodayTrue: Number, //Today true requests
+    rTodaySemiTrue: Number, //Today semi-true requests
+    rTodayNoProofs: Number, //Today no proofs requests
+    rTodayReject: Number, //Today reject requests
+    rTodayPending: Number, //Today pending requests
     createdAt: {type: Date, default: new Date()} //Time of colelction
 });
 
