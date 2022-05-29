@@ -275,6 +275,28 @@ const onReplyWithComment = async (msg, bot) => {
     await informRequestersWithComment(request, msg.chat.id, commentMsgId, bot);
 }
 
+const statusesKeyboard = async (requestId) => {
+
+    return [
+        [
+            { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
+            { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
+        ],
+        [
+            { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
+            { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+        ],
+        [
+            { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
+            { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+        ],
+        [   
+            { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
+        ]
+    ];
+
+};
+
 const onCheckRequest = async (msg, bot) => {
     console.log(msg);
     const requestStatus = await checkRequestStatus(msg, bot);
@@ -394,21 +416,7 @@ const onCheckRequest = async (msg, bot) => {
     let inline_keyboard;
     if (!notified) {
     
-        inline_keyboard = [
-            [
-                { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
-                { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
-            ],
-            [
-                { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
-            ],
-            [
-                { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
-            ]
-        ];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+        inline_keyboard = await statusesKeyboard(requestId);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -515,15 +523,15 @@ const onCheckGroupRequest = async (msg, bot) => {
             }
             const requestId = new mongoose.Types.ObjectId();
 
-            var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+            //new
+            var inline_keyboard = await statusesKeyboard(requestId);
             var options = {
-                reply_to_message_id: sentMsg[0].message_id,
+                reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({
                     inline_keyboard
                 })
             };
-            const sentActionMsg = await bot.sendMessage(moderatorsChanel,'#pending',options);
+            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '#pending', options);
             var request = new Request({
                 _id: requestId,
                 requesterTG: msg.chat.id,
