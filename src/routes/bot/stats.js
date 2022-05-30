@@ -65,10 +65,10 @@ function sendStats() {
         stats.rTodayFake = lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length
         msg += '\nФейк: ' + stats.rTodayFake;
 
-        stats.rTodaySemiTrue = requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        stats.rTodaySemiTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === -5).length;
         msg += '\nНапівправда: ' + stats.rTodaySemiTrue;
 
-        stats.rTodayNoProofs = requests.filter(r => parseInt(r.fakeStatus) === -4).length;
+        stats.rTodayNoProofs = lastrequests.filter(r => parseInt(r.fakeStatus) === -4).length;
         msg += '\nВідсутні докази: ' + stats.rTodayNoProofs;
 
         stats.rTodayTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
