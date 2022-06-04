@@ -116,6 +116,7 @@ var commentSchema = Schema({
     _id: Schema.Types.ObjectId,
     tag: String,
     comment: String,
+    entities: {type : Array , "default" : []},
     createdAt: {type: Date, default: new Date()}
 })
 

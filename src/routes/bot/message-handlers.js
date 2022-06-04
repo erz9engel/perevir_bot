@@ -687,10 +687,18 @@ async function saveCommentToDB(message, bot) {
                 return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
             } 
             
+            let entities = message.entities;
+            entities.shift();
+            let offset = message.text.indexOf(text)
+            for (let index = 0; index < entities.length; index++) {
+                entities[index].offset = entities[index].offset - offset
+            }
+
             let comment = new Comment({
                 _id: new mongoose.Types.ObjectId(),
                 tag: tag,
                 comment: text,
+                entities: entities,
                 createdAt: new Date()
             });
             await comment.save()
@@ -715,7 +723,8 @@ async function confirmComment(message, bot) {
     ]];
     let options = {
         reply_to_message_id: message.message_id,
-        reply_markup: JSON.stringify({inline_keyboard})
+        reply_markup: JSON.stringify({inline_keyboard}),
+        entities: JSON.stringify(comment.entities),
     };
     try {
         await bot.sendMessage(
