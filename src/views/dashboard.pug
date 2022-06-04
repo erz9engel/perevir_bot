@@ -107,6 +107,16 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
           .card-body.p-3
             .chart
               canvas#newsletters.chart-canvas(height='300')
+      pre
+      .col-lg-6
+        .card.z-index-2
+          .card-header.pb-0
+            h6 Запитів на користувача
+            p.text-sm
+              | Групування даних: 10+, 15+, 20+, 50+
+          .card-body.p-3
+            .chart
+              canvas#requestPerUser.chart-canvas(height='300')
 
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')
@@ -421,6 +431,31 @@ script.
   backgroundColor: gradientStroke2,
   fill: true,
   data: [#{data.nRecived}],
+  maxBarThickness: 6
+  }
+  ],
+  },
+  options: options,
+  });
+
+  
+  //NEWSLETTER
+  var ctx3 = document.getElementById("requestPerUser").getContext("2d");
+  new Chart(ctx3, {
+  type: "line",
+  data: {
+  labels: [#{data.requestPerUserLabel}],
+  datasets: [
+  {
+  label: "Користувачів",
+  tension: 0.4,
+  borderWidth: 0,
+  pointRadius: 0,
+  borderColor: "#006854",
+  borderWidth: 3,
+  backgroundColor: gradientStroke2,
+  fill: true,
+  data: [#{data.requestPerUserData}],
   maxBarThickness: 6
   }
   ],
