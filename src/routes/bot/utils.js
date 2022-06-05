@@ -273,6 +273,14 @@ const getLanguage = async (tgId) => {
     return user;
 }
 
+function shiftOffsetEntities(entities, offset) {
+    entities.shift();
+    for (let index = 0; index < entities.length; index++) {
+        entities[index].offset = entities[index].offset - offset
+    }
+    return entities;
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -287,5 +295,6 @@ module.exports = {
     getLabeledSource,
     safeErrorLog,
     changeInlineKeyboard,
-    getLanguage
+    getLanguage,
+    shiftOffsetEntities,
 }

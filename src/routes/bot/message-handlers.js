@@ -29,7 +29,8 @@ const {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
-    getLanguage
+    getLanguage,
+    shiftOffsetEntities,
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
@@ -679,20 +680,28 @@ async function saveCommentToDB(message, bot) {
     let comment = await Comment.findOne({"tag": tag}, '');
     let text = message.text.slice(tag.length).trim();
 
-    if (comment) {
-        await bot.sendMessage(message.chat.id, 'Тег ' + tag + ' вже існує в базі, виберіть інший тег');
+    if (comment && comment.comment !== text) {
+        let inline_keyboard = [[
+            { text: '✅️ Оновити', callback_data: 'UPDATECOMMENT_' + comment._id},
+            { text: '❌️ Скасувати', callback_data: 'UPDATECOMMENT_'}
+        ]];
+        let options = {
+            reply_to_message_id: message.message_id,
+            reply_markup: {inline_keyboard},
+            entities: comment.entities,
+        }
+        let resp = await bot.sendMessage(
+            message.chat.id,
+            comment.comment + '\n\n===========================\nОновити існуючий коментар під тегом ' + tag + '?',
+            options,
+        );
     } else {
         if (tag.startsWith('#')) {
             if (text.length < 10) {
                 return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
             } 
             
-            let entities = message.entities;
-            entities.shift();
-            let offset = message.text.indexOf(text)
-            for (let index = 0; index < entities.length; index++) {
-                entities[index].offset = entities[index].offset - offset
-            }
+            let entities = shiftOffsetEntities(message.entities, message.text.indexOf(text))
 
             let comment = new Comment({
                 _id: new mongoose.Types.ObjectId(),
