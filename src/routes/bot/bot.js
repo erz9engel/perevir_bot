@@ -70,7 +70,7 @@ bot.on('message', async (msg) => {
     const userStatus = await checkUserStatus(msg.from.id)
     if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
         const recipient = userStatus.split('_')[1]
-        if (msg.text && msg.text === "/close_chat") {
+        if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
             await closeChat(msg.from.id, recipient, bot)
         } else {
             await bot.copyMessage(recipient, msg.chat.id, msg.message_id)

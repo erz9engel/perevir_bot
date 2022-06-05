@@ -343,10 +343,22 @@ const onChatModeQuery = async (callbackQuery, bot) => {
         await moderator.save()
         await requester.save()
         await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
-        await bot.sendMessage(moderatorId, 'За цим запитом розпочато діалог з ініціатором запиту.\n'
+        let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
             + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу '
-            + getUserName(message.reply_to_message.from) + ' від імені бота')
-        await bot.sendMessage(moderatorId, 'Для того, щоб вийти з режиму діалогу напишіть /close_chat')
+            + getUserName(message.reply_to_message.from) + ' від імені бота\n'
+            + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
+            + 'або скористайтеся кнопкою внизу'
+        await bot.sendMessage(
+            moderatorId,
+            moderatorText,
+            {
+                reply_markup: {
+                    resize_keyboard: true,
+                    one_time_keyboard: false,
+                    keyboard: [[{ text: '📵 Завершити діалог'}]]
+                }
+            }
+        )
         await bot.sendMessage(requesterId, 'З метою уточнення даних по вашому запиту до цього чату підключиться фактчекер')
     }
 }

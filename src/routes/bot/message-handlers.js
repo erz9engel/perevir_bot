@@ -734,7 +734,8 @@ async function confirmComment(message, bot) {
 async function closeChat(user, recipient, bot) {
     await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
     await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
-    await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено')
+    const replyOptions = await getReplyOptions('ua');
+    await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
     await bot.sendMessage(recipient, 'Фактчекер завершив діалог')
 }
 
