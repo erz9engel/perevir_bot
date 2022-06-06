@@ -10,6 +10,7 @@ var cors = require('cors');
 var routes = require('./routes/index');
 require('./routes/bot/stats');
 var textsAPIRouter = require("./routes/dashboard/textsAPI");
+var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
 var authAPIRouter = require("./routes/dashboard/authAPI");
 require('./routes/config/passport');
 
@@ -26,6 +27,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+app.use("/leaderboardAPI", leaderboardAPIRouter);
 app.use("/textsAPI", textsAPIRouter);
 app.use("/authAPI", authAPIRouter);
 

@@ -6,3 +6,11 @@
 .card .card-body {
     margin-bottom: 20px;
 }
+
+.left-pad {
+    padding-left: 25px!important;
+}
+
+.date {
+    margin-right: 20px;
+}
