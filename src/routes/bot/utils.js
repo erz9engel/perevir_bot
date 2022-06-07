@@ -267,6 +267,20 @@ function safeErrorLog(error) {
     }
 }
 
+const getLanguage = async (tgId) => {
+    const user = await TelegramUser.findOne({telegramID: tgId}, 'language');
+    if(!user) return {'language': 'ua'}
+    return user;
+}
+
+function shiftOffsetEntities(entities, offset) {
+    entities.shift();
+    for (let index = 0; index < entities.length; index++) {
+        entities[index].offset = entities[index].offset - offset
+    }
+    return entities;
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -280,5 +294,7 @@ module.exports = {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
-    changeInlineKeyboard
+    changeInlineKeyboard,
+    getLanguage,
+    shiftOffsetEntities,
 }

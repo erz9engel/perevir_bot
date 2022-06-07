@@ -5,13 +5,16 @@ const {
     getUserName,
     involveModerator,
     changeInlineKeyboard,
-    safeErrorLog
+    safeErrorLog,
+    getLanguage,
+    shiftOffsetEntities,
 } = require("./utils");
 
 const {
     NoCurrentFakes
 } = require('./contstants')
 const {informRequestersWithComment} = require("./message-handlers");
+const { getText } = require('./localisation');
 const mongoose = require("mongoose");
 require('dotenv').config();
 
@@ -19,6 +22,7 @@ const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Data = mongoose.model('Data');
 const Escalation = mongoose.model('Escalation');
+const Comment = mongoose.model('Comment');
 
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
@@ -253,7 +257,8 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             createdAt: new Date(),
         });
 
-        await getText('request_escalated', 'ua', async function(err, text) {
+        const {language,id} = await getLanguage(request.requesterTG);
+        await getText('request_escalated', language, async function(err, text) {
             if (err) return safeErrorLog(err);
             let options = {
                 reply_to_message_id: request.requesterMsgID
@@ -310,6 +315,39 @@ const onEscalateQuery = async (callbackQuery, bot) => {
     }
 }
 
+const onUpdateCommentQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    if (data === 'UPDATECOMMENT_') {
+        try {
+            await bot.deleteMessage(message.chat.id, message.message_id);
+        } catch (e) {
+            console.log(e);
+        }
+    } else {
+        try {
+            await bot.editMessageReplyMarkup({}, {
+                chat_id: message.chat.id,
+                message_id: message.message_id
+            })
+        } catch (e) {
+            return console.log(e);
+        }
+
+        const commentId = data.split('_')[1];
+        let tag = message.reply_to_message.text.split("\n", 1)[0].split(' ')[0];
+        let text = message.reply_to_message.text.slice(tag.length).trim();
+        let entities = shiftOffsetEntities(
+            message.reply_to_message.entities,
+            message.reply_to_message.text.indexOf(text),
+        )
+        await Comment.findByIdAndUpdate(
+            commentId,
+            {comment: text, entities: entities }
+        );
+        await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
+    }
+}
+
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
@@ -318,4 +356,5 @@ module.exports = {
     onSendFakesQuery,
     onConfirmCommentQuery,
     onEscalateQuery,
+    onUpdateCommentQuery,
 }

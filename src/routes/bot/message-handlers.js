@@ -19,7 +19,6 @@ const {
     SetFakesRequestText,
     RequestTimeout
 } = require('./contstants');
-const { obj } = require('./contstants')
 const { getText } = require('./localisation');
 const {
     getSubscriptionBtn,
@@ -30,6 +29,8 @@ const {
     newYoutubeSource,
     getLabeledSource,
     safeErrorLog,
+    getLanguage,
+    shiftOffsetEntities,
 } = require("./utils");
 
 const onStart = async (msg, bot) => {
@@ -69,11 +70,6 @@ const getReplyOptions = async (lang) => {
             keyboard: keyboard
         }
     };
-}
-
-const getLanguage = async (tgId) => {
-    const user = await TelegramUser.findOne({telegramID: tgId}, 'language');
-    return user;
 }
 
 const onCheckContent = async (msg, bot) => {
@@ -280,6 +276,28 @@ const onReplyWithComment = async (msg, bot) => {
     await informRequestersWithComment(request, msg.chat.id, commentMsgId, bot);
 }
 
+const statusesKeyboard = async (requestId) => {
+
+    return [
+        [
+            { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
+            { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
+        ],
+        [
+            { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
+            { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+        ],
+        [
+            { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
+            { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+        ],
+        [   
+            { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
+        ]
+    ];
+
+};
+
 const onCheckRequest = async (msg, bot) => {
     console.log(msg);
     const requestStatus = await checkRequestStatus(msg, bot);
@@ -399,21 +417,7 @@ const onCheckRequest = async (msg, bot) => {
     let inline_keyboard;
     if (!notified) {
     
-        inline_keyboard = [
-            [
-                { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
-                { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
-            ],
-            [
-                { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
-            ],
-            [
-                { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
-            ]
-        ];
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+        inline_keyboard = await statusesKeyboard(requestId);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -479,7 +483,8 @@ const onCheckGroupRequest = async (msg, bot) => {
         return group.groupId === msg.media_group_id;
     });
     if (index < 0) {
-        mediaGroups.push({ groupId: msg.media_group_id, text: msg.caption, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
+        if (msg.caption) mediaGroups.push({ groupId: msg.media_group_id, text: msg.caption, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
+        else mediaGroups.push({ groupId: msg.media_group_id, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
     } else {
         mediaGroups[index].mediaFiles.push({mediaFileId: mediaFileId, mediaType: mediaType});
         if (msg.caption) mediaGroups[index].text += msg.caption;
@@ -519,15 +524,15 @@ const onCheckGroupRequest = async (msg, bot) => {
             }
             const requestId = new mongoose.Types.ObjectId();
 
-            var inline_keyboard = [[{ text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId }, { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId }, { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }]];
-            inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
+            //new
+            var inline_keyboard = await statusesKeyboard(requestId);
             var options = {
-                reply_to_message_id: sentMsg[0].message_id,
+                reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({
                     inline_keyboard
                 })
             };
-            const sentActionMsg = await bot.sendMessage(moderatorsChanel,'#pending',options);
+            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '#pending', options);
             var request = new Request({
                 _id: requestId,
                 requesterTG: msg.chat.id,
@@ -555,13 +560,13 @@ const onCheckGroupRequest = async (msg, bot) => {
 }
 
 const onUnsupportedContent = async (msg, bot) => {
-    try {
-        const {language} = await getLanguage(msg.chat.id);
-        await getText('unsupported_request', language, async function(err, text){
-            if (err) return safeErrorLog(err);
+    const {language} = await getLanguage(msg.chat.id);
+    await getText('unsupported_request', language, async function(err, text){
+        if (err) return safeErrorLog(err);
+        try {
             await bot.sendMessage(msg.chat.id, text);
-        });
-    } catch (e) { safeErrorLog(e) }
+        } catch (e) { safeErrorLog(e) }
+    });
 }
 
 async function sleep(ms) {
@@ -675,18 +680,34 @@ async function saveCommentToDB(message, bot) {
     let comment = await Comment.findOne({"tag": tag}, '');
     let text = message.text.slice(tag.length).trim();
 
-    if (comment) {
-        await bot.sendMessage(message.chat.id, 'Тег ' + tag + ' вже існує в базі, виберіть інший тег');
+    if (comment && comment.comment !== text) {
+        let inline_keyboard = [[
+            { text: '✅️ Оновити', callback_data: 'UPDATECOMMENT_' + comment._id},
+            { text: '❌️ Скасувати', callback_data: 'UPDATECOMMENT_'}
+        ]];
+        let options = {
+            reply_to_message_id: message.message_id,
+            reply_markup: {inline_keyboard},
+            entities: comment.entities,
+        }
+        let resp = await bot.sendMessage(
+            message.chat.id,
+            comment.comment + '\n\n===========================\nОновити існуючий коментар під тегом ' + tag + '?',
+            options,
+        );
     } else {
         if (tag.startsWith('#')) {
             if (text.length < 10) {
                 return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
             } 
             
+            let entities = shiftOffsetEntities(message.entities, message.text.indexOf(text))
+
             let comment = new Comment({
                 _id: new mongoose.Types.ObjectId(),
                 tag: tag,
                 comment: text,
+                entities: entities,
                 createdAt: new Date()
             });
             await comment.save()
@@ -711,7 +732,8 @@ async function confirmComment(message, bot) {
     ]];
     let options = {
         reply_to_message_id: message.message_id,
-        reply_markup: JSON.stringify({inline_keyboard})
+        reply_markup: JSON.stringify({inline_keyboard}),
+        entities: JSON.stringify(comment.entities),
     };
     try {
         await bot.sendMessage(

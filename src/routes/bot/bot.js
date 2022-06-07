@@ -27,6 +27,7 @@ const {
     onSendFakesQuery,
     onConfirmCommentQuery,
     onEscalateQuery,
+    onUpdateCommentQuery,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -46,6 +47,12 @@ const {
     SetFakesRequestText
 } = require('./contstants');
 const {safeErrorLog} = require("./utils");
+const {
+    isValidCheckRequest,
+    isReplyWithCommentRequest,
+    isUnsupportedContent,
+    isTextFromDict,
+} = require("./validation");
 
 setTimeout(function () {
     try {
@@ -58,21 +65,21 @@ setTimeout(function () {
 bot.on('message', async (msg) => {
     const text = msg.text;
     
-    if (msg.chat.id === escalationGroup) {
+    if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
-    } else if (msg.chat.id === commentGroup && msg.text){
+    } else if (msg.chat.id.toString() === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
     } else if (text === '/start') {
         await onStart(msg, bot);
-    } else if (text === CheckContentText['ua'] || text === CheckContentText['en']) {
+    } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
-    } else if (text === SubscribtionText['ua'] || text === SubscribtionText['en']) {
+    } else if (isTextFromDict(text, SubscribtionText)) {
         await onSubscription(msg, bot)
-    } else if (text === ChangeLanguage['ua'] || text === ChangeLanguage['en']) {
+    } else if (isTextFromDict(text, ChangeLanguage)) {
         await onChangeLanguage(msg, bot)
-    } else if (text == '/setfakes') { 
+    } else if (text === '/setfakes') {
         await onSetFakesRequest(msg, bot);
     } else if (text && text.startsWith('/setblacksource')) { 
         await onSetSource(msg, bot, true);
@@ -82,18 +89,18 @@ bot.on('message', async (msg) => {
         await onRequestStatus(msg, bot, true);
     } else if (text === '/forbidrequests') {
         await onRequestStatus(msg, bot, false);
-    }  else if (msg.reply_to_message && msg.reply_to_message.text == SetFakesRequestText) { 
+    }  else if (msg.reply_to_message && msg.reply_to_message.text === SetFakesRequestText) {
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
     } else if (text === '/closepending') {
         await onCloseOldRequests(msg, bot)
-    } else if (msg.reply_to_message && msg.reply_to_message.text && msg.reply_to_message.text.indexOf('#comment_') != -1){
+    } else if (isReplyWithCommentRequest(msg)) {
         await onReplyWithComment(msg, bot);
-    } else if ((msg.photo || msg.video || (msg.text && msg.text.length > 10)) && !msg.reply_to_message) { //Check if text > 10 in order to sort out short msgs
+    } else if (isValidCheckRequest(msg)) {
         if (msg.media_group_id) await onCheckGroupRequest(msg, bot);
         else await onCheckRequest(msg, bot);
-    } else if (msg.audio || msg.document || msg.voice || msg.location) {
+    } else if (isUnsupportedContent(msg)) {
         await onUnsupportedContent(msg, bot);
     }
 });
@@ -120,6 +127,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onConfirmCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
         await onEscalateQuery(callbackQuery, bot)
+    } else if (data.startsWith('UPDATECOMMENT_')) {
+        await onUpdateCommentQuery(callbackQuery, bot)
     }
 });
 

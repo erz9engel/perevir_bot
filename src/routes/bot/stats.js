@@ -36,17 +36,26 @@ function sendStats() {
       
         stats.rFake = requests.filter(r => parseInt(r.fakeStatus) === -1).length;
         msg += '\nФейк: ' + stats.rFake;
-        msg += '\nНапівправда: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
-        msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
+
+        stats.rSemiTrue = requests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + stats.rSemiTrue;
+
+        stats.rNoProofs = requests.filter(r => parseInt(r.fakeStatus) === -4).length;
+        msg += '\nВідсутні докази: ' + stats.rNoProofs;
+
         stats.rTrue = requests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nПравда: ' + stats.rTrue;
 
-        msg += '\nВідмовлено: ' + requests.filter(r => parseInt(r.fakeStatus) === -2).length;
-        msg += '\nОчікує: ' + requests.filter(r => parseInt(r.fakeStatus) === 0).length;
+        stats.rReject = requests.filter(r => parseInt(r.fakeStatus) === -2).length;
+        msg += '\nВідмовлено: ' + stats.rReject;
+
+        stats.rPending = requests.filter(r => parseInt(r.fakeStatus) === 0).length;
+        msg += '\nОчікує: ' + stats.rPending;
         msg += '\nАвтовідмова: ' + requests.filter(r => parseInt(r.fakeStatus) === -3).length;
         msg += '\nАвтопідтвердження: ' + requests.filter(r => parseInt(r.fakeStatus) === 2).length;
-        msg += '\n\n<b>Остання доба:</b>';
+
         //Last 24 hours
+        msg += '\n\n<b>Остання доба:</b>';
         now.setDate(now.getDate() - 1);
         const lastrequests = requests.filter(r => new Date(r.createdAt) >= now);
 
@@ -55,13 +64,21 @@ function sendStats() {
 
         stats.rTodayFake = lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length
         msg += '\nФейк: ' + stats.rTodayFake;
-        msg += '\nНапівправда: ' + requests.filter(r => parseInt(r.fakeStatus) === -5).length;
-        msg += '\nВідсутні докази: ' + requests.filter(r => parseInt(r.fakeStatus) === -4).length;
+
+        stats.rTodaySemiTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + stats.rTodaySemiTrue;
+
+        stats.rTodayNoProofs = lastrequests.filter(r => parseInt(r.fakeStatus) === -4).length;
+        msg += '\nВідсутні докази: ' + stats.rTodayNoProofs;
+
         stats.rTodayTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
         msg += '\nПравда: ' + stats.rTodayTrue;
 
-        msg += '\nВідмовлено: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -2).length;
-        msg += '\nОчікує: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 0).length;
+        stats.rTodayReject = lastrequests.filter(r => parseInt(r.fakeStatus) === -2).length;
+        msg += '\nВідмовлено: ' + stats.rTodayReject;
+
+        stats.rTodayPending = lastrequests.filter(r => parseInt(r.fakeStatus) === 0).length;
+        msg += '\nОчікує: ' + stats.rTodayPending;
         msg += '\nАвтовідмова: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === -3).length;
         msg += '\nАвтопідтвердження: ' + lastrequests.filter(r => parseInt(r.fakeStatus) === 2).length;
 
@@ -140,9 +157,17 @@ async function collectStats(stats) {
         rTotal: stats.rTotal,
         rFake: stats.rFake,
         rTrue: stats.rTrue, 
+        rSemiTrue: stats.rSemiTrue,
+        rNoProofs: stats.rNoProofs,
+        rReject: stats.rReject,
+        rPending: stats.rPending,
         rToday: stats.rToday, 
         rTodayFake: stats.rTodayFake, 
         rTodayTrue: stats.rTodayTrue,
+        rTodaySemiTrue: stats.rTodaySemiTrue,
+        rTodayNoProofs: stats.rTodayNoProofs,
+        rTodayReject: stats.rTodayReject,
+        rTodayPending: stats.rTodayPending,
         createdAt: new Date()
     });
     await dailyStats.save().then(() => {}).catch((error) => {
