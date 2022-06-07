@@ -4,3 +4,4 @@
 package-lock.json
 .DS_Store
 /mongo-volume
+src/routes/config/perevir_bot.log

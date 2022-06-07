@@ -3,6 +3,7 @@ var router = express.Router();
 const mongoose = require('mongoose');
 const auth = require('./auth');
 const fs = require('fs');
+const {logger} = require("../config/logging");
 var Data = mongoose.model('Data');
 
 //POST new user route (optional, everyone has access)
@@ -37,10 +38,10 @@ async function updateTexts(texts) {
             }
             fs.writeFile("texts.json", JSON.stringify(dbTexts), 'utf8', async function (err) {
                 if (err) {
-                    console.log("An error occured while writing JSON Object to File.");
-                    return console.log(err);
+                    logger.error("An error occured while writing JSON Object to File.");
+                    return logger.error(err);
                 }
-                console.log("Texts file has been updated.");
+                logger.info("Texts file has been updated.");
                 //Write to DB
                 await Data.findOneAndUpdate({name: 'texts'}, {value: JSON.stringify(dbTexts)});
             });
@@ -60,7 +61,7 @@ async function getTextsFromDB (){
         } else if (texts.value) {
             fs.writeFile("texts.json", texts.value, 'utf8', function (err) {
                 if (err) {
-                    console.log("An error occured while writing JSON Object to File.");
+                    logger.error("An error occured while writing JSON Object to File.");
                 }
             });
         }

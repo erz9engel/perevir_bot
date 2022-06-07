@@ -53,7 +53,7 @@ router.post('/assign', authenticate, async (req, res) => {
 
         const updatedRequest = await NewsRequest.findOne({_id: newsRequestId}).populate('assignedTo');
 
-        console.log(updatedRequest);
+        logger.info(updatedRequest);
         res.send(updatedRequest);
     } catch (_) {
         return res.status(404).send('news request not found');
