@@ -10,7 +10,7 @@ require('dotenv').config();
 //DataBase connection 
 mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true }, function (err, db) {
     if (err) {
-        console.log('Unable to connect to the server. Please start the server\n'+ err);
+        logger.error('Unable to connect to the server. Please start the server\n'+ err);
     } 
 });
 
@@ -25,6 +25,7 @@ var Requests = mongoose.model('Request');
 var TelegramUser = mongoose.model('TelegramUser');
 
 require('./bot/bot');
+const {logger} = require("./config/logging");
 //router.use(require('./api'));
 
 router.get('/sign-up', auth.optional, async (req, res) => {

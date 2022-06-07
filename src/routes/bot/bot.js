@@ -34,6 +34,8 @@ const {
 
 const {answerInlineQuery} = require("./inline-query")
 
+const {logger} = require('../config/logging')
+
 //TELEGRAM BOT
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TGTOKEN;
@@ -66,6 +68,7 @@ setTimeout(function () {
 }, 10000); //Notify about reloading
 
 bot.on('message', async (msg) => {
+    logger.debug(msg)
     const text = msg.text;
 
     const userStatus = await checkUserStatus(msg.from.id)
@@ -117,9 +120,10 @@ bot.on('message', async (msg) => {
 });
 
 bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
+    logger.debug(callbackQuery)
     const {data} = callbackQuery;
     if (!data) {
-        return console.error('INVALID callback query, no action provided', callbackQuery)
+        return logger.error('INVALID callback query, no action provided', callbackQuery)
     }
 
     if (data.startsWith('FS_')) {
@@ -133,7 +137,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     } else if (data.startsWith('SENDFAKES_')) {
         await onSendFakesQuery(callbackQuery, bot)
     } else if (data.startsWith('REASON_')) {
-        console.log("old reason message") 
+        logger.warn("old reason message")
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
@@ -146,6 +150,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
 });
 
 bot.on("inline_query", async function onCallbackQuery(inlineQuery) {
+    logger.debug(inlineQuery)
     const {query} = inlineQuery;
     if (query.length > 3) {
         await answerInlineQuery(inlineQuery, bot)

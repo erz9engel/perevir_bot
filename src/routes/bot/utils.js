@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { getText } = require('./localisation');
+const {logger} = require("../config/logging");
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
@@ -75,7 +76,7 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
-            console.log(index + " - " + users.length );
+            logger.debug(index + " - " + users.length );
         } catch (e) { 
             safeErrorLog(e);
         }
@@ -93,7 +94,7 @@ function writeNReceivers(receivedUsers) {
     const now = new Date();
     const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
     DailyStats.findOneAndUpdate({stringDate:stringDate}, {$inc: {nRecived: receivedUsers}}, function(e, d){
-        if (e) console.log(e);
+        if (e) logger.error(e);
         //Potential bug, if function is called before DS created this day
     });
 }
@@ -118,8 +119,8 @@ async function closeRequestByTimeout(request, bot) {
 async function involveModerator (requestId, moderatorTg) {
 
     const request = await Request.findById(requestId, 'moderator');
-    if (!request) return console.log('There is no request to assign moderator');
-    else if (request.moderator) return console.log('Second assignment of moderator to request');
+    if (!request) return logger.warn('There is no request to assign moderator');
+    else if (request.moderator) return logger.warn('Second assignment of moderator to request');
 
     const moderatorTgId = moderatorTg.id;
     var moderator = await Moderator.findOneAndUpdate({telegramID: moderatorTgId}, {$push: {requests: requestId}, lastAction: new Date()});
@@ -247,7 +248,7 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
         }
         newKeyboard = newKeyboard.concat(newBlock);
     } else {
-        console.error(blockToChange + ' inline keyboard block is unknown');
+        logger.error(blockToChange + ' inline keyboard block is unknown');
         newKeyboard = inlineKeyboard;
     }
     newKeyboard = newKeyboard.concat(inlineKeyboard)
@@ -257,12 +258,12 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
 
 function safeErrorLog(error) {
     try {
-        console.log(error.response.body.description)
+        logger.error(error.response.body.description)
     } catch (e) {
         if (error.message) {
-            console.log(error.message)
+            logger.error(error.message)
         } else {
-            console.log(error);
+            logger.error(error);
         }
     }
 }

@@ -32,6 +32,7 @@ const {
     getLanguage,
     shiftOffsetEntities,
 } = require("./utils");
+const {logger} = require("../config/logging");
 
 const onStart = async (msg, bot) => {
 
@@ -50,7 +51,7 @@ const onStart = async (msg, bot) => {
         createdAt: new Date()
     });
     await newUser.save().then(() => {}).catch((error) => {
-        console.log("MongoErr: " + error.code);
+        logger.error("MongoErr: " + error.code);
     });
 }
 
@@ -84,7 +85,7 @@ const onCheckContent = async (msg, bot) => {
 
 const onSubscription = async (msg, bot) => {
     const user = await TelegramUser.findOne({telegramID: msg.chat.id});
-    if (!user) return console.log("User not found 1.1")
+    if (!user) return logger.warn("User not found 1.1")
     const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
     var options = {
         reply_markup: JSON.stringify({
@@ -106,10 +107,10 @@ const onSubscription = async (msg, bot) => {
 
 const onChangeLanguage = async (msg, bot) => {
     const user = await TelegramUser.findOne({telegramID: msg.chat.id});
-    if (!user) return console.log("User not found 1.1");
+    if (!user) return logger.warn("User not found 1.1");
 
     var lang = user.language;
-    if (!lang) return console.log("User has no language");
+    if (!lang) return logger.warn("User has no language");
 
     if (lang == 'en') lang = 'ua';
     else if (lang == 'ua') lang = 'en';
@@ -137,7 +138,7 @@ const onSetFakesRequest = async (msg, bot) => {
         try {
             await bot.sendMessage(msg.chat.id, SetFakesRequestText, options);
         } catch (e) { safeErrorLog(e) }
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 const onSetSource = async (msg, bot, fake) => {
@@ -229,7 +230,7 @@ const onSetSource = async (msg, bot, fake) => {
             });
 
         }
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 const onSetFakes = async (msg, bot) => {
@@ -241,7 +242,7 @@ const onSetFakes = async (msg, bot) => {
             await bot.sendMessage(msg.chat.id, 'Зміни збережено');
             await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
         } catch (e) { safeErrorLog(e) }
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 const onSendFakes = async (msg, bot) => {
@@ -255,7 +256,7 @@ const onSendFakes = async (msg, bot) => {
         try {
             await bot.sendMessage(msg.chat.id, 'Надіслати актуальні фейки користувачам?', options);
         } catch (e) { safeErrorLog(e) }
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 const onRequestStatus = async (msg, bot, status) => {
@@ -265,7 +266,7 @@ const onRequestStatus = async (msg, bot, status) => {
         try {
             await bot.sendMessage(msg.chat.id, confirmMsg);
         } catch (e) { safeErrorLog(e) }
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 const onReplyWithComment = async (msg, bot) => {
@@ -302,7 +303,7 @@ const statusesKeyboard = async (requestId) => {
 };
 
 const onCheckRequest = async (msg, bot) => {
-    console.log(msg);
+    logger.debug(msg);
     const requestStatus = await checkRequestStatus(msg, bot);
     if (!requestStatus) return
     //Check any input message
@@ -467,7 +468,7 @@ const onCheckRequest = async (msg, bot) => {
 
 var mediaGroups = [];
 const onCheckGroupRequest = async (msg, bot) => {
-    console.log(msg);
+    logger.debug(msg);
 
     var mediaFileId, mediaType;
     if (msg.photo) {
@@ -674,7 +675,7 @@ const onCloseOldRequests = async (msg, bot) => {
                 ' року та досі були в статусі #pending');
         } catch (e) { safeErrorLog(e); }
 
-    } else {console.log('not allowed')}
+    } else {logger.info('This action is not allowed for non-admin users')}
 }
 
 async function saveCommentToDB(message, bot) {
@@ -745,7 +746,7 @@ async function confirmComment(message, bot) {
             options
         );
     } catch (e) {
-        console.log(e);
+        logger.error(e);
     }
 }
 

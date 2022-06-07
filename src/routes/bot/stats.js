@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 var bot = require('./bot');
+const {logger} = require("../config/logging");
 
 const Request = mongoose.model('Request');
 const Moderator = mongoose.model('Moderator');
@@ -110,7 +111,7 @@ function sendModeratorDailyStats() {
                     calculatedModerators.push({id: requestsM[i].moderator._id, tgId: requestsM[i].moderator.telegramID, name: requestsM[i].moderator.name, requests: 1, fakes: amounts.fakes, rejects: amounts.rejects, trues: amounts.trues, comments: amounts.comments })
                 }
             }
-            if (calculatedModerators.length == 0) return console.log('No moderators activity');
+            if (calculatedModerators.length == 0) return logger.warn('No moderators activity');
             calculatedModerators.sort((a, b) => a.requests < b.requests ? 1 : -1);
 
             var msg = "#24H_LEADERBOARD за <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>\nтоп-10';
@@ -171,7 +172,7 @@ async function collectStats(stats) {
         createdAt: new Date()
     });
     await dailyStats.save().then(() => {}).catch((error) => {
-        console.log("MongoErr on daily stats: " + error.code);
+        logger.error("MongoErr on daily stats: " + error.code);
     });
 }
 

@@ -16,6 +16,7 @@ const {
 const {informRequestersWithComment} = require("./message-handlers");
 const { getText } = require('./localisation');
 const mongoose = require("mongoose");
+const {logger} = require("../config/logging");
 require('dotenv').config();
 
 const Request = mongoose.model('Request');
@@ -52,7 +53,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     }
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
-        if (!request) return console.log('No request ' + requestId);
+        if (!request) return logger.warn('No request ' + requestId);
 
         inline_keyboard = changeInlineKeyboard(
             inline_keyboard,
@@ -82,7 +83,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     //Change status back to pending
     const requestId = data.split('_')[1];
     const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: 0});
-    if (!request) return console.log('No request ' + requestId);
+    if (!request) return logger.warn('No request ' + requestId);
     let inline_keyboard = changeInlineKeyboard(
         message.reply_markup.inline_keyboard,
         'decision',
@@ -221,7 +222,7 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
         try {
             await bot.deleteMessage(message.chat.id, message.message_id);
         } catch (e) {
-            console.log(e);
+            logger.error(e);
         }
     } else {
         try {
@@ -230,7 +231,7 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
                 message_id: message.message_id
             })
         } catch (e) {
-            return console.log(e);
+            return logger.error(e);
         }
         const requestId = data.split('_')[1];
         const commentMsgId = message.message_id;
@@ -249,7 +250,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
     const moderator = getUserName(callbackQuery.from);
     try {
         const request = await Request.findById(requestId);
-        if (!request) return console.log('No request ' + requestId);
+        if (!request) return logger.warn('No request ' + requestId);
         let escalationId = new mongoose.Types.ObjectId();
         var escalation = new Escalation({
             _id: escalationId,
@@ -311,7 +312,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
         });
 
     } catch (err) {
-        console.error(err);
+        logger.error(err);
     }
 }
 
