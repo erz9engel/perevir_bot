@@ -73,6 +73,7 @@ var telegramUserSchema = Schema({
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
     lastFakeNews: String, //Last sent fakeNews,
     language: {type: String, default: 'ua'}, //Preffered language
+    status: String, //Status for the user TBD:(blocked/suspended/chat etc)
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
