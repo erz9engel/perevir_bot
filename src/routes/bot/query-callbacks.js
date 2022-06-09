@@ -345,6 +345,8 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
             {comment: text, entities: entities }
         );
         await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
+    }
+}
 
 const onChatModeQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
@@ -371,14 +373,18 @@ const onChatModeQuery = async (callbackQuery, bot) => {
             {text: text, show_alert: true}
         );
     } else {
+        let text = 'Діалог ініціалізовано, для спілкування перейдіть у бот @perevir_bot';
+        await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
         moderator.status = 'chat_' + requesterId;
         requester.status = 'chat_' + moderatorId;
         await moderator.save()
         await requester.save()
         await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
         let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
-            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу '
-            + getUserName(message.reply_to_message.from) + ' від імені бота\n'
+            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу від імені бота\n'
             + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
             + 'або скористайтеся кнопкою внизу'
         await bot.sendMessage(
