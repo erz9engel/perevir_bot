@@ -28,7 +28,8 @@ const {
     onSendFakesQuery,
     onConfirmCommentQuery,
     onEscalateQuery,
-    onChatModeQuery,
+    onUpdateCommentQuery,
+    onChatModeQuery
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -137,6 +138,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onConfirmCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
         await onEscalateQuery(callbackQuery, bot)
+    } else if (data.startsWith('UPDATECOMMENT_')) {
+        await onUpdateCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('CHAT_')) {
         await onChatModeQuery(callbackQuery, bot)
     }
