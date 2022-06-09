@@ -759,10 +759,16 @@ async function confirmComment(message, bot) {
 
 async function closeChat(user, recipient, bot) {
     await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
-    await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
+    const {language} = await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
     const replyOptions = await getReplyOptions('ua');
     await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
-    await bot.sendMessage(recipient, 'Фактчекер завершив діалог')
+    
+    try {
+        await getText('close_chat', language, async function(err, text){
+            if (err) return safeErrorLog(err);
+            await bot.sendMessage(recipient, text)
+        });
+    } catch (e) { safeErrorLog(e) }
 }
 
 module.exports = {

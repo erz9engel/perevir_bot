@@ -403,7 +403,13 @@ const onChatModeQuery = async (callbackQuery, bot) => {
                 }
             }
         )
-        await bot.sendMessage(requesterId, 'З метою уточнення даних по вашому запиту до цього чату підключиться фактчекер')
+        
+        try {
+            await getText('open_chat', requester.language, async function(err, text){
+                if (err) return safeErrorLog(err);
+                await bot.sendMessage(requesterId, text);
+            });
+        } catch (e) { safeErrorLog(e) }
 
     }
 }
