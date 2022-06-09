@@ -40,7 +40,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
         requestId = escalation.request;
-        await bot.editMessageText("#resolved | " + status + "\nРедактор: " + moderator, {
+        const req = await Request.findById(requestId, 'requestId');
+        await bot.editMessageText("№" + req.requestId + "\n#resolved | " + status + "\nРедактор: " + moderator, {
             chat_id: messageChat,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -53,14 +54,13 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     try {
         const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
         if (!request) return console.log('No request ' + requestId);
-
         inline_keyboard = changeInlineKeyboard(
             inline_keyboard,
             'decision',
             [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
         )
 
-        await bot.editMessageText("#resolved | " + status + "\nМодератор: " + moderator, {
+        await bot.editMessageText("№" + request.requestId + "\n#resolved | " + status + "\nМодератор: " + moderator, {
             chat_id: messageChat,
             message_id: request.moderatorActionMsgID,
             reply_markup: JSON.stringify({
@@ -103,7 +103,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
     )
 
     try {
-        await bot.editMessageText("#pending", {
+        await bot.editMessageText("№" + request.requestId + "\n#pending", {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -172,6 +172,11 @@ const onCommentQuery = async (callbackQuery, bot) => {
             safeErrorLog(e);
         }
     }
+    let text = 'Коментар ініціалізовано, перейдіть у бот @perevir_bot';
+        await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
     
 }
 
@@ -295,14 +300,14 @@ const onEscalateQuery = async (callbackQuery, bot) => {
         };
         const actionMsg = await bot.sendMessage(
             process.env.TGESCALATIONGROUP,
-            '#pending\nЕскалацію прислав ' + moderator,
+            '№' + request.requestId + '\n#pending\nЕскалацію прислав ' + moderator,
             options,
         )
         escalation.actionMsgID = actionMsg.message_id
         await escalation.save()
 
         inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
-        await bot.editMessageText("#escalated | Запит направлено на ескалацію модератором: " + moderator, {
+        await bot.editMessageText("№" + request.requestId + "\n#escalated | Запит направлено на ескалацію модератором: " + moderator, {
             chat_id: message.chat.id,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
@@ -345,6 +350,8 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
             {comment: text, entities: entities }
         );
         await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
+    }
+}
 
 const onChatModeQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
@@ -371,14 +378,18 @@ const onChatModeQuery = async (callbackQuery, bot) => {
             {text: text, show_alert: true}
         );
     } else {
+        let text = 'Діалог ініціалізовано, для спілкування перейдіть у бот @perevir_bot';
+        await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
         moderator.status = 'chat_' + requesterId;
         requester.status = 'chat_' + moderatorId;
         await moderator.save()
         await requester.save()
         await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
         let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
-            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу '
-            + getUserName(message.reply_to_message.from) + ' від імені бота\n'
+            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу від імені бота\n'
             + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
             + 'або скористайтеся кнопкою внизу'
         await bot.sendMessage(
