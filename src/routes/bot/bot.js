@@ -16,7 +16,8 @@ const {
     onUnsupportedContent,
     onCloseOldRequests,
     saveCommentToDB,
-    confirmComment
+    confirmComment,
+    closeChat
 } = require('./message-handlers');
 
 const {
@@ -28,6 +29,7 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
+    onChatModeQuery
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -53,6 +55,7 @@ const {
     isUnsupportedContent,
     isTextFromDict,
 } = require("./validation");
+const {checkUserStatus} = require("./authorization");
 
 setTimeout(function () {
     try {
@@ -64,8 +67,16 @@ setTimeout(function () {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    
-    if (msg.chat.id.toString() === escalationGroup) {
+
+    const userStatus = await checkUserStatus(msg.from.id)
+    if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
+        const recipient = userStatus.split('_')[1]
+        if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
+            await closeChat(msg.from.id, recipient, bot)
+        } else {
+            await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
+        }
+    } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
     } else if (msg.chat.id.toString() === commentGroup && msg.text){
         await saveCommentToDB(msg, bot)
@@ -129,6 +140,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onEscalateQuery(callbackQuery, bot)
     } else if (data.startsWith('UPDATECOMMENT_')) {
         await onUpdateCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('CHAT_')) {
+        await onChatModeQuery(callbackQuery, bot)
     }
 });
 

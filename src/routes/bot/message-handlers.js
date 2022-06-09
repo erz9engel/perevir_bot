@@ -293,6 +293,9 @@ const statusesKeyboard = async (requestId) => {
         ],
         [   
             { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
+        ],
+        [
+            { text: '📱 Діалог з ініціатором', callback_data: 'CHAT_' + requestId }
         ]
     ];
 
@@ -746,6 +749,14 @@ async function confirmComment(message, bot) {
     }
 }
 
+async function closeChat(user, recipient, bot) {
+    await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
+    await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
+    const replyOptions = await getReplyOptions('ua');
+    await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
+    await bot.sendMessage(recipient, 'Фактчекер завершив діалог')
+}
+
 module.exports = {
     onStart,
     onCheckContent,
@@ -763,5 +774,6 @@ module.exports = {
     onCloseOldRequests,
     saveCommentToDB,
     confirmComment,
-    informRequestersWithComment
+    informRequestersWithComment,
+    closeChat
 }
