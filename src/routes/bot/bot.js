@@ -67,7 +67,7 @@ setTimeout(function () {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-
+    console.log(msg);
     const userStatus = await checkUserStatus(msg.from.id);
     if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
         const recipient = userStatus.split('_')[1]
@@ -83,7 +83,9 @@ bot.on('message', async (msg) => {
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
     } else if (text === '/start') {
-        await onStart(msg, bot);
+        await onStart(msg, bot, 'ua');
+    } else if (text === '/start en') {
+        await onStart(msg, bot, 'en');
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
     } else if (isTextFromDict(text, SubscribtionText)) {

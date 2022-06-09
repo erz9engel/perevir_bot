@@ -33,12 +33,12 @@ const {
     shiftOffsetEntities,
 } = require("./utils");
 
-const onStart = async (msg, bot) => {
+const onStart = async (msg, bot, lang) => {
 
-    const replyOptions = await getReplyOptions('ua');
+    const replyOptions = await getReplyOptions(lang);
 
     try {
-        await getText('welcome', 'ua', async function(err, text){
+        await getText('welcome', lang, async function(err, text){
             if (err) return safeErrorLog(err);
             await bot.sendMessage(msg.chat.id, text, replyOptions);
         });
@@ -47,6 +47,7 @@ const onStart = async (msg, bot) => {
     let newUser = new TelegramUser({
         _id: new mongoose.Types.ObjectId(),
         telegramID: msg.chat.id,
+        language: lang,
         createdAt: new Date()
     });
     await newUser.save().then(() => {}).catch((error) => {
@@ -416,6 +417,9 @@ const onCheckRequest = async (msg, bot) => {
     if (language == 'en') moderatorsChanel = process.env.TGENGLISHCHAT;
     else moderatorsChanel = process.env.TGMAINCHAT;
 
+    const reqsCount = await Request.countDocuments({});
+    request.requestId = reqsCount + 1;
+
     const sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
     let inline_keyboard;
     if (!notified) {
@@ -427,7 +431,7 @@ const onCheckRequest = async (msg, bot) => {
                 inline_keyboard
             })
         };
-        const sentActionMsg = await bot.sendMessage(moderatorsChanel, '#pending', options);
+        const sentActionMsg = await bot.sendMessage(moderatorsChanel, "№" + request.requestId + '\n#pending', options);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
         //Inform user
@@ -452,12 +456,13 @@ const onCheckRequest = async (msg, bot) => {
         var status = "#autoDecline"
         if (request.fakeStatus == 2) status = "#autoConfirm";
 
-        const sentActionMsg = await bot.sendMessage(moderatorsChanel, status ,options);
+        const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n' + status ,options);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
 
     }
 
+    
     //Save new request in DB
     if (newImage) await newImage.save();
     else if (newVideo) await newVideo.save();
@@ -535,9 +540,11 @@ const onCheckGroupRequest = async (msg, bot) => {
                     inline_keyboard
                 })
             };
-            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '#pending', options);
+
+            const reqsCount = await Request.countDocuments({});
             var request = new Request({
                 _id: requestId,
+                requestId: reqsCount + 1,
                 requesterTG: msg.chat.id,
                 requesterId: id,
                 requesterMsgID: msg.message_id,
@@ -549,6 +556,7 @@ const onCheckGroupRequest = async (msg, bot) => {
                 moderatorActionMsgID: sentActionMsg.message_id
             });
             await request.save();
+            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n#pending', options);
             //Inform user
             var options = {
                 disable_web_page_preview: true

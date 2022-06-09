@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
+    requestId: Number, //Internal ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
@@ -72,7 +73,7 @@ var telegramUserSchema = Schema({
     telegramID: {type: Number, unique: true}, //User's telegram ID
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
     lastFakeNews: String, //Last sent fakeNews,
-    language: {type: String, default: 'ua'}, //Preffered language
+    language: String, //Preffered language
     status: String, //Status for the user TBD:(blocked/suspended/chat etc)
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
