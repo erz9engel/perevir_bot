@@ -542,6 +542,7 @@ const onCheckGroupRequest = async (msg, bot) => {
             };
 
             const reqsCount = await Request.countDocuments({});
+            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + (reqsCount + 1) + '\n#pending', options);
             var request = new Request({
                 _id: requestId,
                 requestId: reqsCount + 1,
@@ -556,7 +557,6 @@ const onCheckGroupRequest = async (msg, bot) => {
                 moderatorActionMsgID: sentActionMsg.message_id
             });
             await request.save();
-            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n#pending', options);
             //Inform user
             var options = {
                 disable_web_page_preview: true
