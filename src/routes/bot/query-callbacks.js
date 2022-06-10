@@ -362,6 +362,13 @@ const onChatModeQuery = async (callbackQuery, bot) => {
     const requesterId = request.requesterTG;
     let requester = await TelegramUser.findOne({telegramID: requesterId});
     let moderator = await TelegramUser.findOne({telegramID: moderatorId});
+    if(!moderator || !requester) {
+        let text = 'Щось пішло не так...';
+        return await bot.answerCallbackQuery(
+            callbackQuery.id,
+            {text: text, show_alert: true}
+        );
+    }
     if (requester.status && requester.status.startsWith('chat_')) {
         let text = 'Чат вже зайнятий іншим модератором';
         if (requester.status.split('_')[1] === moderatorId.toString()) {
