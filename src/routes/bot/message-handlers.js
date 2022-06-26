@@ -30,8 +30,12 @@ const {
     getLabeledSource,
     safeErrorLog,
     getLanguage,
-    shiftOffsetEntities,
+    shiftOffsetEntities
 } = require("./utils");
+
+const {
+    statusesKeyboard
+} = require("../keyboard");
 
 const onStart = async (msg, bot, lang) => {
 
@@ -274,33 +278,8 @@ const onReplyWithComment = async (msg, bot) => {
     const request_id = msg.reply_to_message.text.split('_')[1];
     const commentMsgId = msg.message_id;
     const request = await Request.findByIdAndUpdate(request_id, {commentMsgId: commentMsgId, commentChatId: msg.chat.id });
-    await informRequestersWithComment(request, msg.chat.id, commentMsgId, bot);
+    await informRequestersWithComment(request, msg.chat.id, commentMsgId, bot, msg.text);
 }
-
-const statusesKeyboard = async (requestId) => {
-
-    return [
-        [
-            { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
-            { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
-        ],
-        [
-            { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-            { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
-        ],
-        [
-            { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-            { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
-        ],
-        [   
-            { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
-        ],
-        [
-            { text: '📱 Діалог з ініціатором', callback_data: 'CHAT_' + requestId }
-        ]
-    ];
-
-};
 
 const onCheckRequest = async (msg, bot) => {
     console.log(msg);
@@ -645,22 +624,26 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
     } catch (e){ safeErrorLog(e) }
 }
 
-async function informRequestersWithComment(request, chatId, commentMsgId, bot) {
+async function informRequestersWithComment(request, chatId, commentMsgId, bot, text) {
     if (!request) return
     var options = {
         reply_to_message_id: request.requesterMsgID
     };
 
-    try {
-        await bot.copyMessage(request.requesterTG, chatId , commentMsgId, options);
-    } catch (e){ safeErrorLog(e) }
+    if (request.viberReq) {
+        if(text) notifyViber(text, request.viberRequester);
+    } else {
+        try {
+            await bot.copyMessage(request.requesterTG, chatId, commentMsgId, options);
+        } catch (e){ safeErrorLog(e) }
+    }
 
     for (var i in request.otherUsetsTG) {
         const optionsR = {
             reply_to_message_id: request.otherUsetsTG[i].requesterMsgID
         };
         try {
-            await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId , commentMsgId, optionsR);
+            await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId, commentMsgId, optionsR);
         } catch (e){ safeErrorLog(e) }
     }
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
@@ -790,4 +773,9 @@ module.exports = {
     confirmComment,
     informRequestersWithComment,
     closeChat
+}
+
+async function notifyViber(text, viberRequester) {
+    const {messageViber} = require('../viber/bot');
+    messageViber(text, viberRequester);
 }

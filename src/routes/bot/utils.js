@@ -42,14 +42,19 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
 
     await getText(textArg, null, async function(err, text){
         if (err) return safeErrorLog(err);
-        let options = {
-            reply_to_message_id: foundRequest.requesterMsgID
-        };
+        //Notify original requester
+        if (foundRequest.viberReq) {
+            notifyViber(text['ua'], foundRequest.viberRequester);
+        } else {
+            let options = {
+                reply_to_message_id: foundRequest.requesterMsgID
+            };
     
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
-        } catch (e){ safeErrorLog(e) }
-    
+            try {
+                await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
+            } catch (e){ safeErrorLog(e) }
+        }
+        //Notify other requesters
         for (let i in foundRequest.otherUsetsTG) {
             const optionsR = {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
@@ -257,12 +262,12 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
 
 function safeErrorLog(error) {
     try {
-        console.log(error.response.body.description)
+        return console.log(error.response.body.description)
     } catch (e) {
         if (error.message) {
-            console.log(error.message)
+            return console.log(error.message)
         } else {
-            console.log(error);
+            return console.log(error);
         }
     }
 }
@@ -296,5 +301,10 @@ module.exports = {
     safeErrorLog,
     changeInlineKeyboard,
     getLanguage,
-    shiftOffsetEntities,
+    shiftOffsetEntities
+}
+
+async function notifyViber(text, viberRequester) {
+    const {messageViber} = require('../viber/bot');
+    messageViber(text, viberRequester);
 }

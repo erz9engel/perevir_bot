@@ -172,12 +172,6 @@ const onCommentQuery = async (callbackQuery, bot) => {
             safeErrorLog(e);
         }
     }
-    let text = 'Коментар ініціалізовано, перейдіть у бот @perevir_bot';
-        await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
-    
 }
 
 const onSubscriptionQuery = async (callbackQuery, bot) => {
@@ -269,17 +263,21 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                 reply_to_message_id: request.requesterMsgID
             };
 
-            try {
-                await bot.sendMessage(request.requesterTG, text, options);
-            } catch (e) {
-                safeErrorLog(e)
+            if (request.viberReq) {
+                notifyViber(text, request.viberRequester);
+            } else {
+                try {
+                    await bot.sendMessage(request.requesterTG, text, options);
+                } catch (e) {
+                    safeErrorLog(e)
+                }
             }
         });
 
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
-            request.requesterTG,
-            request.requesterMsgID,
+            process.env.TGMAINCHAT,
+            request.moderatorMsgID,
         );
         let inline_keyboard = [
             [
@@ -431,4 +429,9 @@ module.exports = {
     onEscalateQuery,
     onUpdateCommentQuery,
     onChatModeQuery
+}
+
+async function notifyViber(text, viberRequester) {
+    const {messageViber} = require('../viber/bot');
+    messageViber(text, viberRequester);
 }

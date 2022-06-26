@@ -169,6 +169,7 @@ module.exports = {
         try {
             const sentMsg = await bot.sendMessage(id, msg, options);
             if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
+            return sentMsg;
         } catch (e){ safeErrorLog(e) }
     }
 };
