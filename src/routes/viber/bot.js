@@ -172,6 +172,7 @@ async function onNewRequest (message, response) {
 }
 
 const local = process.env.LOCAL;
+const webhookUrl = process.env.WEBHOOKURL;
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
         console.log('Set the new webhook to"', publicUrl);
@@ -183,7 +184,7 @@ if (local == parseInt(1)) {
 } else {
     const port = 8080;
     const https = require('https');
-    https.createServer(bot.middleware()).listen(8080, () => bot.setWebhook('https://factcheck.eu-4.evennode.com').then((m) => console.log(m)));
+    https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl).then((m) => console.log(m)));
 }
 
 module.exports = {
