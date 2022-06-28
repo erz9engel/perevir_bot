@@ -44,7 +44,9 @@ const onStart = async (msg, bot, lang) => {
     try {
         await getText('welcome', lang, async function(err, text){
             if (err) return safeErrorLog(err);
-            await bot.sendMessage(msg.chat.id, text, replyOptions);
+            try {
+                await bot.sendMessage(msg.chat.id, text, replyOptions);
+            } catch (e) { safeErrorLog(e) }
         });
     } catch (e) { safeErrorLog(e) }
     //Check if user registered
@@ -54,9 +56,7 @@ const onStart = async (msg, bot, lang) => {
         language: lang,
         createdAt: new Date()
     });
-    await newUser.save().then(() => {}).catch((error) => {
-        console.log("MongoErr: " + error.code);
-    });
+    await newUser.save().then(() => {}).catch(() => {});
 }
 
 const getReplyOptions = async (lang) => {
@@ -82,7 +82,9 @@ const onCheckContent = async (msg, bot) => {
     try {
         await getText('check_content', language, async function(err, text){
             if (err) return safeErrorLog(err);
-            await bot.sendMessage(msg.chat.id, text);
+            try {
+                await bot.sendMessage(msg.chat.id, text);
+            } catch (e) { safeErrorLog(e) }
         });
     } catch (e) { safeErrorLog(e) }
 }
@@ -125,7 +127,9 @@ const onChangeLanguage = async (msg, bot) => {
     try {
         await getText('change_lang', lang, async function(err, text){
             if (err) return safeErrorLog(err);
-            await bot.sendMessage(msg.chat.id, text, replyOptions);
+            try {
+                await bot.sendMessage(msg.chat.id, text, replyOptions);
+            } catch (e) { safeErrorLog(e) }
         });
     } catch (e) { safeErrorLog(e) }
 
@@ -316,8 +320,10 @@ const onCheckRequest = async (msg, bot) => {
                 const description = bannedChat.description ? bannedChat.description : '';
                 await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
-                    if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
-                    else await bot.sendMessage(msg.chat.id, text);
+                    try {
+                        if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                        else await bot.sendMessage(msg.chat.id, text);
+                    } catch (e) { safeErrorLog(e) }
                 });
                 notified = true;           
             } catch (e) {safeErrorLog(e)}
@@ -331,7 +337,10 @@ const onCheckRequest = async (msg, bot) => {
         //Check if message has photo data
         mediaId = new mongoose.Types.ObjectId();
         var image = msg.photo[msg.photo.length - 1]; //Let's take the highest possible resolution
-        const imageFile = await bot.getFile(image.file_id);
+        var imageFile;
+        try {
+            imageFile = await bot.getFile(image.file_id);
+        } catch (e) { safeErrorLog(e) }
         //const fileUrl = 'https://api.telegram.org/file/bot' + token + '/' + imageFile.file_path;
 
         newImage = new Image({
@@ -379,8 +388,10 @@ const onCheckRequest = async (msg, bot) => {
                 const description = labeledSource.description ? labeledSource.description : '';
                 await getText(sourceText, language, async function(err, text){
                     if (err) return safeErrorLog(err);
-                    if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
-                    else await bot.sendMessage(msg.chat.id, text);
+                    try {
+                        if (language == 'ua') await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                        else await bot.sendMessage(msg.chat.id, text);
+                    } catch (e) { safeErrorLog(e) }
                 });
                 notified = true;
             } catch (e) {safeErrorLog(e)}
@@ -399,7 +410,10 @@ const onCheckRequest = async (msg, bot) => {
     const reqsCount = await Request.countDocuments({});
     request.requestId = reqsCount + 1;
 
-    const sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
+    var sentMsg;
+    try {
+        sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
+    } catch (e) { safeErrorLog(e) }
     let inline_keyboard;
     if (!notified) {
     
@@ -410,7 +424,10 @@ const onCheckRequest = async (msg, bot) => {
                 inline_keyboard
             })
         };
-        const sentActionMsg = await bot.sendMessage(moderatorsChanel, "№" + request.requestId + '\n#pending', options);
+        var sentActionMsg;
+        try {
+            sentActionMsg = await bot.sendMessage(moderatorsChanel, "№" + request.requestId + '\n#pending', options);
+        } catch (e) { safeErrorLog(e) }
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
         //Inform user
@@ -419,7 +436,9 @@ const onCheckRequest = async (msg, bot) => {
         };
         await getText('new_requests', language, async function(err, text){
             if (err) return safeErrorLog(err);
-            await bot.sendMessage(msg.chat.id, text, informOptions);
+            try {
+                await bot.sendMessage(msg.chat.id, text, informOptions);
+            } catch (e) { safeErrorLog(e) }
         });
     
     } else {
@@ -434,8 +453,10 @@ const onCheckRequest = async (msg, bot) => {
         };
         var status = "#autoDecline"
         if (request.fakeStatus == 2) status = "#autoConfirm";
-
-        const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n' + status ,options);
+        var sentActionMsg;
+        try {
+            sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n' + status ,options);
+        } catch (e) { safeErrorLog(e) }
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
 
@@ -501,13 +522,20 @@ const onCheckGroupRequest = async (msg, bot) => {
 
 
             if (mediaGroups[index].text) {
-                const textpart = await bot.sendMessage(moderatorsChanel, mediaGroups[index].text);
+                var textpart;
+                try {
+                    textpart = await bot.sendMessage(moderatorsChanel, mediaGroups[index].text);
+                } catch (e) { safeErrorLog(e) }
                 const options = {
                     reply_to_message_id: textpart.message_id
                 };
-                sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles, options);
+                try {
+                    sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles, options);
+                } catch (e) { safeErrorLog(e) }
             } else {
-                sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles);
+                try {
+                    sentMsg = await bot.sendMediaGroup(moderatorsChanel, mediaFiles);
+                } catch (e) { safeErrorLog(e) }
             }
             const requestId = new mongoose.Types.ObjectId();
 
@@ -521,7 +549,10 @@ const onCheckGroupRequest = async (msg, bot) => {
             };
 
             const reqsCount = await Request.countDocuments({});
-            const sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + (reqsCount + 1) + '\n#pending', options);
+            var sentActionMsg;
+            try {
+                sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + (reqsCount + 1) + '\n#pending', options);
+            } catch (e) { safeErrorLog(e) }
             var request = new Request({
                 _id: requestId,
                 requestId: reqsCount + 1,
@@ -542,7 +573,9 @@ const onCheckGroupRequest = async (msg, bot) => {
             };
             await getText('new_requests', language, async function(err, text){
                 if (err) return safeErrorLog(err);
-                await bot.sendMessage(msg.chat.id, text, options);
+                try {
+                    await bot.sendMessage(msg.chat.id, text, options);
+                } catch (e) { safeErrorLog(e) }
             });
             
         } else return
@@ -578,7 +611,9 @@ async function checkRequestStatus(msg, bot) {
         try {
             await getText('stopped_requests', language, async function(err, text){
                 if (err) return safeErrorLog(err);
-                bot.sendMessage(msg.chat.id, text);  
+                try {
+                    bot.sendMessage(msg.chat.id, text);  
+                } catch (e) { safeErrorLog(e) }
             });
         } catch (e) { safeErrorLog(e) }
     }
@@ -591,7 +626,9 @@ async function addToWaitlist(msg, foundRequest, bot ) {
     try {
         await getText('waitlist', language, async function(err, text){
             if (err) return safeErrorLog(err);
-            bot.sendMessage(msg.chat.id, text);  
+            try {
+                bot.sendMessage(msg.chat.id, text);  
+            } catch (e) { safeErrorLog(e) }
         });
     } catch (e){ safeErrorLog(e) }
 
@@ -614,13 +651,19 @@ async function reportStatus(msg, foundRequest, bot, bannedChat) {
         const {language} = await getLanguage(msg.chat.id);
         await getText(textArg, language, async function(err, text){
             if (err) return safeErrorLog(err);
-            if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
-            else await bot.sendMessage(msg.chat.id, text);
+            try {
+                if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await bot.sendMessage(msg.chat.id, text + '\n\n' + description);
+                else await bot.sendMessage(msg.chat.id, text);
+            } catch (e) { safeErrorLog(e) }
         });
         
     } catch (e){ safeErrorLog(e) }
     try {
-        if (foundRequest.commentMsgId) await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
+        if (foundRequest.commentMsgId){
+            try {
+                await bot.copyMessage(msg.chat.id, foundRequest.commentChatId, foundRequest.commentMsgId);
+            } catch (e) { safeErrorLog(e) }
+        }
     } catch (e){ safeErrorLog(e) }
 }
 
@@ -684,15 +727,19 @@ async function saveCommentToDB(message, bot) {
             reply_markup: {inline_keyboard},
             entities: comment.entities,
         }
-        let resp = await bot.sendMessage(
-            message.chat.id,
-            comment.comment + '\n\n===========================\nОновити існуючий коментар під тегом ' + tag + '?',
-            options,
-        );
+        try {
+            await bot.sendMessage(
+                message.chat.id,
+                comment.comment + '\n\n===========================\nОновити існуючий коментар під тегом ' + tag + '?',
+                options,
+            );
+        } catch (e) { safeErrorLog(e) }
     } else {
         if (tag.startsWith('#')) {
             if (text.length < 10) {
-                return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
+                try {
+                    return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
+                } catch (e) { return safeErrorLog(e) }
             } 
             
             let entities = shiftOffsetEntities(message.entities, message.text.indexOf(text))
@@ -705,19 +752,27 @@ async function saveCommentToDB(message, bot) {
                 createdAt: new Date()
             });
             await comment.save()
-            await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+            try {
+                await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
+            } catch (e) { safeErrorLog(e) }
         }
     }
 }
 
 async function confirmComment(message, bot) {
     if (!message.reply_to_message) {
-        return await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
+        try {
+            return await bot.sendMessage(message.chat.id, 'Не зрозуміло до якого запиту цей коментар.\nНаправте комент через меню "Відповісти"');
+        } catch (e) { return safeErrorLog(e) }
     }
 
     let requestId = message.reply_to_message.text.split("_")[1];
     var request = await Request.findById(requestId, '');
-    if (!request) return await bot.sendMessage(message.chat.id, 'Коментар до нерозпізнаного запиту');
+    if (!request){
+        try {
+            return await bot.sendMessage(message.chat.id, 'Коментар до нерозпізнаного запиту');
+        } catch (e) { return safeErrorLog(e) }
+    }
     
     let comment = await Comment.findOne({"tag": message.text});
     let inline_keyboard = [[
@@ -744,7 +799,9 @@ async function closeChat(user, recipient, bot) {
     await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
     const {language} = await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
     const replyOptions = await getReplyOptions('ua');
-    await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
+    try {
+        await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
+    } catch (e) { safeErrorLog(e) }
     
     try {
         await getText('close_chat', language, async function(err, text){
