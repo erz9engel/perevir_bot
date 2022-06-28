@@ -154,11 +154,26 @@ const onCommentQuery = async (callbackQuery, bot) => {
     } catch (e){ safeErrorLog(e); }
 
     //Update moderators action message
-    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard)
+    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard);
+    //Handle no changes request
+    var commentIteration, btnPartText = '✉️ Залишити додатковий коментар', addText = '';
+    for (var i in message.reply_markup.inline_keyboard) {
+        if (message.reply_markup.inline_keyboard[i][0].callback_data.startsWith('COMMENT_')) {
+            const btnText = message.reply_markup.inline_keyboard[i][0].text;
+            if (btnText.length == btnPartText.length) {
+                addText = ' 2';
+            } else if (btnText.length > btnPartText.length) {
+                commentIteration = parseInt(btnText.split(' ').pop());
+                addText = ' ' + (commentIteration + 1);
+            }
+            break;
+        } 
+    }
+
     let updated_inline_keyboard = changeInlineKeyboard(
         message.reply_markup.inline_keyboard,
         'comment',
-        [[{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]]
+        [[{text: btnPartText + addText, callback_data: 'COMMENT_' + requestId}]]
     )
     if (existing_inline_keyboard!==JSON.stringify(updated_inline_keyboard)) {
         try {
