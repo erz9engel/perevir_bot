@@ -1,4 +1,4 @@
-FROM node:16-slim
+FROM public.ecr.aws/docker/library/node:16-slim
 # set up working directory
 WORKDIR /usr/src/app
 # copy package.json for dependancies
