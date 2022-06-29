@@ -41,40 +41,40 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
         requestId = escalation.request;
         const req = await Request.findById(requestId, 'requestId');
-        await bot.editMessageText("№" + req.requestId + "\n#resolved | " + status + "\nРедактор: " + moderator, {
-            chat_id: messageChat,
-            message_id: message.message_id,
-            reply_markup: JSON.stringify({
-                'inline_keyboard' : [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalation._id }]]
-            })
-        });
+        try {
+            await bot.editMessageText("№" + req.requestId + "\n#resolved | " + status + "\nРедактор: " + moderator, {
+                chat_id: messageChat,
+                message_id: message.message_id,
+                reply_markup: JSON.stringify({
+                    'inline_keyboard' : [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalation._id }]]
+                })
+            });
+        } catch (e) { safeErrorLog(e) }
         inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
         messageChat = process.env.TGMAINCHAT
     }
-    try {
-        const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
-        if (!request) return console.log('No request ' + requestId);
+    const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
+        
         inline_keyboard = changeInlineKeyboard(
             inline_keyboard,
             'decision',
             [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
         )
-
-        await bot.editMessageText("№" + request.requestId + "\n#resolved | " + status + "\nМодератор: " + moderator, {
-            chat_id: messageChat,
-            message_id: request.moderatorActionMsgID,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        });
+        
+        try {
+            await bot.editMessageText("№" + request.requestId + "\n#resolved | " + status + "\nМодератор: " + moderator, {
+                chat_id: messageChat,
+                message_id: request.moderatorActionMsgID,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            });
+        } catch (e) { safeErrorLog(e) }
 
         await involveModerator(requestId, callbackQuery.from);
-
+        
+        if (!request) return console.log('No request ' + requestId);
         await notifyUsers(request, fakeStatus, bot);
-
-    } catch (err) {
-        safeErrorLog(err);
-    }
 }
 
 const onChangeStatusQuery = async (callbackQuery, bot) => {
@@ -123,10 +123,12 @@ const onCommentQuery = async (callbackQuery, bot) => {
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
         requestId = escalation.request;
-        await bot.editMessageReplyMarkup({}, {
-            chat_id: message.chat.id,
-            message_id: message.message_id
-        });
+        try {
+            await bot.editMessageReplyMarkup({}, {
+                chat_id: message.chat.id,
+                message_id: message.message_id
+            });
+        } catch (e) { safeErrorLog(e) }
         messageChat = process.env.TGMAINCHAT
     }
 
@@ -152,11 +154,26 @@ const onCommentQuery = async (callbackQuery, bot) => {
     } catch (e){ safeErrorLog(e); }
 
     //Update moderators action message
-    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard)
+    let existing_inline_keyboard = JSON.stringify(message.reply_markup.inline_keyboard);
+    //Handle no changes request
+    var commentIteration, btnPartText = '✉️ Залишити додатковий коментар', addText = '';
+    for (var i in message.reply_markup.inline_keyboard) {
+        if (message.reply_markup.inline_keyboard[i][0].callback_data.startsWith('COMMENT_')) {
+            const btnText = message.reply_markup.inline_keyboard[i][0].text;
+            if (btnText.length == btnPartText.length) {
+                addText = ' 2';
+            } else if (btnText.length > btnPartText.length) {
+                commentIteration = parseInt(btnText.split(' ').pop());
+                addText = ' ' + (commentIteration + 1);
+            }
+            break;
+        } 
+    }
+
     let updated_inline_keyboard = changeInlineKeyboard(
         message.reply_markup.inline_keyboard,
         'comment',
-        [[{text: '✉️ Залишити додатковий коментар', callback_data: 'COMMENT_' + requestId}]]
+        [[{text: btnPartText + addText, callback_data: 'COMMENT_' + requestId}]]
     )
     if (existing_inline_keyboard!==JSON.stringify(updated_inline_keyboard)) {
         try {
@@ -172,12 +189,6 @@ const onCommentQuery = async (callbackQuery, bot) => {
             safeErrorLog(e);
         }
     }
-    let text = 'Коментар ініціалізовано, перейдіть у бот @perevir_bot';
-        await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
-    
 }
 
 const onSubscriptionQuery = async (callbackQuery, bot) => {
@@ -269,17 +280,21 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                 reply_to_message_id: request.requesterMsgID
             };
 
-            try {
-                await bot.sendMessage(request.requesterTG, text, options);
-            } catch (e) {
-                safeErrorLog(e)
+            if (request.viberReq) {
+                notifyViber(text, request.viberRequester);
+            } else {
+                try {
+                    await bot.sendMessage(request.requesterTG, text, options);
+                } catch (e) {
+                    safeErrorLog(e)
+                }
             }
         });
 
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
-            request.requesterTG,
-            request.requesterMsgID,
+            process.env.TGMAINCHAT,
+            request.moderatorMsgID,
         );
         let inline_keyboard = [
             [
@@ -298,22 +313,27 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                 inline_keyboard
             })
         };
-        const actionMsg = await bot.sendMessage(
-            process.env.TGESCALATIONGROUP,
-            '№' + request.requestId + '\n#pending\nЕскалацію прислав ' + moderator,
-            options,
-        )
+        var actionMsg;
+        try {
+            actionMsg = await bot.sendMessage(
+                process.env.TGESCALATIONGROUP,
+                '№' + request.requestId + '\n#pending\nЕскалацію прислав ' + moderator,
+                options,
+            )
+        } catch (e) { safeErrorLog(e) }
         escalation.actionMsgID = actionMsg.message_id
         await escalation.save()
 
         inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
-        await bot.editMessageText("№" + request.requestId + "\n#escalated | Запит направлено на ескалацію модератором: " + moderator, {
-            chat_id: message.chat.id,
-            message_id: message.message_id,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        });
+        try {
+            await bot.editMessageText("№" + request.requestId + "\n#escalated | Запит направлено на ескалацію модератором: " + moderator, {
+                chat_id: message.chat.id,
+                message_id: message.message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            });
+        } catch (e) { safeErrorLog(e) } 
 
     } catch (err) {
         console.error(err);
@@ -349,7 +369,9 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
             commentId,
             {comment: text, entities: entities }
         );
-        await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
+        try {
+            await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
+        } catch (e) { safeErrorLog(e) } 
     }
 }
 
@@ -364,57 +386,71 @@ const onChatModeQuery = async (callbackQuery, bot) => {
     let moderator = await TelegramUser.findOne({telegramID: moderatorId});
     if(!moderator || !requester) {
         let text = 'Щось пішло не так...';
-        return await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
+        try {
+            return await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {text: text, show_alert: true}
+            );
+        } catch (e) { return safeErrorLog(e) } 
     }
     if (requester.status && requester.status.startsWith('chat_')) {
         let text = 'Чат вже зайнятий іншим модератором';
         if (requester.status.split('_')[1] === moderatorId.toString()) {
             text = 'Ви вже відкрили чат з цим користувачем. Для його закриття напишіть боту /close_chat'
         }
-        await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
+        try {
+            await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {text: text, show_alert: true}
+            );
+        } catch (e) { safeErrorLog(e) } 
     } else if (moderator.status && moderator.status.startsWith('chat_')) {
         let text = 'Ви вже відкрили чат з іншим користувачем. Для його закриття напишіть боту /close_chat';
-        await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
+        try {
+            await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {text: text, show_alert: true}
+            );
+        } catch (e) { safeErrorLog(e) } 
     } else {
         let text = 'Діалог ініціалізовано, для спілкування перейдіть у бот @perevir_bot';
-        await bot.answerCallbackQuery(
-            callbackQuery.id,
-            {text: text, show_alert: true}
-        );
+        try {
+            await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {text: text, show_alert: true}
+            );
+        } catch (e) { safeErrorLog(e) } 
         moderator.status = 'chat_' + requesterId;
         requester.status = 'chat_' + moderatorId;
         await moderator.save()
         await requester.save()
-        await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
+        try {
+            await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
+        } catch (e) { safeErrorLog(e) } 
         let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
             + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу від імені бота\n'
             + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
             + 'або скористайтеся кнопкою внизу'
-        await bot.sendMessage(
-            moderatorId,
-            moderatorText,
-            {
-                reply_markup: {
-                    resize_keyboard: true,
-                    one_time_keyboard: false,
-                    keyboard: [[{ text: '📵 Завершити діалог'}]]
+        try {
+            await bot.sendMessage(
+                moderatorId,
+                moderatorText,
+                {
+                    reply_markup: {
+                        resize_keyboard: true,
+                        one_time_keyboard: false,
+                        keyboard: [[{ text: '📵 Завершити діалог'}]]
+                    }
                 }
-            }
-        )
+            )
+        } catch (e) { safeErrorLog(e) } 
         
         try {
             await getText('open_chat', requester.language, async function(err, text){
                 if (err) return safeErrorLog(err);
-                await bot.sendMessage(requesterId, text);
+                try {
+                    await bot.sendMessage(requesterId, text);
+                } catch (e) { safeErrorLog(e) } 
             });
         } catch (e) { safeErrorLog(e) }
 
@@ -431,4 +467,9 @@ module.exports = {
     onEscalateQuery,
     onUpdateCommentQuery,
     onChatModeQuery
+}
+
+async function notifyViber(text, viberRequester) {
+    const {messageViber} = require('../viber/bot');
+    messageViber(text, viberRequester);
 }

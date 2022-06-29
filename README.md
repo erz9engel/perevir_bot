@@ -20,6 +20,8 @@
 
 *ADMINS=*ID адмінів через кому (для \forbidrequests i \allowrequests)*
 
+*VIBER_PUBLIC_ACCOUNT_ACCESS_TOKEN_KEY=*VIBER BOT TOKEN*
+
 Для того, щоб бот коректно міг зберігати коментарі до бази його треба додати до відповідної групи, а також через Botfather вимкнути Group Privacy в Bot Settings
 Для роботи в inline режимі слід включити цю опцію через /setinlinemode в https://t.me/BotFather
 

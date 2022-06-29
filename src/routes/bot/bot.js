@@ -67,14 +67,16 @@ setTimeout(function () {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    console.log(msg);
+    
     const userStatus = await checkUserStatus(msg.from.id);
     if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
         const recipient = userStatus.split('_')[1]
         if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
             await closeChat(msg.from.id, recipient, bot)
         } else {
-            await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
+            try {
+                await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
+            } catch (e){ safeErrorLog(e) }
         }
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
@@ -88,9 +90,9 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, 'en');
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
-    } else if (isTextFromDict(text, SubscribtionText)) {
+    } else if (isTextFromDict(text, SubscribtionText) || text === '/daily_fakes') {
         await onSubscription(msg, bot)
-    } else if (isTextFromDict(text, ChangeLanguage)) {
+    } else if (isTextFromDict(text, ChangeLanguage) || text === '/change_language') {
         await onChangeLanguage(msg, bot)
     } else if (text === '/setfakes') {
         await onSetFakesRequest(msg, bot);
@@ -167,6 +169,7 @@ module.exports = {
         try {
             const sentMsg = await bot.sendMessage(id, msg, options);
             if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
+            return sentMsg;
         } catch (e){ safeErrorLog(e) }
     }
 };

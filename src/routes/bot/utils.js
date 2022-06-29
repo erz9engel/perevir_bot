@@ -42,14 +42,19 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
 
     await getText(textArg, null, async function(err, text){
         if (err) return safeErrorLog(err);
-        let options = {
-            reply_to_message_id: foundRequest.requesterMsgID
-        };
+        //Notify original requester
+        if (foundRequest.viberReq) {
+            notifyViber(text['ua'], foundRequest.viberRequester);
+        } else {
+            let options = {
+                reply_to_message_id: foundRequest.requesterMsgID
+            };
     
-        try {
-            await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
-        } catch (e){ safeErrorLog(e) }
-    
+            try {
+                await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
+            } catch (e){ safeErrorLog(e) }
+        }
+        //Notify other requesters
         for (let i in foundRequest.otherUsetsTG) {
             const optionsR = {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
@@ -73,7 +78,9 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
                 })
             };
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
-            await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
+            try {
+                await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
+            } catch (e) { safeErrorLog(e) }
             await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             console.log(index + " - " + users.length );
         } catch (e) { 
@@ -82,8 +89,12 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
         if (index == users.length - 1) {
             //Notify admin about end result
             const receivedUsers = await TelegramUser.find({lastFakeNews: message_id + "_" + chat_id}, '');
-            await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + receivedUsers.length);
-            await bot.sendMessage(394717645, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+            try {
+                await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+            } catch (e) { safeErrorLog(e) }
+            try {
+                await bot.sendMessage(394717645, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+            } catch (e) { safeErrorLog(e) }
             writeNReceivers(receivedUsers.length);
         }
     }
@@ -104,13 +115,15 @@ async function closeRequestByTimeout(request, bot) {
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
     }
 
-    await bot.editMessageText("#timeout", {
-        chat_id: process.env.TGMAINCHAT,
-        message_id: request.moderatorActionMsgID,
-        reply_markup: JSON.stringify({
-            inline_keyboard
-        })
-    });
+    try {
+        await bot.editMessageText("#timeout", {
+            chat_id: process.env.TGMAINCHAT,
+            message_id: request.moderatorActionMsgID,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+    } catch (e) { safeErrorLog(e) }
     await notifyUsers(request, "-6", bot)
     await Request.updateOne(request, {fakeStatus: "-6"});
 }
@@ -257,12 +270,12 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
 
 function safeErrorLog(error) {
     try {
-        console.log(error.response.body.description)
+        return console.log(error.response.body.description)
     } catch (e) {
         if (error.message) {
-            console.log(error.message)
+            return console.log(error.message)
         } else {
-            console.log(error);
+            return console.log(error);
         }
     }
 }
@@ -296,5 +309,10 @@ module.exports = {
     safeErrorLog,
     changeInlineKeyboard,
     getLanguage,
-    shiftOffsetEntities,
+    shiftOffsetEntities
+}
+
+async function notifyViber(text, viberRequester) {
+    const {messageViber} = require('../viber/bot');
+    messageViber(text, viberRequester);
 }

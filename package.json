@@ -29,7 +29,8 @@
     "passport-local": "^1.0.0",
     "pug": "^3.0.2",
     "request": "^2.88.2",
-    "serve-favicon": "^2.3.0"
+    "serve-favicon": "^2.3.0",
+    "viber-bot": "^1.0.18"
   },
   "engines": {
     "node": "~6.10.x"

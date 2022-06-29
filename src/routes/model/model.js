@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 var requestSchema = Schema({
     _id: Schema.Types.ObjectId, //Request ID
     requestId: Number, //Internal ID
+    viberReq: Boolean, //If request from Viber 
+    viberRequester: String, //Viber requester ID
+    viberMediaUrl: String, //Viber media URL
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
@@ -186,6 +189,14 @@ adminSchema.methods.toAuthJSON = function () {
     };
 };
 
+var viberUserSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    viberId: {type: String, unique: true}, 
+    createdAt: {type: Date, default: new Date()}
+});
+
+
+mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);  
 mongoose.model('Image', imageSchema);  
