@@ -66,7 +66,7 @@ try {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    
+    return console.log(1)
     const userStatus = await checkUserStatus(msg.from.id);
     if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
         const recipient = userStatus.split('_')[1]
