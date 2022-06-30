@@ -124,6 +124,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
+    return console.log(2);
 
     if (data.startsWith('FS_')) {
         await onFakeStatusQuery(callbackQuery, bot)
