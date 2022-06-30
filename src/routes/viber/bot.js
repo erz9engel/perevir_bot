@@ -183,8 +183,8 @@ if (local == parseInt(1)) {
     });
 } else {
     const port = 8080;
-    const https = require('https');
-    https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl).then((m) => console.log(m)));
+    console.log("Setting webhook to: " + webhookUrl + ":" + port);
+    http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl).then((m) => console.log(m)));
 }
 
 module.exports = {

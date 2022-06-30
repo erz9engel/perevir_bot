@@ -40,7 +40,8 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
         requestId = escalation.request;
-        const req = await Request.findById(requestId, 'requestId');
+        var req = await Request.findById(requestId, 'requestId');
+        if(!req) req = {requestId: ''};
         try {
             await bot.editMessageText("№" + req.requestId + "\n#resolved | " + status + "\nРедактор: " + moderator, {
                 chat_id: messageChat,
@@ -53,28 +54,29 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
         messageChat = process.env.TGMAINCHAT
     }
-    const request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
+    var request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
+    if(!request) request = {requestId: ''};
+    
+    inline_keyboard = changeInlineKeyboard(
+        inline_keyboard,
+        'decision',
+        [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
+    )
         
-        inline_keyboard = changeInlineKeyboard(
-            inline_keyboard,
-            'decision',
-            [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
-        )
-        
-        try {
-            await bot.editMessageText("№" + request.requestId + "\n#resolved | " + status + "\nМодератор: " + moderator, {
-                chat_id: messageChat,
-                message_id: request.moderatorActionMsgID,
-                reply_markup: JSON.stringify({
-                    inline_keyboard
-                })
-            });
-        } catch (e) { safeErrorLog(e) }
+    try {
+        await bot.editMessageText("№" + request.requestId + "\n#resolved | " + status + "\nМодератор: " + moderator, {
+            chat_id: messageChat,
+            message_id: message.message_id,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+    } catch (e) { safeErrorLog(e) }
 
-        await involveModerator(requestId, callbackQuery.from);
+    await involveModerator(requestId, callbackQuery.from);
         
-        if (!request) return console.log('No request ' + requestId);
-        await notifyUsers(request, fakeStatus, bot);
+    if (!request._id) return console.log('No request ' + requestId);
+    await notifyUsers(request, fakeStatus, bot);
 }
 
 const onChangeStatusQuery = async (callbackQuery, bot) => {
