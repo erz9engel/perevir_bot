@@ -66,7 +66,6 @@ try {
 
 bot.on('message', async (msg) => {
     const text = msg.text;
-    return console.log(1)
     const userStatus = await checkUserStatus(msg.from.id);
     if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
         const recipient = userStatus.split('_')[1]
@@ -124,7 +123,6 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
-    return console.log(2);
 
     if (data.startsWith('FS_')) {
         await onFakeStatusQuery(callbackQuery, bot)
@@ -173,6 +171,3 @@ module.exports = {
         } catch (e){ safeErrorLog(e) }
     }
 };
-
-//TEST
-bot.sendMessage(394717645, "reloaded");
