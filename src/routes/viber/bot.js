@@ -9,6 +9,7 @@ var {messageId} = require('../bot/bot');
 
 const ngrok = require('../get_public_url');
 const http = require('http');
+const https = require('https');
 const {
     statusesKeyboard
 } = require("../keyboard");
@@ -182,9 +183,16 @@ if (local == parseInt(1)) {
         console.error(error);
     });
 } else {
-    const port = 8080;
+    const port = 8000;
+
     console.log("Setting webhook to: " + webhookUrl + ":" + port);
-    http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl).then((m) => console.log(m)));
+    https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
+        .then((m) => console.log(m))
+        .catch(async (e) => {
+            console.log('err')
+            console.log(e)
+        })
+    );
 }
 
 module.exports = {
