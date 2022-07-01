@@ -173,7 +173,8 @@ async function onNewRequest (message, response) {
 }
 
 const local = process.env.LOCAL;
-const webhookUrl = process.env.WEBHOOKURL;
+const webhookUrl = process.env.VIBER_WEBHOOK_SERVER_URL;
+const port = process.env.VIBER_WEBHOOK_SERVER_PORT;
 
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
@@ -194,17 +195,14 @@ async function setWebhook() {
     };
     
     request(options, async function (error, response) {
-        if (error) {
+        if (error || response.statusCode == 503) {
             console.log(error)
             console.log("Unable to connect to " + webhookUrl);
             await sleep(1000); 
             return setWebhook();
         }
-        console.log(response.body);
 
-        const port = 443;
-  
-        console.log("Setting webhook to: " + webhookUrl + ":" + port);
+        console.log("Setting webhook to: " + webhookUrl + " and port: " + port);
         http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
           .then((m) => console.log(m))
           .catch(async (e) => {
