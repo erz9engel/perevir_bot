@@ -183,7 +183,7 @@ if (local == parseInt(1)) {
         console.error(error);
     });
 } else {
-    const port = 8000;
+    const port = 443;
 
     console.log("Setting webhook to: " + webhookUrl + ":" + port);
     https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
