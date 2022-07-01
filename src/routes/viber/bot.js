@@ -8,8 +8,8 @@ require('dotenv').config();
 var {messageId} = require('../bot/bot');
 
 const ngrok = require('../get_public_url');
+const request = require('request');
 const http = require('http');
-const https = require('https');
 const {
     statusesKeyboard
 } = require("../keyboard");
@@ -174,6 +174,7 @@ async function onNewRequest (message, response) {
 
 const local = process.env.LOCAL;
 const webhookUrl = process.env.WEBHOOKURL;
+
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
         console.log('Set the new webhook to"', publicUrl);
@@ -183,17 +184,42 @@ if (local == parseInt(1)) {
         console.error(error);
     });
 } else {
-    const port = 443;
-
-    console.log("Setting webhook to: " + webhookUrl + ":" + port);
-    https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
-        .then((m) => console.log(m))
-        .catch(async (e) => {
-            console.log('err')
-            console.log(e)
-        })
-    );
+    setWebhook();
 }
+
+async function setWebhook() {
+    var options = {
+        'method': 'GET',
+        'url': webhookUrl
+    };
+    
+    request(options, async function (error, response) {
+        if (error) {
+            console.log(error)
+            console.log("Unable to connect to " + webhookUrl);
+            await sleep(1000); 
+            return setWebhook();
+        }
+        console.log(response.body);
+
+        const port = 443;
+  
+        console.log("Setting webhook to: " + webhookUrl + ":" + port);
+        http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
+          .then((m) => console.log(m))
+          .catch(async (e) => {
+              console.log('err')
+              console.log(e)
+          })
+        );
+    });
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
 
 module.exports = {
     messageViber: async function (text, userId) {
