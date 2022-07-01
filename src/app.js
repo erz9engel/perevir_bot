@@ -9,7 +9,6 @@ var cors = require('cors');
 
 var routes = require('./routes/index');
 require('./routes/bot/stats');
-require('./routes/viber/bot');
 var textsAPIRouter = require("./routes/dashboard/textsAPI");
 var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
 var authAPIRouter = require("./routes/dashboard/authAPI");
@@ -65,4 +64,5 @@ app.set('port', process.env.PORT || 3000);
 
 var server = app.listen(app.get('port'), function () {
     debug('Express server listening on port ' + server.address().port);
+    require('./routes/viber/bot');
 });
