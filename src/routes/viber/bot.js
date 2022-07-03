@@ -201,7 +201,7 @@ async function setWebhook() {
             await sleep(1000); 
             return setWebhook();
         }
-
+        await sleep(10000); 
         console.log("Setting webhook to: " + webhookUrl + " and port: " + port);
         http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
           .then((m) => console.log(m))
