@@ -139,7 +139,7 @@ async function onNewRequest (message, response) {
             createdAt: new Date(),
             lastUpdate: new Date()
         });
-        var msgText = '#VIBER\n\n';
+        var msgText = '';
         if(text) msgText += text + '\n\n';
         if(url) msgText += "<a href='" + url + "'>Медіа</a>";
         //Send to moderation
@@ -156,7 +156,7 @@ async function onNewRequest (message, response) {
                 inline_keyboard
             })
         };
-        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending', false, optionsMod);
+        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending | #viber', false, optionsMod);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
         request.save();
@@ -201,7 +201,7 @@ async function setWebhook() {
             await sleep(1000); 
             return setWebhook();
         }
-        await sleep(10000); 
+        
         console.log("Setting webhook to: " + webhookUrl + " and port: " + port);
         http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
           .then((m) => console.log(m))
