@@ -4,6 +4,7 @@ const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
 const SourceDomain = mongoose.model('SourceDomain');
+const SourceStatistics = mongoose.model('SourceStatistics');
 const DailyStats = mongoose.model('DailyStats');
 
 function getSubscriptionBtn(status, user_id) {
@@ -201,6 +202,24 @@ async function newYoutubeSource (url) {
     return { hostname: host, username: username }
 }
 
+function parseSource(message) {
+    let telegramId = '';
+    let name = '';
+    if (message.forward_from_chat){
+        telegramId = message.forward_from_chat.id;
+        name = message.forward_from_chat.name;
+    }
+    return {telegramId: telegramId, name:name};
+}
+
+async function updateSource(source) {
+    const { telegramId, name } = source;
+    if (telegramId){
+        await SourceStatistics.findOneAndUpdate({sourceTgId: telegramId}, { sourceName: name });
+    }
+}
+
+
 async function getLabeledSource (text){
     try {
         const { hostname, pathname, searchParams} = new URL(text);
@@ -309,7 +328,9 @@ module.exports = {
     safeErrorLog,
     changeInlineKeyboard,
     getLanguage,
-    shiftOffsetEntities
+    shiftOffsetEntities,
+    parseSource,
+    updateSource,
 }
 
 async function notifyViber(text, viberRequester) {
