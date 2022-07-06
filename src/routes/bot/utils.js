@@ -81,8 +81,8 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             try {
                 await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
+                await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             } catch (e) { safeErrorLog(e) }
-            await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
             console.log(index + " - " + users.length );
         } catch (e) { 
             safeErrorLog(e);

@@ -8,6 +8,7 @@ require('dotenv').config();
 var {messageId} = require('../bot/bot');
 
 const ngrok = require('../get_public_url');
+const request = require('request');
 const http = require('http');
 const {
     statusesKeyboard
@@ -138,7 +139,7 @@ async function onNewRequest (message, response) {
             createdAt: new Date(),
             lastUpdate: new Date()
         });
-        var msgText = '#VIBER\n\n';
+        var msgText = '';
         if(text) msgText += text + '\n\n';
         if(url) msgText += "<a href='" + url + "'>Медіа</a>";
         //Send to moderation
@@ -155,7 +156,7 @@ async function onNewRequest (message, response) {
                 inline_keyboard
             })
         };
-        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending', false, optionsMod);
+        const sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending | #viber', false, optionsMod);
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
         request.save();
@@ -172,7 +173,9 @@ async function onNewRequest (message, response) {
 }
 
 const local = process.env.LOCAL;
-const webhookUrl = process.env.WEBHOOKURL;
+const webhookUrl = process.env.VIBER_WEBHOOK_SERVER_URL;
+const port = process.env.VIBER_WEBHOOK_SERVER_PORT;
+
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
         console.log('Set the new webhook to"', publicUrl);
@@ -182,10 +185,39 @@ if (local == parseInt(1)) {
         console.error(error);
     });
 } else {
-    const port = 8080;
-    const https = require('https');
-    https.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl).then((m) => console.log(m)));
+    setWebhook();
 }
+
+async function setWebhook() {
+    var options = {
+        'method': 'GET',
+        'url': webhookUrl
+    };
+    
+    request(options, async function (error, response) {
+        if (error || response.statusCode == 503) {
+            console.log(error)
+            console.log("Unable to connect to " + webhookUrl);
+            await sleep(1000); 
+            return setWebhook();
+        }
+        
+        console.log("Setting webhook to: " + webhookUrl + " and port: " + port);
+        http.createServer(bot.middleware()).listen(port, () => bot.setWebhook(webhookUrl)
+          .then((m) => console.log(m))
+          .catch(async (e) => {
+              console.log('err')
+              console.log(e)
+          })
+        );
+    });
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
 
 module.exports = {
     messageViber: async function (text, userId) {

@@ -57,13 +57,12 @@ const {
 } = require("./validation");
 const {checkUserStatus} = require("./authorization");
 
-setTimeout(function () {
-    try {
-        bot.sendMessage(admins[0], 'Bot reloaded');
-    } catch (e) {
-        safeErrorLog(e);
-    }
-}, 10000); //Notify about reloading
+//Notify about reloading
+try {
+    bot.sendMessage(admins[0], 'Bot reloaded');
+} catch (e) {
+    safeErrorLog(e);
+}
 
 bot.on('message', async (msg) => {
     const text = msg.text;

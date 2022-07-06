@@ -415,6 +415,7 @@ const onCheckRequest = async (msg, bot) => {
     var sentMsg;
     try {
         sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
+        request.moderatorMsgID = sentMsg.message_id;
     } catch (e) { safeErrorLog(e) }
     let inline_keyboard;
     if (!notified) {
@@ -429,9 +430,9 @@ const onCheckRequest = async (msg, bot) => {
         var sentActionMsg;
         try {
             sentActionMsg = await bot.sendMessage(moderatorsChanel, "№" + request.requestId + '\n#pending', options);
+            request.moderatorActionMsgID = sentActionMsg.message_id;
         } catch (e) { safeErrorLog(e) }
-        request.moderatorMsgID = sentMsg.message_id;
-        request.moderatorActionMsgID = sentActionMsg.message_id;
+        
         //Inform user
         var informOptions = {
             disable_web_page_preview: true
@@ -564,10 +565,10 @@ const onCheckGroupRequest = async (msg, bot) => {
                 requesterUsername: msg.from.username,
                 createdAt: new Date(),
                 lastUpdate: new Date(),
-                text: msg.caption,
-                moderatorMsgID: sentMsg[0].message_id,
-                moderatorActionMsgID: sentActionMsg.message_id
+                text: msg.caption
             });
+            if(sentMsg[0]) request.moderatorMsgID = sentMsg[0].message_id;
+            if(sentActionMsg) request.moderatorActionMsgID = sentActionMsg.message_id;
             await request.save();
             //Inform user
             var options = {
