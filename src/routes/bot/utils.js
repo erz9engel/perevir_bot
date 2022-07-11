@@ -294,6 +294,10 @@ function shiftOffsetEntities(entities, offset) {
     return entities;
 }
 
+function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -309,7 +313,8 @@ module.exports = {
     safeErrorLog,
     changeInlineKeyboard,
     getLanguage,
-    shiftOffsetEntities
+    shiftOffsetEntities,
+    delay
 }
 
 async function notifyViber(text, viberRequester) {
