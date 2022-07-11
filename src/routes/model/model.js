@@ -195,17 +195,30 @@ var viberUserSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
+var sourceStatisticsSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    sourceTgId: String,
+    sourceName: String,
+    trueCount: {type : Number , "default" : 0},
+    falseCount: {type : Number , "default" : 0},
+    manipulationCount: {type : Number , "default" : 0},
+    noproofCount: {type : Number , "default" : 0},
+    rejectCount: {type : Number , "default" : 0},
+    totalRequests: {type : Number , "default" : 0},
+    createdAt: {type: Date, default: new Date()},
+})
 
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
-mongoose.model('Request', requestSchema);  
-mongoose.model('Image', imageSchema);  
-mongoose.model('Video', videoSchema);  
-mongoose.model('TelegramUser', telegramUserSchema);  
-mongoose.model('Data', dataSchema);   
-mongoose.model('SourceTelegram', sourceTelegramSchema);  
-mongoose.model('SourceDomain', sourceDomainSchema);   
-mongoose.model('Moderator', moderatorSchema);  
+mongoose.model('Request', requestSchema);
+mongoose.model('Image', imageSchema);
+mongoose.model('Video', videoSchema);
+mongoose.model('TelegramUser', telegramUserSchema);
+mongoose.model('Data', dataSchema);
+mongoose.model('SourceTelegram', sourceTelegramSchema);
+mongoose.model('SourceDomain', sourceDomainSchema);
+mongoose.model('Moderator', moderatorSchema);
 mongoose.model('Comment', commentSchema);
 mongoose.model('DailyStats', dailyStatsSchema);
 mongoose.model('Escalation', escalationSchema);
+mongoose.model('SourceStatistics', sourceStatisticsSchema);
