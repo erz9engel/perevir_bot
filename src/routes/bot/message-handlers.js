@@ -30,7 +30,9 @@ const {
     getLabeledSource,
     safeErrorLog,
     getLanguage,
-    shiftOffsetEntities
+    shiftOffsetEntities,
+    parseSource,
+    updateSource,
 } = require("./utils");
 
 const {
@@ -462,7 +464,7 @@ const onCheckRequest = async (msg, bot) => {
         request.moderatorActionMsgID = sentActionMsg.message_id;
 
     }
-
+    await updateSource(parseSource(msg));
     
     //Save new request in DB
     if (newImage) await newImage.save();
