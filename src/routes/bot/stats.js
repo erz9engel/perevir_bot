@@ -1,30 +1,17 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 var bot = require('./bot');
+const schedule = require('node-schedule');
 
 const Request = mongoose.model('Request');
 const Moderator = mongoose.model('Moderator');
 const DailyStats = mongoose.model('DailyStats');
 const TelegramUser = mongoose.model('TelegramUser');
+const SourceStatistics = mongoose.model('SourceStatistics');
 
-const startTime = new Date(); startTime.setHours(8, 00);
-const now = new Date();
-
-if (startTime.getTime() < now.getTime()) {
-  startTime.setHours(startTime.getHours() + 24);
-}
-
-const firstTriggerAfterMs = startTime.getTime() - now.getTime();
-
-setTimeout(function(){
-    sendStats();
-    sendModeratorDailyStats();
-
-    setInterval(function () {
-        sendStats();
-        sendModeratorDailyStats();
-    }, 24 * 60 * 60 * 1000);
-}, firstTriggerAfterMs);
+schedule.scheduleJob("0 8 * * *", async () => sendStats());
+schedule.scheduleJob("1 8 * * *", async () => sendModeratorDailyStats());
+schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
@@ -124,6 +111,63 @@ function sendModeratorDailyStats() {
             bot.message(msg, true, {parse_mode: 'HTML'});
         });
     });
+}
+
+async function updateSourceStats() {
+    const stats = await Request.aggregate([
+    {
+        $match: {"telegramForwardedChat": {$ne: null}}
+    },
+    {
+        $group: {
+            _id: { telegramForwardedChat: "$telegramForwardedChat", fakeStatus: "$fakeStatus" },
+            sourceCount: { $sum :1 }
+        }
+    },
+    {
+        $group: {
+            _id: "$_id.telegramForwardedChat",
+            statusCounts: { $push: { status: "$_id.fakeStatus", count: "$sourceCount" } }
+        }
+    },
+    {
+        $project: {
+            _id: 1,
+            statusCounts:1,
+            "totalRequests": {
+                "$sum": "$statusCounts.count"
+            }
+        }
+    },
+    {
+        $sort: {telegramForwardedChat: -1, totalRequests: -1}
+    }
+]);
+    for (var index = 0; index < stats.length; index++) {
+        let sourceStat = {"1": 0, "-1": 0, "-2": 0, "-4": 0, "-5": 0}
+        for (var i = 0; i < stats[index].statusCounts.length; i++) {
+            sourceStat[stats[index].statusCounts[i].status.toString()] = stats[index].statusCounts[i].count
+        }
+        let updateData = {
+            trueCount: sourceStat["1"],
+            falseCount: sourceStat["-1"],
+            manipulationCount: sourceStat["-5"],
+            noproofCount: sourceStat["-4"],
+            rejectCount: sourceStat["-2"],
+            totalRequests: stats[index].totalRequests,
+        }
+        let updateResult = await SourceStatistics.findOneAndUpdate(
+            {sourceTgId: stats[index]._id},
+            updateData,
+        );
+        if (!updateResult){
+            updateData["_id"] = new mongoose.Types.ObjectId()
+            updateData["sourceTgId"] = stats[index]._id
+            updateData["sourceName"] = ""
+            let s = new SourceStatistics(updateData)
+            await s.save()
+        }
+    }
 }
 
 function getAmounts(request) {
