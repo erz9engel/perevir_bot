@@ -48,7 +48,7 @@ const {
     ChangeLanguage,
     SetFakesRequestText
 } = require('./contstants');
-const {safeErrorLog} = require("./utils");
+const {safeErrorLog, delay} = require("./utils");
 const {
     isValidCheckRequest,
     isReplyWithCommentRequest,
@@ -87,6 +87,10 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, 'ua');
     } else if (text === '/start en') {
         await onStart(msg, bot, 'en');
+    } else if (text === '/start fakes') {
+        await onStart(msg, bot, 'ua');
+        await delay(3000);
+        await onSubscription(msg, bot);
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
     } else if (isTextFromDict(text, SubscribtionText) || text === '/daily_fakes') {
