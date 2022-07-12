@@ -207,7 +207,7 @@ function parseSource(message) {
     let name = '';
     if (message.forward_from_chat){
         telegramId = message.forward_from_chat.id;
-        name = message.forward_from_chat.name;
+        name = message.forward_from_chat.name || message.forward_from_chat.title;
     }
     return {telegramId: telegramId, name:name};
 }
@@ -215,7 +215,15 @@ function parseSource(message) {
 async function updateSource(source) {
     const { telegramId, name } = source;
     if (telegramId){
-        await SourceStatistics.findOneAndUpdate({sourceTgId: telegramId}, { sourceName: name });
+        let existingSource = await SourceStatistics.findOneAndUpdate({sourceTgId: telegramId}, { sourceName: name });
+        if (!existingSource) {
+            let s = new SourceStatistics({
+                _id: new mongoose.Types.ObjectId(),
+                sourceTgId: telegramId,
+                sourceName: name,
+            })
+            await s.save()
+        }
     }
 }
 
