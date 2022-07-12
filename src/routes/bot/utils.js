@@ -227,7 +227,6 @@ async function updateSource(source) {
     }
 }
 
-
 async function getLabeledSource (text){
     try {
         const { hostname, pathname, searchParams} = new URL(text);
