@@ -433,10 +433,10 @@ const onCheckRequest = async (msg, bot) => {
             let initiator = getUserName(msg.from);
             if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
             sentActionMsg = await bot.sendMessage(
-                    moderatorsChanel,
-                    '№' + (reqsCount + 1) + '\nініціатор: ' + initiator + '\n#pending',
-                    options
-                );
+                moderatorsChanel,
+                '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending',
+                options,
+            );
             request.moderatorActionMsgID = sentActionMsg.message_id;
         } catch (e) { safeErrorLog(e) }
         
