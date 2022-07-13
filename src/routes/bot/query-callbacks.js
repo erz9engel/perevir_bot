@@ -29,6 +29,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
     let messageChat = message.chat.id
     let inline_keyboard = message.reply_markup.inline_keyboard
+    let actionMsgText = message.text.split("\n#pending")[0]
     const moderator = getUserName(callbackQuery.from);
     let status, sourceTxt;
     if (fakeStatus === '1') status = "#true | Правда"
@@ -47,7 +48,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         sourceTxt = req.viberReq ? "#viber | " : "";
         
         try {
-            await bot.editMessageText("№" + req.requestId + "\n#resolved | " + sourceTxt + status + "\nРедактор: " + moderator, {
+            await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nРедактор: " + moderator, {
                 chat_id: messageChat,
                 message_id: message.message_id,
                 reply_markup: JSON.stringify({
@@ -69,7 +70,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     sourceTxt = request.viberReq ? "#viber | " : "";
         
     try {
-        await bot.editMessageText("№" + request.requestId + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
+        await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
             chat_id: messageChat,
             message_id: message.message_id,
             reply_markup: JSON.stringify({
