@@ -111,6 +111,16 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
   .row
     .col-12
       .card.mb-4
+        .card-header.pb-0
+          h6 Сіра статистика
+          span.d-sm-inline.d-none Сортувати по колонці:&#x20;
+          select#orderBy(onchange="getSourcestats()")
+            option(value="totalRequests") Всього
+            option(value="falseCount") Фейк
+            option(value="trueCount") Правда
+            option(value="manipulationCount") Напівправда
+            option(value="noproofCount") Немає доказів
+            option(value="rejectCount") Відмова
         .card-body.px-0.pt-0.pb-2
           .table-responsive.p-0
             table.table.align-items-center.mb-0

@@ -6,12 +6,17 @@ var SourceStatistics = mongoose.model('SourceStatistics');
 
 //POST new user route (optional, everyone has access)
 router.get('/get', auth.required, async (req, res, next) => {
-    SourceStatistics.find(
+    let sorting = {}
+    sorting[req.query.sort] = 'desc'
+    let query = SourceStatistics.find(
         {'totalRequests': { $gt: 5 } },
         'sourceTgId sourceName trueCount falseCount manipulationCount noproofCount rejectCount totalRequests',
-        function(err, sources){
-            return res.send(sources);
-        });
+    ).sort(
+        sorting
+    );
+    query.exec(function(err, docs) {
+       return res.send(docs)
+    })
 });
 
 module.exports = router

@@ -112,12 +112,11 @@ function runNewsletter() {
 }
 
 function getSourcestats() {
-
-  fetch("../sourcestatsAPI/get")
+  const orderBy = document.getElementById('orderBy').value;
+  fetch("../sourcestatsAPI/get?" + new URLSearchParams({sort: orderBy}))
   .then(response => response.json())
   .then(res => {
     document.getElementById('sourcestats').innerHTML = '';
-    console.log(JSON.stringify(res))
     for (var i in res) {
       document.getElementById('sourcestats').innerHTML += '<tr> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceTgId +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceName +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].falseCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].trueCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].manipulationCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].noproofCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].rejectCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].totalRequests +'</span> </td> </tr>';
     }
