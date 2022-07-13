@@ -110,3 +110,20 @@ function runNewsletter() {
     alert(error);
   });
 }
+
+function getSourcestats() {
+
+  fetch("../sourcestatsAPI/get")
+  .then(response => response.json())
+  .then(res => {
+    document.getElementById('sourcestats').innerHTML = '';
+    console.log(JSON.stringify(res))
+    for (var i in res) {
+      document.getElementById('sourcestats').innerHTML += '<tr> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceTgId +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceName +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].falseCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].trueCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].manipulationCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].noproofCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].rejectCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].totalRequests +'</span> </td> </tr>';
+    }
+  })
+  .catch((error) => {
+    document.getElementById('sourcestats').innerHTML = '<tr><td class="text-center"> <span class="font-weight-bold">Немає даних</span> </td> </tr>';
+  });
+
+}
