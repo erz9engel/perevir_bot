@@ -174,5 +174,24 @@ module.exports = {
             if (pin) await bot.pinChatMessage(id, sentMsg.message_id);
             return sentMsg;
         } catch (e){ safeErrorLog(e) }
-    }
+    },
+    sendLetters: async function (ids, msg) {
+        sendLettersF(ids, msg)
+    },
 };
+
+async function sendLettersF(ids, msg) {
+    const RPS = 5; //Requests per second
+
+    for (var index = 0; index < ids.length; index++) {
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
+            try {
+                await bot.sendMessage(ids[index], msg);
+            } catch (e) { safeErrorLog(e) }
+            console.log(index + " - " + ids.length );
+        } catch (e) { 
+            safeErrorLog(e);
+        }
+    }
+}

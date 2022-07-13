@@ -33,6 +33,7 @@ const {
     shiftOffsetEntities,
     parseSource,
     updateSource,
+    getUserName,
 } = require("./utils");
 
 const {
@@ -429,7 +430,13 @@ const onCheckRequest = async (msg, bot) => {
         };
         var sentActionMsg;
         try {
-            sentActionMsg = await bot.sendMessage(moderatorsChanel, "№" + request.requestId + '\n#pending', options);
+            let initiator = getUserName(msg.from);
+            if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
+            sentActionMsg = await bot.sendMessage(
+                moderatorsChanel,
+                '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending',
+                options,
+            );
             request.moderatorActionMsgID = sentActionMsg.message_id;
         } catch (e) { safeErrorLog(e) }
         

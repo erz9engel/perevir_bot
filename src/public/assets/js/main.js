@@ -63,3 +63,50 @@ function getLeaderboard() {
   });
     
 }
+
+function getNewsletter() {
+  const from = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const checkedMinNews = document.getElementById('checkedMinNews').value;
+  const checkedMaxNews = document.getElementById('checkedMaxNews').value;
+
+  fetch("../newsletterAPI/get?" + new URLSearchParams({
+    from: from,
+    to: to,
+    checkedMinNews: checkedMinNews,
+    checkedMaxNews: checkedMaxNews
+  }))
+  .then(response => response.json())
+  .then(res => {
+    document.getElementById('users').innerHTML = res.amount;
+  })
+  .catch((error) => {
+    alert(error);
+  });
+}
+
+
+function runNewsletter() {
+  const from = document.getElementById('from').value;
+  const to = document.getElementById('to').value;
+  const checkedMinNews = document.getElementById('checkedMinNews').value;
+  const checkedMaxNews = document.getElementById('checkedMaxNews').value;
+  const message = document.getElementById('message').value;
+
+  if (message == '') return alert('Повідомлення не може бути пустим');
+
+  fetch("../newsletterAPI/send?" + new URLSearchParams({
+    from: from,
+    to: to,
+    checkedMinNews: checkedMinNews,
+    checkedMaxNews: checkedMaxNews,
+    message: message
+  }))
+  .then(response => response.json())
+  .then(res => {
+    alert('Успішно запущено')
+  })
+  .catch((error) => {
+    alert(error);
+  });
+}
