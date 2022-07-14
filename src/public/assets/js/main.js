@@ -69,12 +69,15 @@ function getNewsletter() {
   const to = document.getElementById('to').value;
   const checkedMinNews = document.getElementById('checkedMinNews').value;
   const checkedMaxNews = document.getElementById('checkedMaxNews').value;
+  const subscribed = document.getElementById('subscribed').checked;
+  document.getElementById('users').innerHTML = 'Підрахунок...';
 
   fetch("../newsletterAPI/get?" + new URLSearchParams({
     from: from,
     to: to,
     checkedMinNews: checkedMinNews,
-    checkedMaxNews: checkedMaxNews
+    checkedMaxNews: checkedMaxNews,
+    subscribed: subscribed
   }))
   .then(response => response.json())
   .then(res => {
@@ -85,12 +88,21 @@ function getNewsletter() {
   });
 }
 
+function checkForm () {
+  const message = document.getElementById('message').value;
+  if (message == '') {
+    document.getElementById('sendBtn').style.display = 'none';
+  } else {
+    document.getElementById('sendBtn').style.display = 'block';
+  }
+}
 
 function runNewsletter() {
   const from = document.getElementById('from').value;
   const to = document.getElementById('to').value;
   const checkedMinNews = document.getElementById('checkedMinNews').value;
   const checkedMaxNews = document.getElementById('checkedMaxNews').value;
+  const subscribed = document.getElementById('subscribed').checked;
   const message = document.getElementById('message').value;
 
   if (message == '') return alert('Повідомлення не може бути пустим');
@@ -100,6 +112,7 @@ function runNewsletter() {
     to: to,
     checkedMinNews: checkedMinNews,
     checkedMaxNews: checkedMaxNews,
+    subscribed: subscribed,
     message: message
   }))
   .then(response => response.json())
