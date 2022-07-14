@@ -93,6 +93,8 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, 'ua');
         await delay(3000);
         await onSubscription(msg, bot);
+    }  else if (text.startsWith('/start c_')) {
+        await onStart(msg, bot, 'ua', text.split(' c_')[1]);
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
     } else if (isTextFromDict(text, SubscribtionText) || text === '/daily_fakes') {
