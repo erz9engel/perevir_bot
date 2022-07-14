@@ -31,7 +31,7 @@ async function getUsersData(from, to, checkedMinNews, checkedMaxNews, subscribed
     var groupedRequests = [], allIds = [];
     for (var r in requests) {
         if (requests[r] && requests[r].requesterTG) {
-            if (subscribed && Boolean(requests[r].requesterId.subscribed)) {
+            if (subscribed && requests[r].requesterId && Boolean(requests[r].requesterId.subscribed)) {
                 groupedRequests.push({'requesterTG': requests[r].requesterTG})
             } else if (!subscribed) {
                 groupedRequests.push({'requesterTG': requests[r].requesterTG})
