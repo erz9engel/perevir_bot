@@ -91,6 +91,10 @@ router.get('/', auth.optional, async (req, res) => {
                     data.requestPerUserLabel.push(usersData[i][0]);
                     data.requestPerUserData.push(usersData[i][1]);
                 }
+
+                const campaigns = await getCampaigns();
+                data.campaigns = campaigns;
+
                 return res.render('dashboard', {data: data}); 
             });
         } 
@@ -126,6 +130,14 @@ async function getUsersData() {
     const allUsers = await TelegramUser.countDocuments({});
     devidedReqs[0] = Number(allUsers-groupedReqsArr.length);
     return Object.entries(devidedReqs);
+}
+
+async function getCampaigns() {
+
+    const users = await TelegramUser.find({joinedCampaign: { $exists: true}}, 'joinedCampaign');
+    const groupedUsers = countValuesByKey(users, 'joinedCampaign');
+    const groupedReqsArr = Object.entries(groupedUsers);
+    return groupedReqsArr;
 }
 
 router.get('/leaderboard', auth.optional, async (req, res) => {

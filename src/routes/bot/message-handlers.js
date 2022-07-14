@@ -40,7 +40,7 @@ const {
     statusesKeyboard
 } = require("../keyboard");
 
-const onStart = async (msg, bot, lang) => {
+const onStart = async (msg, bot, lang, campaign) => {
 
     const replyOptions = await getReplyOptions(lang);
 
@@ -57,6 +57,7 @@ const onStart = async (msg, bot, lang) => {
         _id: new mongoose.Types.ObjectId(),
         telegramID: msg.chat.id,
         language: lang,
+        joinedCampaign: campaign,
         createdAt: new Date()
     });
     await newUser.save().then(() => {}).catch(() => {});
