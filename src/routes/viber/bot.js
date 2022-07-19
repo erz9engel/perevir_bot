@@ -31,6 +31,8 @@ const bot = new ViberBot({
 });
 
 bot.onConversationStarted((userProfile, isSubscribed, context) => {
+    var action = "checkContent";
+    if (context) action += '_' + context;
     if (isSubscribed == false) {
         const SAMPLE_KEYBOARD = {
             "Type": "keyboard",
@@ -42,7 +44,7 @@ bot.onConversationStarted((userProfile, isSubscribed, context) => {
                     "Rows": 1,
                     "Text": "Перевірити контент",
                     "ActionType": "reply",
-                    "ActionBody": "checkContent",
+                    "ActionBody": action,
                     "TextSize": "large"
                 }
             ]
@@ -67,12 +69,18 @@ function onMessage(message, response) {
 
     User.findOne({ 'viberId': viberId }, function (err, user) {
         if (user == null || user == undefined) {
+            const text = message.text;
+            var campaign;
+            if (text && text.startsWith('checkContent_c_')) {
+                campaign = text.split('_c_')[1];
+            }
+
             const newUser = new User({
                 _id: new mongoose.Types.ObjectId(),
                 viberId: viberId,
+                joinedCampaign: campaign,
                 createdAt: new Date()
             });
-
             newUser.save()
                 .then(function () {
                     handleMsg(message, response);
@@ -85,7 +93,7 @@ function onMessage(message, response) {
 
 function handleMsg(message, response) {
     const text = message.text;
-    if (text === 'checkContent') {
+    if (text && text.startsWith('checkContent')) {
         onCheckContent(response);
     } else {
         onNewRequest(message, response);
