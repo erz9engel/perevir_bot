@@ -193,6 +193,7 @@ adminSchema.methods.toAuthJSON = function () {
 var viberUserSchema = Schema({
     _id: Schema.Types.ObjectId,
     viberId: {type: String, unique: true}, 
+    joinedCampaign: String, //Name of Campaign from where pressed button
     createdAt: {type: Date, default: new Date()}
 });
 
