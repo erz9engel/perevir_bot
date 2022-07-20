@@ -23,6 +23,7 @@ var Admin = mongoose.model('Admin');
 var DailyStats = mongoose.model('DailyStats');
 var Requests = mongoose.model('Request');
 var TelegramUser = mongoose.model('TelegramUser');
+var ViberUser = mongoose.model('ViberUser');
 
 require('./bot/bot');
 //router.use(require('./api'));
@@ -137,7 +138,14 @@ async function getCampaigns() {
     const users = await TelegramUser.find({joinedCampaign: { $exists: true}}, 'joinedCampaign');
     const groupedUsers = countValuesByKey(users, 'joinedCampaign');
     const groupedReqsArr = Object.entries(groupedUsers);
-    return groupedReqsArr;
+
+    const usersVB = await ViberUser.find({joinedCampaign: { $exists: true}}, 'joinedCampaign');
+    const groupedUsersVB = countValuesByKey(usersVB, 'joinedCampaign');
+    const groupedReqsArrVB = Object.entries(groupedUsersVB);
+
+    const joined = groupedReqsArr.concat(groupedReqsArrVB); 
+
+    return joined;
 }
 
 router.get('/leaderboard', auth.optional, async (req, res) => {
