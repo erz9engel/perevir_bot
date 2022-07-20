@@ -478,6 +478,7 @@ const onCheckRequest = async (msg, bot) => {
     if (newImage) await newImage.save();
     else if (newVideo) await newVideo.save();
     await request.save();
+    await TelegramUser.findByIdAndUpdate(id, {$push: {requests: requestId}});
 
 }
 
