@@ -87,6 +87,24 @@ bot.on('message', async (msg) => {
         await confirmComment(msg, bot)
     } else if (text === '/start') {
         await onStart(msg, bot, 'ua');
+    }  else if (text === '/do_it') {
+        //start migration
+        const Request = mongoose.model('Request');
+        const TelegramUser = mongoose.model('TelegramUser');
+
+        const requests = await Request.find({}, 'requesterTG');
+        for (var i in requests) {
+            if (requests[i].requesterTG && requests[i].requesterTG != undefined) {
+                try {
+                    await TelegramUser.findOneAndUpdate({telegramID: requests[i].requesterTG}, {$push: {requests: requests[i]._id}});
+                    console.log('updated ' + requests[i]._id);
+                    await delay(333);
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        }
+        //end
     } else if (text === '/start en') {
         await onStart(msg, bot, 'en');
     } else if (text === '/start fakes') {

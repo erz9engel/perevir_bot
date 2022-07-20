@@ -74,6 +74,7 @@ var videoSchema = Schema({
 var telegramUserSchema = Schema({
     _id: Schema.Types.ObjectId, //User ID
     telegramID: {type: Number, unique: true}, //User's telegram ID
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Request' }], //Requests
     subscribed: {type: Boolean, default: true}, //Subscription status for newslatters
     lastFakeNews: String, //Last sent fakeNews,
     language: String, //Preffered language
