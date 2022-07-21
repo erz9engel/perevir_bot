@@ -727,9 +727,11 @@ async function saveCommentToDB(message, bot) {
     if (!message.text) return
     let tag = message.text.split("\n", 1)[0].split(' ')[0];
     let comment = await Comment.findOne({"tag": tag}, '');
+    console.log("Found comment: " + JSON.stringify(comment))
     let text = message.text.slice(tag.length).trim();
 
     if (comment && comment.comment !== text) {
+        console.log("Comment already exists")
         let inline_keyboard = [[
             { text: '✅️ Оновити', callback_data: 'UPDATECOMMENT_' + comment._id},
             { text: '❌️ Скасувати', callback_data: 'UPDATECOMMENT_'}
@@ -747,15 +749,17 @@ async function saveCommentToDB(message, bot) {
             );
         } catch (e) { safeErrorLog(e) }
     } else {
+        console.log("Comment is new")
         if (tag.startsWith('#')) {
+            console.log("Tag starts with #")
             if (text.length < 10) {
                 try {
                     return await bot.sendMessage(message.chat.id, 'Коментар відсутній або надто короткий (<10)');
                 } catch (e) { return safeErrorLog(e) }
             } 
-            
+            console.log("Comment is long enough")
             let entities = shiftOffsetEntities(message.entities, message.text.indexOf(text))
-
+            console.log("Entities shifted")
             let comment = new Comment({
                 _id: new mongoose.Types.ObjectId(),
                 tag: tag,
@@ -764,11 +768,13 @@ async function saveCommentToDB(message, bot) {
                 createdAt: new Date()
             });
             await comment.save()
+            console.log("Comment saved to DB")
             try {
                 await bot.sendMessage(message.chat.id, 'Збережено до бази: ' + tag);
             } catch (e) { safeErrorLog(e) }
         }
     }
+    console.log("End of saveComment function")
 }
 
 async function confirmComment(message, bot) {

@@ -82,6 +82,8 @@ bot.on('message', async (msg) => {
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
     } else if (msg.chat.id.toString() === commentGroup && msg.text){
+        console.log("Received comment to save to DB")
+        console.log(msg)
         await saveCommentToDB(msg, bot)
     } else if (msg.via_bot && msg.via_bot.id.toString() === token.split(':')[0]) {
         await confirmComment(msg, bot)
