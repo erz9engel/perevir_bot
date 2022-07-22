@@ -35,7 +35,7 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     if (fakeStatus === '1') status = "#true | Правда"
     else if (fakeStatus === '-1') status = "#false | Фейк"
     else if (fakeStatus === '-2') status = "#reject | Відмова"
-    else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
+    else if (fakeStatus === '-4') status = "#noproof | Бракує доказів"
     else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
     
 
@@ -101,7 +101,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+                { text: '🔵 Бракує доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [
                 { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
@@ -313,7 +313,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟠 Напівправда', callback_data: 'FS_-5_' + escalationId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + escalationId },
+                { text: '🔵 Бракує доказів', callback_data: 'FS_-4_' + escalationId },
             ],
         ];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalationId }]);
