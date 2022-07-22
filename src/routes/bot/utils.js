@@ -67,8 +67,17 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
     });
 }
 
+function writeNReceivers(receivedUsers) {
+    const now = new Date();
+    const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
+    DailyStats.findOneAndUpdate({stringDate:stringDate}, {$inc: {nRecived: receivedUsers}}, function(e, d){
+        if (e) console.log(e);
+        //Potential bug, if function is called before DS created this day
+    });
+}
+
 async function sendFakes(users, message_id, chat_id, admin, bot) {
-    const RPS = 5; //Requests per second
+    const RPS = 10; //Requests per second
 
     for (var index = 0; index < users.length; index++) {
         try {
@@ -99,15 +108,6 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             writeNReceivers(receivedUsers.length);
         }
     }
-}
-
-function writeNReceivers(receivedUsers) {
-    const now = new Date();
-    const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
-    DailyStats.findOneAndUpdate({stringDate:stringDate}, {$inc: {nRecived: receivedUsers}}, function(e, d){
-        if (e) console.log(e);
-        //Potential bug, if function is called before DS created this day
-    });
 }
 
 async function closeRequestByTimeout(request, bot) {

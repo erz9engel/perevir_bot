@@ -187,7 +187,7 @@ module.exports = {
 };
 
 async function sendLettersF(ids, msg) {
-    const RPS = 5; //Requests per second
+    const RPS = 10; //Requests per second
 
     for (var index = 0; index < ids.length; index++) {
         try {
