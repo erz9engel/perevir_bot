@@ -25,6 +25,21 @@ router.get('/get', auth.required, async (req, res, next) => {
 });
 
 async function getUsersData(from, to, checkedMinNews, checkedMaxNews, subscribed) {
+    var tgUsers;
+    if (subscribed) tgUsers = await TelegramUser.find({subscribed: subscribed}, 'telegramID requests');
+    else tgUsers = await TelegramUser.find({}, 'telegramID requests');
+    //populate requests
+    tgUsers = await Request.populate(tgUsers, { path: 'requests', match: {'createdAt': { $gt: from, $lte: to } }, select: '_id' });
+
+    var toContactIds = [];
+    for (var j in tgUsers) {
+        if (tgUsers[j].requests.length >= checkedMinNews && tgUsers[j].requests.length <= checkedMaxNews) toContactIds.push(tgUsers[j].telegramID);
+    }
+
+    return toContactIds;
+};
+
+async function getUsersDataOLD(from, to, checkedMinNews, checkedMaxNews, subscribed) {
     var requests = await Request.find({ $and: [{'createdAt': { $gt: from, $lte: to } }]}, 'requesterTG requesterId');
     requests = await TelegramUser.populate(requests, { path: 'requesterId', select: 'subscribed' });
     //Remove viber & sort by subscription status
