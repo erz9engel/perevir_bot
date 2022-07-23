@@ -113,18 +113,21 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
       .card.mb-4
         .card-header.pb-0
           h6 Розсилка
-          input#from(type='date' class='date' min='2022-02-24' onchange="getNewsletter()")
-          input#to(type='date' class='date' min='2022-02-24' onchange="getNewsletter()")
-          input#checkedMinNews(type='number' class='date' min='0' onchange="getNewsletter()" placeholder="Запитів від...")
-          input#checkedMaxNews(type='number' class='date' min='0' onchange="getNewsletter()"  placeholder="Запитів до...")
+          input#from(type='date' class='date' min='2022-02-24')
+          input#to(type='date' class='date' min='2022-02-24')
+          input#checkedMinNews(type='number' class='date' min='0' placeholder="Запитів від...")
+          input#checkedMaxNews(type='number' class='date' min='0' placeholder="Запитів до...")
           li.list-group-item.border-0.px-0
             .form-check.form-switch.ps-0
-              input#subscribed.form-check-input.ms-auto(type='checkbox' checked='' onchange="getNewsletter()")
+              input#subscribed.form-check-input.ms-auto(type='checkbox' checked='')
               label.form-check-label.text-body.ms-3.text-truncate.w-80.mb-0(for='subscribed') Лише підписаним на розсилку
-          h6 Користувачів:
-          h4#users Підрахунок...
+          button(type='button' class='btn bg-gradient-dark mb-0' onclick="getNewsletter()") Розрахувати користувачів
           br
-          textarea#message(type='text' class='messageTxt' placeholder="Текст повідомлення..." rows="4" cols="81" onkeyup="checkForm()")
+          br
+          h6 Користувачів:
+          h4#users 
+          br
+          textarea#message(type='text' class='messageTxt' placeholder="Текст повідомлення..." rows="4" cols="78" onkeyup="checkForm()")
           br
           button#sendBtn(type='button' class='btn bg-gradient-dark mb-0' style="display:none" onclick="runNewsletter()") Запустити розсилку
           br
@@ -135,6 +138,5 @@ script(src='../assets/js/core/bootstrap.min.js')
 script(src='../assets/js/plugins/chartjs.min.js')
 script(src='../assets/js/main.js')
 script.
-  getNewsletter();
   document.getElementById('from').max = new Date().toISOString().split("T")[0];
   document.getElementById('to').max = new Date().toISOString().split("T")[0];
