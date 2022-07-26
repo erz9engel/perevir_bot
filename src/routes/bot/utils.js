@@ -273,15 +273,15 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
     */
     let newKeyboard = [];
     if (blockToChange === 'decision'){
-        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             inlineKeyboard.shift();
         }
         newKeyboard = newKeyboard.concat(newBlock);
     } else if (blockToChange === 'comment') {
-        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             newKeyboard.push(inlineKeyboard.shift());
         }
-        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             inlineKeyboard.shift();
         }
         newKeyboard = newKeyboard.concat(newBlock);

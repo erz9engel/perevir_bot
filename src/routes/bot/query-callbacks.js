@@ -37,7 +37,6 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     else if (fakeStatus === '-2') status = "#reject | Відмова"
     else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
     else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
-    
 
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
@@ -83,6 +82,33 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         
     if (!request._id) return console.log('No request ' + requestId);
     await notifyUsers(request, fakeStatus, bot);
+}
+
+const onNeedUpdate = async (request, bot) => {  
+
+    const fakeStatus = String(request.fakeStatus);
+    const actionMsgText = "№" + request.requestId;
+    let status, sourceTxt;
+    if (fakeStatus === '1') status = "#true | Правда"
+    else if (fakeStatus === '-1') status = "#false | Фейк"
+    else if (fakeStatus === '-2') status = "#reject | Відмова"
+    else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
+    else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
+    sourceTxt = request.viberReq ? "#viber | " : "";
+    const moderator = request.moderator.name;
+    const inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + request._id }]]
+    
+    try {
+        await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
+            chat_id: process.env.TGMAINCHAT,
+            message_id: request.moderatorActionMsgID,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+    } catch (e) { safeErrorLog(e) }
+    await notifyUsers(request, fakeStatus, bot);
+    
 }
 
 const onChangeStatusQuery = async (callbackQuery, bot) => {
@@ -476,7 +502,8 @@ module.exports = {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery
+    onChatModeQuery,
+    onNeedUpdate
 }
 
 async function notifyViber(text, viberRequester) {

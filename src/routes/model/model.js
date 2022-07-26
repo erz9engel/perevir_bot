@@ -33,6 +33,7 @@ var requestSchema = Schema({
     fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected, -3 - auto reject, 2 - auto confirm
     requestReason: Number, //0 - emergency, 1 - decision, 2 - important
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
+    needUpdate: Boolean,
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 

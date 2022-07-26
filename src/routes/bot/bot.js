@@ -64,6 +64,10 @@ try {
     safeErrorLog(e);
 }
 
+//Lauch needUpdate
+const {onTryToUpdate} = require("./needUpdate");
+onTryToUpdate(bot);
+
 bot.on('message', async (msg) => {
     const text = msg.text;
     
@@ -181,7 +185,7 @@ module.exports = {
     },
     sendLetters: async function (ids, msg) {
         sendLettersF(ids, msg)
-    },
+    }
 };
 
 async function sendLettersF(ids, msg) {
