@@ -1,7 +1,6 @@
-
 const statusesKeyboard = async (requestId, viber) => {
 
-    const arr = [
+    var arr = [
         [
             { text: '⛔ Фейк', callback_data: 'FS_-1_' + requestId },
             { text: '🟢 Правда', callback_data: 'FS_1_' + requestId }
