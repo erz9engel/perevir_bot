@@ -167,7 +167,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+                { text: '🔵 Бракує доказів', callback_data: 'FS_-4_' + requestId },
             ],
             [
                 { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
@@ -379,7 +379,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟠 Напівправда', callback_data: 'FS_-5_' + escalationId },
-                { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + escalationId },
+                { text: '🔵 Бракує доказів', callback_data: 'FS_-4_' + escalationId },
             ],
         ];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + escalationId }]);

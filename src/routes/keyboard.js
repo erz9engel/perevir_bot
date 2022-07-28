@@ -7,7 +7,7 @@ const statusesKeyboard = async (requestId, viber) => {
         ],
         [
             { text: '🟠 Напівправда', callback_data: 'FS_-5_' + requestId },
-            { text: '🔵 Немає доказів', callback_data: 'FS_-4_' + requestId },
+            { text: '🔵 Бракує доказів', callback_data: 'FS_-4_' + requestId },
         ],
         [
             { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
