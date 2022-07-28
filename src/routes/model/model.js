@@ -15,6 +15,7 @@ var requestSchema = Schema({
     moderatorMsgID: Number, //Telegram message ID of resent message
     moderatorActionMsgID: Number, //Telegram message ID of action message
     moderator: { type: mongoose.Schema.Types.ObjectId, ref: 'Moderator' }, //Moderator
+    takenModerator: Number, //If shows in volunteer bot
     otherUsetsTG: [{
         requesterTG: Number,
         requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
@@ -33,6 +34,7 @@ var requestSchema = Schema({
     fakeStatus: {type: Number, default: 0}, //Request Fake status: 0 - uncertain, 1 - not fake, -1 - fake, -2 - rejected, -3 - auto reject, 2 - auto confirm
     requestReason: Number, //0 - emergency, 1 - decision, 2 - important
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
+    needUpdate: Boolean,
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
@@ -211,6 +213,21 @@ var sourceStatisticsSchema = Schema({
     createdAt: {type: Date, default: new Date()},
 })
 
+//Volunteer bot user
+var userSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    telegram_id: Number,
+    username: String,
+    first_name: String,
+    last_name: String,
+    language_code: String,
+    phoneNumber: Number,
+    last_activity_at: Date,
+    is_blocked: Boolean,
+    is_deactivated: Boolean,
+    createdAt: Date
+})
+
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
@@ -225,3 +242,4 @@ mongoose.model('Comment', commentSchema);
 mongoose.model('DailyStats', dailyStatsSchema);
 mongoose.model('Escalation', escalationSchema);
 mongoose.model('SourceStatistics', sourceStatisticsSchema);
+mongoose.model('User', userSchema);
