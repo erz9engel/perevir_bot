@@ -29,7 +29,8 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery
+    onChatModeQuery,
+    onReqTakeQuery
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -63,6 +64,10 @@ try {
 } catch (e) {
     safeErrorLog(e);
 }
+
+//Lauch needUpdate
+const {onTryToUpdate} = require("./needUpdate");
+onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -155,6 +160,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onUpdateCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('CHAT_')) {
         await onChatModeQuery(callbackQuery, bot)
+    }  else if (data.startsWith('TAKEREQ_')) {
+        await onReqTakeQuery(callbackQuery, bot)
     }
 });
 
@@ -183,7 +190,7 @@ module.exports = {
     },
     sendLetters: async function (ids, msg) {
         sendLettersF(ids, msg)
-    },
+    }
 };
 
 async function sendLettersF(ids, msg) {

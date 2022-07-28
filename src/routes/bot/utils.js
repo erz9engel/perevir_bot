@@ -6,6 +6,8 @@ const Moderator = mongoose.model('Moderator');
 const SourceDomain = mongoose.model('SourceDomain');
 const SourceStatistics = mongoose.model('SourceStatistics');
 const DailyStats = mongoose.model('DailyStats');
+const User = mongoose.model('User');
+require('dotenv').config();
 
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
@@ -133,13 +135,29 @@ async function involveModerator (requestId, moderatorTg) {
 
     const request = await Request.findById(requestId, 'moderator');
     if (!request) return console.log('There is no request to assign moderator');
-    else if (request.moderator) return console.log('Second assignment of moderator to request');
+    
+    var moderatorTgId = moderatorTg.id;
+    if (!moderatorTgId) moderatorTgId = moderatorTg;
+    if (request.moderator) {
+        console.log('Second assignment of moderator to request');
+        var moderator = await Moderator.findOne({telegramID: moderatorTgId});
+        return moderator.name;
+    } 
 
-    const moderatorTgId = moderatorTg.id;
+    var name = ' ';
     var moderator = await Moderator.findOneAndUpdate({telegramID: moderatorTgId}, {$push: {requests: requestId}, lastAction: new Date()});
     const now = new Date();
     if (!moderator) {
-        const name = getUserName(moderatorTg);
+        if (moderatorTg.id) {
+            name = getUserName(moderatorTg);
+        } else {
+            const user = await User.findOne({telegram_id: moderatorTgId});
+            if (user) {
+                if (user.username) name = '@' + user.username;
+                else name = user.first_name + ' ' + user.last_name;
+            }
+        }
+
         let newModerator = new Moderator({
             _id: new mongoose.Types.ObjectId(),
             telegramID: moderatorTgId,
@@ -151,9 +169,12 @@ async function involveModerator (requestId, moderatorTg) {
         await newModerator.save().then((md) => {
             moderator = md;
         }).catch(() => {});
+    } else {
+        name = moderator.name;
     }
     
-    await Request.findByIdAndUpdate(requestId, {moderator: moderator._id, lastUpdate: now});
+    await Request.findByIdAndUpdate(requestId, {moderator: moderator._id, takenModerator: moderatorTgId, lastUpdate: now});
+    return name;
 
 }
 
@@ -273,15 +294,15 @@ function changeInlineKeyboard (inlineKeyboard, blockToChange, newBlock) {
     */
     let newKeyboard = [];
     if (blockToChange === 'decision'){
-        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             inlineKeyboard.shift();
         }
         newKeyboard = newKeyboard.concat(newBlock);
     } else if (blockToChange === 'comment') {
-        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (!getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             newKeyboard.push(inlineKeyboard.shift());
         }
-        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_')) {
+        while (getCallbackDataFromKeyboard(inlineKeyboard).startsWith('COMMENT_') && inlineKeyboard.length != 0) {
             inlineKeyboard.shift();
         }
         newKeyboard = newKeyboard.concat(newBlock);
@@ -324,6 +345,19 @@ function delay(time) {
     return new Promise(resolve => setTimeout(resolve, time));
 }
 
+function getFakeText (fakeStatus) {
+
+    let status;
+    if (fakeStatus === '1') status = "#true | Правда"
+    else if (fakeStatus === '-1') status = "#false | Фейк"
+    else if (fakeStatus === '-2') status = "#reject | Відмова"
+    else if (fakeStatus === '-4') status = "#noproof | Немає доказів"
+    else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
+
+    return status;
+
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -342,7 +376,8 @@ module.exports = {
     shiftOffsetEntities,
     delay,
     parseSource,
-    updateSource
+    updateSource,
+    getFakeText
 }
 
 async function notifyViber(text, viberRequester) {

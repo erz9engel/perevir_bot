@@ -8,7 +8,10 @@ const {
     safeErrorLog,
     getLanguage,
     shiftOffsetEntities,
+    getFakeText
 } = require("./utils");
+
+const {statusesKeyboard} = require("../keyboard");
 
 const {
     NoCurrentFakes
@@ -24,20 +27,35 @@ const Data = mongoose.model('Data');
 const Escalation = mongoose.model('Escalation');
 const Comment = mongoose.model('Comment');
 
+const onReqTakeQuery = async (callbackQuery, bot) => {
+
+    const {data, message} = callbackQuery;
+    let requestId = data.split('_')[1];
+    const inline_keyboard = await statusesKeyboard(requestId);
+       
+    try {
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+    } catch (e) {
+        safeErrorLog(e);
+    }
+
+    const xx = await Request.findByIdAndUpdate(requestId, {takenModerator: callbackQuery.from.id, lastUpdate: new Date()});
+
+}
+
 const onFakeStatusQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery
+    const {data, message} = callbackQuery;
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
-    let messageChat = message.chat.id
+    let messageChat = message.chat.id;
     let inline_keyboard = message.reply_markup.inline_keyboard
     let actionMsgText = message.text.split("\n#pending")[0]
     const moderator = getUserName(callbackQuery.from);
-    let status, sourceTxt;
-    if (fakeStatus === '1') status = "#true | Правда"
-    else if (fakeStatus === '-1') status = "#false | Фейк"
-    else if (fakeStatus === '-2') status = "#reject | Відмова"
-    else if (fakeStatus === '-4') status = "#noproof | Бракує доказів"
-    else if (fakeStatus === '-5') status = "#manipulation | Напівправда"
-    
+    let status = getFakeText(fakeStatus), sourceTxt;
 
     if (messageChat.toString() === process.env.TGESCALATIONGROUP) {
         const escalation = await Escalation.findByIdAndUpdate(requestId, {isResolved: true});
@@ -83,6 +101,54 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
         
     if (!request._id) return console.log('No request ' + requestId);
     await notifyUsers(request, fakeStatus, bot);
+}
+
+const onNeedUpdate = async (request, bot) => {  
+
+    const fakeStatus = String(request.fakeStatus);
+    const actionMsgText = "№" + request.requestId;
+    let status = getFakeText(fakeStatus), sourceTxt;
+    sourceTxt = request.viberReq ? "#viber | " : "";
+    const moderator = await involveModerator(request._id, request.takenModerator);
+    
+    const inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + request._id }]]
+    
+    try {
+        await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
+            chat_id: process.env.TGMAINCHAT,
+            message_id: request.moderatorActionMsgID,
+            reply_markup: JSON.stringify({
+                inline_keyboard
+            })
+        });
+    } catch (e) { safeErrorLog(e) }
+    await notifyUsers(request, fakeStatus, bot);
+    
+}
+
+const onTakenRequest = async (request, bot) => {  
+    try {
+        await bot.editMessageReplyMarkup({}, {
+            chat_id: process.env.TGMAINCHAT,
+            message_id: request.moderatorActionMsgID
+        });
+    } catch (e) { safeErrorLog(e) }
+}
+
+const onBackRequest = async (request, bot) => {
+    //Change status back to pending
+    let inline_keyboard = await statusesKeyboard(request._id, request.viberReq);
+    
+    try {
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: process.env.TGMAINCHAT,
+            message_id: request.moderatorActionMsgID
+        });
+    } catch (e) {
+        safeErrorLog(e);
+    }
 }
 
 const onChangeStatusQuery = async (callbackQuery, bot) => {
@@ -476,7 +542,11 @@ module.exports = {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery
+    onChatModeQuery,
+    onNeedUpdate,
+    onTakenRequest,
+    onBackRequest,
+    onReqTakeQuery
 }
 
 async function notifyViber(text, viberRequester) {
