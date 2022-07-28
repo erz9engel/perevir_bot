@@ -5,7 +5,7 @@ const {delay} = require('./utils');
 
 async function onTryToUpdate (bot) {
     var requests = await Request.find({"needUpdate": true}).populate('moderator');
-    console.log("Found " + requests.length + ' requests that needs to be updated in channel')
+    if (requests.length > 0) console.log("Found " + requests.length + ' requests that needs to be updated in channel')
     for (var i in requests) {
         if (requests[i].fakeStatus != 0) {
             await onNeedUpdate(requests[i], bot); 

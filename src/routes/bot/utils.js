@@ -172,8 +172,8 @@ async function involveModerator (requestId, moderatorTg) {
     } else {
         name = moderator.name;
     }
-    console.log(name);
-    await Request.findByIdAndUpdate(requestId, {moderator: moderator._id, lastUpdate: now});
+    
+    await Request.findByIdAndUpdate(requestId, {moderator: moderator._id, takenModerator: moderatorTgId, lastUpdate: now});
     return name;
 
 }

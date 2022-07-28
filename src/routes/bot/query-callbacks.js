@@ -27,6 +27,27 @@ const Data = mongoose.model('Data');
 const Escalation = mongoose.model('Escalation');
 const Comment = mongoose.model('Comment');
 
+const onReqTakeQuery = async (callbackQuery, bot) => {
+
+    const {data, message} = callbackQuery;
+    let requestId = data.split('_')[1];
+    const inline_keyboard = await statusesKeyboard(requestId);
+       
+    try {
+        await bot.editMessageReplyMarkup({
+            inline_keyboard: inline_keyboard
+        }, {
+            chat_id: message.chat.id,
+            message_id: message.message_id
+        });
+    } catch (e) {
+        safeErrorLog(e);
+    }
+
+    const xx = await Request.findByIdAndUpdate(requestId, {takenModerator: callbackQuery.from.id, lastUpdate: new Date()});
+
+}
+
 const onFakeStatusQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
@@ -524,7 +545,8 @@ module.exports = {
     onChatModeQuery,
     onNeedUpdate,
     onTakenRequest,
-    onBackRequest
+    onBackRequest,
+    onReqTakeQuery
 }
 
 async function notifyViber(text, viberRequester) {

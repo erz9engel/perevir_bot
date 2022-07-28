@@ -29,7 +29,8 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery
+    onChatModeQuery,
+    onReqTakeQuery
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -157,6 +158,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onUpdateCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('CHAT_')) {
         await onChatModeQuery(callbackQuery, bot)
+    }  else if (data.startsWith('TAKEREQ_')) {
+        await onReqTakeQuery(callbackQuery, bot)
     }
 });
 
