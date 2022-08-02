@@ -93,8 +93,8 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             try {
                 await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
                 await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
+                console.log(index + " - " + users.length + " - " + users[index].telegramID);
             } catch (e) { safeErrorLog(e) }
-            console.log(index + " - " + users.length );
         } catch (e) { 
             safeErrorLog(e);
         }
