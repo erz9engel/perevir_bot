@@ -80,6 +80,7 @@ function writeNReceivers(receivedUsers) {
 
 async function sendFakes(users, message_id, chat_id, admin, bot) {
     const RPS = 10; //Requests per second
+    var sent = 0;
 
     for (var index = 0; index < users.length; index++) {
         try {
@@ -93,7 +94,8 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
             try {
                 await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
                 await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
-                console.log(index + " - " + users.length + " - " + users[index].telegramID);
+                sent++;
+                console.log(index + " - " + users.length + " - " + users[index].telegramID + ". Sent: " + sent);
             } catch (e) { safeErrorLog(e) }
         } catch (e) { 
             safeErrorLog(e);
