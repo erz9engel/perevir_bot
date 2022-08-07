@@ -685,6 +685,16 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
         reply_to_message_id: request.requesterMsgID
     };
 
+    if (process.env.TGREDACTIONSGROUP) {
+        try {
+            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, process.env.TGMAINCHAT, request.moderatorMsgID);
+            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, process.env.TGMAINCHAT, request.moderatorActionMsgID);
+            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, chatId, commentMsgId);
+        } catch (e) {
+            safeErrorLog(e)
+        }
+    }
+
     if (request.viberReq) {
         if(text) notifyViber(text, request.viberRequester);
     } else {
