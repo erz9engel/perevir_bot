@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const admins = String(process.env.ADMINS).split(',');
+const redactionGroup = process.env.TGREDACTIONSGROUP;
 
 const Request = mongoose.model('Request');
 const Image = mongoose.model('Image');
@@ -685,14 +686,16 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
         reply_to_message_id: request.requesterMsgID
     };
 
-    if (process.env.TGREDACTIONSGROUP) {
+    if (redactionGroup) {
         try {
-            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, process.env.TGMAINCHAT, request.moderatorMsgID);
-            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, process.env.TGMAINCHAT, request.moderatorActionMsgID);
-            await bot.forwardMessage(process.env.TGREDACTIONSGROUP, chatId, commentMsgId);
+            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorMsgID);
+            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorActionMsgID);
+            await bot.forwardMessage(redactionGroup, chatId, commentMsgId);
         } catch (e) {
             safeErrorLog(e)
         }
+    } else {
+        console.log("Redaction group not set in env variables")
     }
 
     if (request.viberReq) {
