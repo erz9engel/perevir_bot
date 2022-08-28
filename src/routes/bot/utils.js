@@ -137,7 +137,8 @@ async function involveModerator (requestId, moderatorTg) {
 
     const request = await Request.findById(requestId, 'moderator');
     if (!request) return console.log('There is no request to assign moderator');
-    
+    if (!moderatorTg) return console.log('Moderator id is empty');
+
     var moderatorTgId = moderatorTg.id;
     if (!moderatorTgId) moderatorTgId = moderatorTg;
     if (request.moderator) {
