@@ -24,6 +24,8 @@ var DailyStats = mongoose.model('DailyStats');
 var Requests = mongoose.model('Request');
 var TelegramUser = mongoose.model('TelegramUser');
 var ViberUser = mongoose.model('ViberUser');
+var Request = mongoose.model('Request');
+var SourceStatistics = mongoose.model('SourceStatistics');
 
 require('./bot/bot');
 //router.use(require('./api'));
@@ -198,6 +200,39 @@ router.get('/sourcestats', auth.optional, async (req, res) => {
         if (!admin) return res.render('sign-in');
         else {
             return res.render('sourcestats');
+        }
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/channelrequests', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in');
+        else {
+            const channelId = req.query.channel_id
+            const page = req.query.page || 1
+            const limit = 100
+            const offset = (page - 1) * limit
+            const source = await SourceStatistics.findOne({"sourceTgId": channelId }, 'sourceName')
+            let results = await Request.find(
+                {'telegramForwardedChat': channelId },
+                'moderatorMsgID text video image',
+            ).sort(
+                {createdAt: "desc"}
+            ).skip(offset).limit(limit);
+            return res.render(
+                'channelrequests',
+                {
+                    channelid: req.query.channel_id,
+                    channelname: source.sourceName,
+                    requests: results,
+                    mainchatid: process.env.TGMAINCHAT.replace("-100", ""),
+                    page: page,
+                }
+            );
         }
     } else {
         return res.render('sign-in');
