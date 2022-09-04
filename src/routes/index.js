@@ -28,6 +28,7 @@ var Request = mongoose.model('Request');
 var SourceStatistics = mongoose.model('SourceStatistics');
 
 require('./bot/bot');
+const {FakeStatusesStrToInt} = require("./bot/contstants");
 //router.use(require('./api'));
 
 router.get('/sign-up', auth.optional, async (req, res) => {
@@ -217,12 +218,16 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
             const limit = 100
             const offset = (page - 1) * limit
             const source = await SourceStatistics.findOne({"sourceTgId": channelId }, 'sourceName')
-            let results = await Request.find(
-                {'telegramForwardedChat': channelId },
-                'moderatorMsgID text video image',
-            ).sort(
-                {createdAt: "desc"}
-            ).skip(offset).limit(limit);
+            let filters = {'telegramForwardedChat': channelId }
+            let title = "Запити з каналу:"
+            if (req.query.fakeStatus) {
+                filters["fakeStatus"] = FakeStatusesStrToInt[req.query.fakeStatus]
+                title = "Запити зі статусом " + req.query.fakeStatus + " з каналу:"
+            }
+            let results = await Request.find(filters, 'moderatorMsgID text video image')
+                .sort({createdAt: "desc"})
+                .skip(offset)
+                .limit(limit);
             return res.render(
                 'channelrequests',
                 {
@@ -231,6 +236,7 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
                     requests: results,
                     mainchatid: process.env.TGMAINCHAT.replace("-100", ""),
                     page: page,
+                    title: title,
                 }
             );
         }
