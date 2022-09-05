@@ -132,17 +132,17 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                       a(href='https://t.me/c/' + `${mainchatid}` + '/' + `${val.moderatorMsgID}`)
                         span#font-weight-bold #{val.moderatorMsgID}
                     if val.text
-                      td.text-center
+                      td.text-left
                         span#font-weight-bold #{val.text}
                     else if val.image
-                      td.text-center
-                        span#font-weight-bold Зображення
+                      td.text-left
+                        span(style="color: #669900") Зображення
                     else if val.video
-                      td.text-center
-                        span#font-weight-bold Відеофайл
+                      td.text-left
+                        span(style="color: #669900") Відеофайл
                     else
-                      td.text-center
-                        span#font-weight-bold Нерозпізнаний тип контенту
+                      td.text-left
+                        span(style="color: #669900") Нерозпізнаний тип контенту
         .card-header.pb-0
           a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${page + 1}`) Наступна сторінка
 
