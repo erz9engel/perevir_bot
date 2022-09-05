@@ -239,6 +239,7 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
                     nextpage: page - 0 + 1,
                     previouspage: page - 1,
                     title: title,
+                    filterstatus: req.query.fakeStatus,
                 }
             );
         }

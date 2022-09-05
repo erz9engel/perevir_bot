@@ -145,10 +145,16 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                         span(style="color: #669900") Нерозпізнаний тип контенту
         .card-header.pb-0
           if page > 1
-            a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${previouspage}`) Попередня сторінка
+            if filterstatus
+                a(href='../channelrequests?channel_id=' + `${channelid}` + '&fakeStatus=' + `${filterstatus}` + '&page=' + `${previouspage}`) Попередня сторінка
+            else
+                a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${previouspage}`) Попередня сторінка
           br
           if requests.length
-            a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${nextpage}`) Наступна сторінка
+            if filterstatus
+                a(href='../channelrequests?channel_id=' + `${channelid}` + '&fakeStatus=' + `${filterstatus}` + '&page=' + `${nextpage}`) Наступна сторінка
+            else
+                a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${nextpage}`) Наступна сторінка
 
 
 // Core JS Files
