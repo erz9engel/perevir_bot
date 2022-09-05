@@ -236,6 +236,8 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
                     requests: results,
                     mainchatid: process.env.TGMAINCHAT.replace("-100", ""),
                     page: page,
+                    nextpage: page - 0 + 1,
+                    previouspage: page - 1,
                     title: title,
                 }
             );

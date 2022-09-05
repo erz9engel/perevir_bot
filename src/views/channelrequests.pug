@@ -144,7 +144,11 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                       td.text-left
                         span(style="color: #669900") Нерозпізнаний тип контенту
         .card-header.pb-0
-          a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${page + 1}`) Наступна сторінка
+          if page > 1
+            a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${previouspage}`) Попередня сторінка
+          br
+          if requests.length
+            a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${nextpage}`) Наступна сторінка
 
 
 // Core JS Files
