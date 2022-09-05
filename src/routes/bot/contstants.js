@@ -34,6 +34,15 @@ const FakeStatusesStrToInt = {
     "autoconfirm": 2,
     "autodecline": -3,
 }
+const FakeStatusesStrToHuman = {
+    "true": "правда",
+    "false": "фейк",
+    "manipulation": "напівправда",
+    "noproof": "бракує доказів",
+    "reject": "відмова",
+    "autoconfirm": "підтверджено автоматичнр",
+    "autodecline": "відмовлено автоматично",
+}
 
 module.exports = {
     CheckContentText,
@@ -44,4 +53,5 @@ module.exports = {
     SetFakesRequestText,
     RequestTimeout,
     FakeStatusesStrToInt,
+    FakeStatusesStrToHuman,
 }

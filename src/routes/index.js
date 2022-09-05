@@ -28,7 +28,7 @@ var Request = mongoose.model('Request');
 var SourceStatistics = mongoose.model('SourceStatistics');
 
 require('./bot/bot');
-const {FakeStatusesStrToInt} = require("./bot/contstants");
+const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
 //router.use(require('./api'));
 
 router.get('/sign-up', auth.optional, async (req, res) => {
@@ -222,7 +222,7 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
             let title = "Запити з каналу:"
             if (req.query.fakeStatus) {
                 filters["fakeStatus"] = FakeStatusesStrToInt[req.query.fakeStatus]
-                title = "Запити зі статусом " + req.query.fakeStatus + " з каналу:"
+                title = "Запити зі статусом " + FakeStatusesStrToHuman[req.query.fakeStatus] + " з каналу:"
             }
             let results = await Request.find(filters, 'moderatorMsgID text video image')
                 .sort({createdAt: "desc"})
