@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 require('dotenv').config();
 const {
     onStart,
@@ -17,7 +16,6 @@ const {
     onCloseOldRequests,
     saveCommentToDB,
     confirmComment,
-    closeChat
 } = require('./message-handlers');
 
 const {
@@ -29,7 +27,6 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onReqTakeQuery
 } = require('./query-callbacks')
 
@@ -67,6 +64,7 @@ try {
 
 //Lauch needUpdate
 const {onTryToUpdate} = require("./needUpdate");
+const {processChatMessage, onChatModeQuery} = require("./chat");
 onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
@@ -76,14 +74,7 @@ bot.on('message', async (msg) => {
     if (userStatus && userStatus === 'blocked') {
         return
     } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
-        const recipient = userStatus.split('_')[1]
-        if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
-            await closeChat(msg.from.id, recipient, bot)
-        } else {
-            try {
-                await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
-            } catch (e){ safeErrorLog(e) }
-        }
+        await processChatMessage(msg, userStatus, bot)
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
     } else if (msg.chat.id.toString() === commentGroup && msg.text){
