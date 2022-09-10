@@ -64,7 +64,7 @@ try {
 
 //Lauch needUpdate
 const {onTryToUpdate} = require("./needUpdate");
-const {processChatMessage, onChatModeQuery} = require("./chat");
+const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
 onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
@@ -153,6 +153,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onChatModeQuery(callbackQuery, bot)
     }  else if (data.startsWith('TAKEREQ_')) {
         await onReqTakeQuery(callbackQuery, bot)
+    } else if (data.startsWith('UNPAUSE_')) {
+        await unpauseCallback(callbackQuery, bot)
     }
 });
 
