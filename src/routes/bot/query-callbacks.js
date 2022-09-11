@@ -453,88 +453,6 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
     }
 }
 
-const onChatModeQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery;
-    const requestId = data.split('_')[1];
-    const request = await Request.findById(requestId);
-    if (!request) return
-    const moderatorId = callbackQuery.from.id;
-    const requesterId = request.requesterTG;
-    let requester = await TelegramUser.findOne({telegramID: requesterId});
-    let moderator = await TelegramUser.findOne({telegramID: moderatorId});
-    if(!moderator || !requester) {
-        let text = 'Щось пішло не так...';
-        try {
-            return await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { return safeErrorLog(e) } 
-    }
-    if (requester.status && requester.status.startsWith('chat_')) {
-        let text = 'Чат вже зайнятий іншим модератором';
-        if (requester.status.split('_')[1] === moderatorId.toString()) {
-            text = 'Ви вже відкрили чат з цим користувачем. Для його закриття напишіть боту /close_chat'
-        }
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-    } else if (moderator.status && moderator.status.startsWith('chat_')) {
-        let text = 'Ви вже відкрили чат з іншим користувачем. Для його закриття напишіть боту /close_chat';
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-    } else {
-        let text = 'Діалог ініціалізовано, для спілкування перейдіть у бот @perevir_bot';
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-        moderator.status = 'chat_' + requesterId;
-        requester.status = 'chat_' + moderatorId;
-        await moderator.save()
-        await requester.save()
-        try {
-            await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
-        } catch (e) { safeErrorLog(e) } 
-        let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
-            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу від імені бота\n'
-            + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
-            + 'або скористайтеся кнопкою внизу'
-        try {
-            await bot.sendMessage(
-                moderatorId,
-                moderatorText,
-                {
-                    reply_markup: {
-                        resize_keyboard: true,
-                        one_time_keyboard: false,
-                        keyboard: [[{ text: '📵 Завершити діалог'}]]
-                    }
-                }
-            )
-        } catch (e) { safeErrorLog(e) } 
-        
-        try {
-            await getText('open_chat', requester.language, async function(err, text){
-                if (err) return safeErrorLog(err);
-                try {
-                    await bot.sendMessage(requesterId, text);
-                } catch (e) { safeErrorLog(e) } 
-            });
-        } catch (e) { safeErrorLog(e) }
-
-    }
-}
-
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
@@ -544,7 +462,6 @@ module.exports = {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onNeedUpdate,
     onTakenRequest,
     onBackRequest,

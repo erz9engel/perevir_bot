@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 require('dotenv').config();
 const {
     onStart,
@@ -17,7 +16,6 @@ const {
     onCloseOldRequests,
     saveCommentToDB,
     confirmComment,
-    closeChat
 } = require('./message-handlers');
 
 const {
@@ -29,7 +27,6 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onReqTakeQuery
 } = require('./query-callbacks')
 
@@ -67,6 +64,7 @@ try {
 
 //Lauch needUpdate
 const {onTryToUpdate} = require("./needUpdate");
+const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
 onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
@@ -76,14 +74,7 @@ bot.on('message', async (msg) => {
     if (userStatus && userStatus === 'blocked') {
         return
     } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
-        const recipient = userStatus.split('_')[1]
-        if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
-            await closeChat(msg.from.id, recipient, bot)
-        } else {
-            try {
-                await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
-            } catch (e){ safeErrorLog(e) }
-        }
+        await processChatMessage(msg, userStatus, bot)
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
     } else if (msg.chat.id.toString() === commentGroup && msg.text){
@@ -139,7 +130,18 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
-
+    const userStatus = await checkUserStatus(callbackQuery.from.id);
+    if (userStatus.startsWith("chat_")){
+        try {
+            return await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {
+                    text: "Ця дія недоступна, тому що у вас відкрито діалог з користувачем",
+                    show_alert: true,
+                }
+            );
+        } catch (e) { return safeErrorLog(e) }
+    }
     if (data.startsWith('FS_')) {
         await onFakeStatusQuery(callbackQuery, bot)
     } else if (data.startsWith('CS_')) {
@@ -162,6 +164,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onChatModeQuery(callbackQuery, bot)
     }  else if (data.startsWith('TAKEREQ_')) {
         await onReqTakeQuery(callbackQuery, bot)
+    } else if (data.startsWith('UNPAUSE_')) {
+        await unpauseCallback(callbackQuery, bot)
     }
 });
 
