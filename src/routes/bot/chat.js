@@ -1,7 +1,8 @@
-const {getReplyOptions} = require("./message-handlers");
+const {getReplyOptions, onReplyWithComment} = require("./message-handlers");
 const {safeErrorLog, getUserName} = require("./utils");
 const {getText} = require("./localisation");
 const mongoose = require("mongoose");
+const {isReplyWithCommentRequest} = require("./validation");
 const TelegramUser = mongoose.model('TelegramUser');
 const Request = mongoose.model('Request');
 
@@ -14,6 +15,8 @@ async function processChatMessage(message, userStatus, bot) {
         await closeChat(message.from.id, recipient, bot)
     } else if (message.text && (message.text === "/pause_chat" || message.text === "⏯️ Призупинити діалог")) {
         await pauseChat(message.from.id, recipient, bot)
+    } else if (isReplyWithCommentRequest(message)) {
+        await onReplyWithComment(message, bot);
     } else {
         if (isPaused) {
             await unpauseRequest(message, recipient, bot)

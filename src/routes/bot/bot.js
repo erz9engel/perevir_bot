@@ -130,7 +130,18 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
-
+    const userStatus = await checkUserStatus(callbackQuery.from.id);
+    if (userStatus.startsWith("chat_")){
+        try {
+            return await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {
+                    text: "Ця дія недоступна, тому що у вас відкрито діалог з користувачем",
+                    show_alert: true,
+                }
+            );
+        } catch (e) { return safeErrorLog(e) }
+    }
     if (data.startsWith('FS_')) {
         await onFakeStatusQuery(callbackQuery, bot)
     } else if (data.startsWith('CS_')) {
