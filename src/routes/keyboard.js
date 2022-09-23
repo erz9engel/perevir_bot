@@ -11,7 +11,7 @@ const statusesKeyboard = async (requestId, viber) => {
         ],
         [
             { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-            { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+            { text: '-->', callback_data: 'MORESTATUSES_' + requestId },
         ],
         [   
             { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
@@ -27,19 +27,17 @@ const statusesKeyboard = async (requestId, viber) => {
 
 };
 
-const statusesKeyboardNEW = async (requestId) => {
 
-    var arr = [
+const takeRequestKeyboard = async (requestId) => {
+    return [
         [
             { text: '🤏 Взяти запит', callback_data: 'TAKEREQ_' + requestId }
         ]
-    ]
-    return arr;
-
+    ];
 };
 
 
 module.exports = {
     statusesKeyboard,
-    statusesKeyboardNEW
+    takeRequestKeyboard
 }

@@ -38,7 +38,7 @@ const {
 } = require("./utils");
 
 const {
-    statusesKeyboardNEW
+    takeRequestKeyboard
 } = require("../keyboard");
 
 const onStart = async (msg, bot, lang, campaign) => {
@@ -423,7 +423,7 @@ const onCheckRequest = async (msg, bot) => {
     let inline_keyboard;
     if (!notified) {
     
-        inline_keyboard = await statusesKeyboardNEW(requestId);
+        inline_keyboard = await takeRequestKeyboard(requestId);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -553,7 +553,7 @@ const onCheckGroupRequest = async (msg, bot) => {
             const requestId = new mongoose.Types.ObjectId();
 
             //new
-            var inline_keyboard = await statusesKeyboardNEW(requestId);
+            var inline_keyboard = await takeRequestKeyboard(requestId);
             var options = {
                 reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({

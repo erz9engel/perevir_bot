@@ -30,7 +30,8 @@ const {
     onEscalateQuery,
     onUpdateCommentQuery,
     onChatModeQuery,
-    onReqTakeQuery
+    onReqTakeQuery,
+    onMoreStatusesQuery,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -141,7 +142,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     }
 
     if (data.startsWith('FS_')) {
-        await onFakeStatusQuery(callbackQuery, bot)
+        await onFakeStatusQuery(callbackQuery, bot, false)
     } else if (data.startsWith('CS_')) {
         await onChangeStatusQuery(callbackQuery, bot)
     } else if (data.startsWith('COMMENT_')) {
@@ -162,6 +163,12 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onChatModeQuery(callbackQuery, bot)
     }  else if (data.startsWith('TAKEREQ_')) {
         await onReqTakeQuery(callbackQuery, bot)
+    } else if (data.startsWith('UNPAUSE_')) {
+        await unpauseCallback(callbackQuery, bot)
+    } else if (data.startsWith('MORESTATUSES_')) {
+        await onMoreStatusesQuery(callbackQuery, bot)
+    } else if (data.startsWith('SKIP')) {
+        await onFakeStatusQuery(callbackQuery, bot, true)
     }
 });
 
