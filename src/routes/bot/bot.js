@@ -132,7 +132,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
     const userStatus = await checkUserStatus(callbackQuery.from.id);
-    if (userStatus.startsWith("chat_")){
+    if (userStatus && userStatus.startsWith("chat_")){
         try {
             return await bot.answerCallbackQuery(
                 callbackQuery.id,
