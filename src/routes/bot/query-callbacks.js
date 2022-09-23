@@ -48,7 +48,7 @@ const onReqTakeQuery = async (callbackQuery, bot) => {
 
 }
 
-const onFakeStatusQuery = async (callbackQuery, bot) => {
+const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
     const {data, message} = callbackQuery;
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
     let messageChat = message.chat.id;
@@ -100,7 +100,9 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     await involveModerator(requestId, callbackQuery.from);
         
     if (!request._id) return console.log('No request ' + requestId);
-    await notifyUsers(request, fakeStatus, bot);
+    if (!silentMode) {
+        await notifyUsers(request, fakeStatus, bot);
+    }
 }
 
 const onNeedUpdate = async (request, bot) => {  
@@ -173,7 +175,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+                { text: '-->', callback_data: 'MORESTATUSES_' + requestId },
             ]
         ]
     )
@@ -188,6 +190,30 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
                 inline_keyboard
             })
         });
+    } catch (e) {
+        safeErrorLog(e);
+    }
+}
+
+const onMoreStatusesQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const requestId = data.split('_')[1];
+    let inline_keyboard = changeInlineKeyboard(
+        message.reply_markup.inline_keyboard,
+        'decision',
+        [
+            [
+                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+                { text: '⏭️ Пропустити', callback_data: 'SKIP_-2_' + requestId },
+            ],
+            [{ text: '<--', callback_data: 'CS_' + requestId }],
+        ]
+    )
+    try {
+        await bot.editMessageReplyMarkup(
+            {inline_keyboard},
+            {chat_id: message.chat.id, message_id: message.message_id},
+        )
     } catch (e) {
         safeErrorLog(e);
     }
@@ -465,7 +491,8 @@ module.exports = {
     onNeedUpdate,
     onTakenRequest,
     onBackRequest,
-    onReqTakeQuery
+    onReqTakeQuery,
+    onMoreStatusesQuery,
 }
 
 async function notifyViber(text, viberRequester) {
