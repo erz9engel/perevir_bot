@@ -820,22 +820,6 @@ async function confirmComment(message, bot) {
     }
 }
 
-async function closeChat(user, recipient, bot) {
-    await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
-    const {language} = await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
-    const replyOptions = await getReplyOptions('ua');
-    try {
-        await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
-    } catch (e) { safeErrorLog(e) }
-    
-    try {
-        await getText('close_chat', language, async function(err, text){
-            if (err) return safeErrorLog(err);
-            await bot.sendMessage(recipient, text)
-        });
-    } catch (e) { safeErrorLog(e) }
-}
-
 module.exports = {
     onStart,
     onCheckContent,
@@ -854,7 +838,7 @@ module.exports = {
     saveCommentToDB,
     confirmComment,
     informRequestersWithComment,
-    closeChat
+    getReplyOptions,
 }
 
 async function notifyViber(text, viberRequester) {
