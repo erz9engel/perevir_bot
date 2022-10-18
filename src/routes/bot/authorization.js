@@ -7,6 +7,11 @@ async function checkUserStatus(userId) {
     return user.status
 }
 
+async function incrementBlockedMessagesCount(userId) {
+    await TelegramUser.findOneAndUpdate({telegramID: userId}, {$inc: {blockedMessages: 1}});
+}
+
 module.exports = {
-    checkUserStatus
+    checkUserStatus,
+    incrementBlockedMessagesCount,
 }
