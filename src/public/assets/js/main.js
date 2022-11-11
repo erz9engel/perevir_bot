@@ -131,7 +131,42 @@ function getSourcestats() {
   .then(res => {
     document.getElementById('sourcestats').innerHTML = '';
     for (var i in res) {
-      document.getElementById('sourcestats').innerHTML += '<tr> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceTgId +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].sourceName +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].falseCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].trueCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].manipulationCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].noproofCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].rejectCount +'</span> </td> <td class="text-center"> <span class="font-weight-bold">'+ res[i].totalRequests +'</span> </td> </tr>';
+      let channelLink = '../channelrequests?channel_id='+ res[i].sourceTgId
+      let tableRow =
+        `<tr>
+          <td class="text-center">
+            <span class="font-weight-bold">
+              <a href="${channelLink}">${res[i].sourceTgId}</a>
+            </span>
+          </td>
+          <td class="text-center">
+            <span class="font-weight-bold">
+              <a href="${channelLink}">${res[i].sourceName}</a>
+            </span>
+          </td>`
+      const fakeStatuses = ['false', 'true', 'manipulation', 'noproof', 'reject'];
+      for (var n in fakeStatuses) {
+        let cellText = '';
+        let fakeStatus = fakeStatuses[n]
+        let statusCount = res[i][fakeStatus + "Count"]
+        if (statusCount > 0) {
+          cellText = `<a href="${channelLink}&fakeStatus=${fakeStatus}">${statusCount}</a>`
+        } else {
+          cellText = statusCount
+        }
+        tableRow +=
+          `<td class="text-center">
+            <span class="font-weight-bold">
+              ${cellText}
+            </span>
+          </td>`
+      }
+      tableRow +=
+          `<td class="text-center">
+            <span class="font-weight-bold">${res[i].totalRequests}</span>
+          </td>
+        </tr>`
+      document.getElementById('sourcestats').innerHTML += tableRow;
     }
   })
   .catch((error) => {

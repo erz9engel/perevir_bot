@@ -54,7 +54,7 @@ const {
     isUnsupportedContent,
     isTextFromDict,
 } = require("./validation");
-const {checkUserStatus} = require("./authorization");
+const {checkUserStatus, incrementBlockedMessagesCount} = require("./authorization");
 
 //Notify about reloading
 try {
@@ -70,11 +70,12 @@ onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
     const text = msg.text;
+    const user = msg.from.id
     
-    const userStatus = await checkUserStatus(msg.from.id);
+    const userStatus = await checkUserStatus(user);
     if (userStatus && userStatus === 'blocked') {
-        return
-    } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
+        await incrementBlockedMessagesCount(user)
+    } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === user) {
         await processChatMessage(msg, userStatus, bot)
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
