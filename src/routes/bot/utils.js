@@ -121,16 +121,21 @@ async function closeRequestByTimeout(request, bot) {
     if (!request.commentChatId) {
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
     }
-
-    try {
-        await bot.editMessageText("#timeout", {
-            chat_id: process.env.TGMAINCHAT,
-            message_id: request.moderatorActionMsgID,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        });
-    } catch (e) { safeErrorLog(e) }
+    if (request.moderatorActionMsgID) {
+        try {
+            await bot.editMessageText("#timeout", {
+                chat_id: process.env.TGMAINCHAT,
+                message_id: request.moderatorActionMsgID,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            });
+        } catch (e) {
+            safeErrorLog(e);
+            console.log("Close by timeout failed for message " + request.moderatorActionMsgID + ", sleeping for 30 seconds ")
+            await new Promise(resolve => setTimeout(resolve, 30000));
+        }
+    }
     await notifyUsers(request, "-6", bot)
     await Request.updateOne(request, {fakeStatus: "-6"});
 }

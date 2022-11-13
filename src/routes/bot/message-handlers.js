@@ -718,23 +718,22 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 }
 
 const onCloseOldRequests = async (msg, bot) => {
-    console.log("Starting closing requests")
     if (admins.includes(String(msg.from.id))) {
-        console.log("Security check successful")
         var timeoutDate = new Date();
         timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
-        console.log("Timeout date is " + timeoutDate.toLocaleString())
         var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
-        console.log("Found " + oldRequests.length + " old requests")
+        try {
+            await bot.sendMessage(msg.chat.id, 'Знайдено ' + oldRequests.length +
+                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+                ' року та досі знаходяться в статусі #pending. Переводжу їх в статус #timeout...');
+        } catch (e) { safeErrorLog(e); }
         for (var index = 0; index < oldRequests.length; index++) {
-            console.log("Processing index " + index)
             try {
                 await closeRequestByTimeout(oldRequests[index], bot);
             } catch (e) { safeErrorLog(e); }
             console.log("Closed index " + index)
             // Not sure about this, but in order not to be accused in spaming users added 1 second pause
             await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Timeout index " + index)
         }
         try {
             await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
