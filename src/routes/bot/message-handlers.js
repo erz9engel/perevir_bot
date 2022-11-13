@@ -719,10 +719,11 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 
 const onCloseOldRequests = async (msg, bot) => {
     if (admins.includes(String(msg.from.id))) {
+        let timeout = parseInt(msg.text.split(" ")[1]) || RequestTimeout
         let timeoutDate = new Date();
         let text;
         let options = {};
-        timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
+        timeoutDate.setDate(timeoutDate.getDate() - timeout);
         let oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
         if (oldRequests.length) {
             let inline_keyboard = [
@@ -741,7 +742,6 @@ const onCloseOldRequests = async (msg, bot) => {
                 + " року та досі знаходяться в статусі #pending немає. Ми все опрацювали 🥳"
         }
         try {
-
             await bot.sendMessage(msg.chat.id, text, options);
         } catch (e) { safeErrorLog(e); }
     } else {console.log('not allowed')}

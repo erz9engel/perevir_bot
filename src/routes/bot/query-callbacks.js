@@ -383,7 +383,7 @@ const onConfirmClosePending = async (callbackQuery, bot) => {
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         try {
-            await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+            await bot.sendMessage(callbackQuery.from.id, 'Закрито ' + index +
                 ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
                 ' року та досі були в статусі #pending');
         } catch (e) { safeErrorLog(e); }
