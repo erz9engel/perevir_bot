@@ -27,7 +27,9 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onReqTakeQuery, onMoreStatusesQuery
+    onReqTakeQuery,
+    onMoreStatusesQuery,
+    onConfirmClosePending,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -114,7 +116,7 @@ bot.on('message', async (msg) => {
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
-    } else if (text === '/closepending') {
+    } else if (text.startsWith('/closepending')) {
         await onCloseOldRequests(msg, bot)
     } else if (isReplyWithCommentRequest(msg)) {
         await onReplyWithComment(msg, bot);
@@ -132,7 +134,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
     const userStatus = await checkUserStatus(callbackQuery.from.id);
-    if (userStatus.startsWith("chat_")){
+    if (userStatus && userStatus.startsWith("chat_")){
         try {
             return await bot.answerCallbackQuery(
                 callbackQuery.id,
@@ -157,6 +159,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('CLOSETIMEOUT_')) {
+        await onConfirmClosePending(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
         await onEscalateQuery(callbackQuery, bot)
     } else if (data.startsWith('UPDATECOMMENT_')) {
