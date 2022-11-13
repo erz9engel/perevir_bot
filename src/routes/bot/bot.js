@@ -116,7 +116,7 @@ bot.on('message', async (msg) => {
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
-    } else if (text.startsWith('/closepending')) {
+    } else if (text && text.startsWith('/closepending')) {
         await onCloseOldRequests(msg, bot)
     } else if (isReplyWithCommentRequest(msg)) {
         await onReplyWithComment(msg, bot);
