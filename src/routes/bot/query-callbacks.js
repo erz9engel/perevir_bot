@@ -8,7 +8,8 @@ const {
     safeErrorLog,
     getLanguage,
     shiftOffsetEntities,
-    getFakeText
+    getFakeText,
+    closeRequestByTimeout,
 } = require("./utils");
 
 const {statusesKeyboard} = require("../keyboard");
@@ -363,6 +364,32 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
     }
 }
 
+const onConfirmClosePending = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    if (data === 'CLOSETIMEOUT_') {
+        try {
+            await bot.deleteMessage(message.chat.id, message.message_id);
+        } catch (e) {
+            safeErrorLog(e)
+        }
+    } else {
+        const timeoutDate = new Date(parseInt(data.split('_')[1]));
+        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": {$lt: timeoutDate}});
+        for (var index = 0; index < oldRequests.length; index++) {
+            try {
+                await closeRequestByTimeout(oldRequests[index], bot);
+            } catch (e) { safeErrorLog(e); }
+            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        try {
+            await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
+                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+                ' року та досі були в статусі #pending');
+        } catch (e) { safeErrorLog(e); }
+    }
+}
+
 const onEscalateQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const requestId = data.split('_')[1];
@@ -493,6 +520,7 @@ module.exports = {
     onBackRequest,
     onReqTakeQuery,
     onMoreStatusesQuery,
+    onConfirmClosePending,
 }
 
 async function notifyViber(text, viberRequester) {

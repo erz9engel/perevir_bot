@@ -29,6 +29,7 @@ const {
     onUpdateCommentQuery,
     onReqTakeQuery,
     onMoreStatusesQuery,
+    onConfirmClosePending,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -158,6 +159,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('CLOSETIMEOUT_')) {
+        await onConfirmClosePending(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
         await onEscalateQuery(callbackQuery, bot)
     } else if (data.startsWith('UPDATECOMMENT_')) {

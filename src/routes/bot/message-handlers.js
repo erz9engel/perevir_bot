@@ -719,28 +719,31 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 
 const onCloseOldRequests = async (msg, bot) => {
     if (admins.includes(String(msg.from.id))) {
-        var timeoutDate = new Date();
+        let timeoutDate = new Date();
+        let text;
+        let options = {};
         timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
-        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
-        try {
-            await bot.sendMessage(msg.chat.id, 'Знайдено ' + oldRequests.length +
-                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-                ' року та досі знаходяться в статусі #pending. Переводжу їх в статус #timeout...');
-        } catch (e) { safeErrorLog(e); }
-        for (var index = 0; index < oldRequests.length; index++) {
-            try {
-                await closeRequestByTimeout(oldRequests[index], bot);
-            } catch (e) { safeErrorLog(e); }
-            console.log("Closed index " + index)
-            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        let oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
+        if (oldRequests.length) {
+            let inline_keyboard = [
+                [{text: '✅️ Закрити застарілі запити', callback_data: 'CLOSETIMEOUT_' + timeoutDate.getTime()}],
+                [{text: '❌️ Скасувати', callback_data: 'CLOSETIMEOUT_'}]
+            ];
+            text = 'Знайдено ' + oldRequests.length + ' повідомлень, що створені до '
+                + timeoutDate.toLocaleDateString('uk-UA') + ' року та досі знаходяться в статусі #pending.\n' +
+                'Перевести їх в статус #timeout?'
+            options = {
+                reply_to_message_id: msg.message_id,
+                reply_markup: JSON.stringify({inline_keyboard}),
+            };
+        } else {
+            text = "Повідомлень , що створені до " + timeoutDate.toLocaleDateString('uk-UA')
+                + " року та досі знаходяться в статусі #pending немає. Ми все опрацювали 🥳"
         }
         try {
-            await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
-                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-                ' року та досі були в статусі #pending');
-        } catch (e) { safeErrorLog(e); }
 
+            await bot.sendMessage(msg.chat.id, text, options);
+        } catch (e) { safeErrorLog(e); }
     } else {console.log('not allowed')}
 }
 
