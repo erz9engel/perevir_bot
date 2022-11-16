@@ -82,6 +82,7 @@ var telegramUserSchema = Schema({
     language: String, //Preffered language
     status: String, //Status for the user TBD:(blocked/suspended/chat etc)
     joinedCampaign: String, //Name of Campaign from where pressed /start
+    quizPoints: Number,
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
