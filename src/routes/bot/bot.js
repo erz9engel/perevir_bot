@@ -27,7 +27,6 @@ const {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onReqTakeQuery,
     onMoreStatusesQuery,
     onConfirmClosePending,
