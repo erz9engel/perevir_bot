@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 require('dotenv').config();
 const {
     onStart,
@@ -17,7 +16,6 @@ const {
     onCloseOldRequests,
     saveCommentToDB,
     confirmComment,
-    closeChat
 } = require('./message-handlers');
 
 const {
@@ -30,7 +28,9 @@ const {
     onEscalateQuery,
     onUpdateCommentQuery,
     onChatModeQuery,
-    onReqTakeQuery
+    onReqTakeQuery,
+    onMoreStatusesQuery,
+    onConfirmClosePending,
 } = require('./query-callbacks');
 
 const {
@@ -63,7 +63,7 @@ const {
     isUnsupportedContent,
     isTextFromDict,
 } = require("./validation");
-const {checkUserStatus} = require("./authorization");
+const {checkUserStatus, incrementBlockedMessagesCount} = require("./authorization");
 
 //Notify about reloading
 try {
@@ -74,23 +74,18 @@ try {
 
 //Lauch needUpdate
 const {onTryToUpdate} = require("./needUpdate");
+const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
 onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {
     const text = msg.text;
+    const user = msg.from.id
     
-    const userStatus = await checkUserStatus(msg.from.id);
+    const userStatus = await checkUserStatus(user);
     if (userStatus && userStatus === 'blocked') {
-        return
-    } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === msg.from.id) {
-        const recipient = userStatus.split('_')[1]
-        if (msg.text && (msg.text === "/close_chat" || msg.text === "📵 Завершити діалог")) {
-            await closeChat(msg.from.id, recipient, bot)
-        } else {
-            try {
-                await bot.copyMessage(recipient, msg.chat.id, msg.message_id)
-            } catch (e){ safeErrorLog(e) }
-        }
+        await incrementBlockedMessagesCount(user)
+    } else if (userStatus && userStatus.startsWith('chat_') && msg.chat.id === user) {
+        await processChatMessage(msg, userStatus, bot)
     } else if (msg.chat.id.toString() === escalationGroup) {
         //ignore messages in escalation group
     } else if (msg.chat.id.toString() === commentGroup && msg.text){
@@ -131,7 +126,7 @@ bot.on('message', async (msg) => {
         await onSetFakes(msg, bot);
     } else if (text === '/sendfakes') {
         await onSendFakes(msg, bot);
-    } else if (text === '/closepending') {
+    } else if (text.startsWith('/closepending')) {
         await onCloseOldRequests(msg, bot)
     } else if (isReplyWithCommentRequest(msg)) {
         await onReplyWithComment(msg, bot);
@@ -148,9 +143,20 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
-
+    const userStatus = await checkUserStatus(callbackQuery.from.id);
+    if (userStatus && userStatus.startsWith("chat_")){
+        try {
+            return await bot.answerCallbackQuery(
+                callbackQuery.id,
+                {
+                    text: "Ця дія недоступна, тому що у вас відкрито діалог з користувачем",
+                    show_alert: true,
+                }
+            );
+        } catch (e) { return safeErrorLog(e) }
+    }
     if (data.startsWith('FS_')) {
-        await onFakeStatusQuery(callbackQuery, bot)
+        await onFakeStatusQuery(callbackQuery, bot, false)
     } else if (data.startsWith('CS_')) {
         await onChangeStatusQuery(callbackQuery, bot)
     } else if (data.startsWith('COMMENT_')) {
@@ -163,6 +169,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         console.log("old reason message") 
     } else if (data.startsWith('CONFIRM_')) {
         await onConfirmCommentQuery(callbackQuery, bot)
+    } else if (data.startsWith('CLOSETIMEOUT_')) {
+        await onConfirmClosePending(callbackQuery, bot)
     } else if (data.startsWith('ESCALATE_')) {
         await onEscalateQuery(callbackQuery, bot)
     } else if (data.startsWith('UPDATECOMMENT_')) {
@@ -177,6 +185,12 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onQuizСheckQuery(callbackQuery, bot)
     } else if (data.startsWith('QUIZ_NEXT')) {
         await onQuizNextQuery(callbackQuery, bot)
+    } else if (data.startsWith('UNPAUSE_')) {
+        await unpauseCallback(callbackQuery, bot)
+    } else if (data.startsWith('MORESTATUSES_')) {
+        await onMoreStatusesQuery(callbackQuery, bot)
+    } else if (data.startsWith('SKIP')) {
+        await onFakeStatusQuery(callbackQuery, bot, true)
     }
 });
 

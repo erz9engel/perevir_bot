@@ -8,7 +8,8 @@ const {
     safeErrorLog,
     getLanguage,
     shiftOffsetEntities,
-    getFakeText
+    getFakeText,
+    closeRequestByTimeout,
 } = require("./utils");
 
 const {statusesKeyboard} = require("../keyboard");
@@ -48,7 +49,7 @@ const onReqTakeQuery = async (callbackQuery, bot) => {
 
 }
 
-const onFakeStatusQuery = async (callbackQuery, bot) => {
+const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
     const {data, message} = callbackQuery;
     let requestId = data.split('_')[2], fakeStatus = data.split('_')[1];
     let messageChat = message.chat.id;
@@ -100,7 +101,9 @@ const onFakeStatusQuery = async (callbackQuery, bot) => {
     await involveModerator(requestId, callbackQuery.from);
         
     if (!request._id) return console.log('No request ' + requestId);
-    await notifyUsers(request, fakeStatus, bot);
+    if (!silentMode) {
+        await notifyUsers(request, fakeStatus, bot);
+    }
 }
 
 const onNeedUpdate = async (request, bot) => {  
@@ -173,7 +176,7 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
             ],
             [
                 { text: '🟡 Відмова', callback_data: 'FS_-2_' + requestId },
-                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+                { text: '-->', callback_data: 'MORESTATUSES_' + requestId },
             ]
         ]
     )
@@ -188,6 +191,30 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
                 inline_keyboard
             })
         });
+    } catch (e) {
+        safeErrorLog(e);
+    }
+}
+
+const onMoreStatusesQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const requestId = data.split('_')[1];
+    let inline_keyboard = changeInlineKeyboard(
+        message.reply_markup.inline_keyboard,
+        'decision',
+        [
+            [
+                { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
+                { text: '⏭️ Пропустити', callback_data: 'SKIP_-2_' + requestId },
+            ],
+            [{ text: '<--', callback_data: 'CS_' + requestId }],
+        ]
+    )
+    try {
+        await bot.editMessageReplyMarkup(
+            {inline_keyboard},
+            {chat_id: message.chat.id, message_id: message.message_id},
+        )
     } catch (e) {
         safeErrorLog(e);
     }
@@ -337,6 +364,32 @@ const onConfirmCommentQuery = async (callbackQuery, bot) => {
     }
 }
 
+const onConfirmClosePending = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    if (data === 'CLOSETIMEOUT_') {
+        try {
+            await bot.deleteMessage(message.chat.id, message.message_id);
+        } catch (e) {
+            safeErrorLog(e)
+        }
+    } else {
+        const timeoutDate = new Date(parseInt(data.split('_')[1]));
+        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": {$lt: timeoutDate}});
+        for (var index = 0; index < oldRequests.length; index++) {
+            try {
+                await closeRequestByTimeout(oldRequests[index], bot);
+            } catch (e) { safeErrorLog(e); }
+            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        try {
+            await bot.sendMessage(callbackQuery.from.id, 'Закрито ' + index +
+                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+                ' року та досі були в статусі #pending');
+        } catch (e) { safeErrorLog(e); }
+    }
+}
+
 const onEscalateQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
     const requestId = data.split('_')[1];
@@ -453,88 +506,6 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
     }
 }
 
-const onChatModeQuery = async (callbackQuery, bot) => {
-    const {data, message} = callbackQuery;
-    const requestId = data.split('_')[1];
-    const request = await Request.findById(requestId);
-    if (!request) return
-    const moderatorId = callbackQuery.from.id;
-    const requesterId = request.requesterTG;
-    let requester = await TelegramUser.findOne({telegramID: requesterId});
-    let moderator = await TelegramUser.findOne({telegramID: moderatorId});
-    if(!moderator || !requester) {
-        let text = 'Щось пішло не так...';
-        try {
-            return await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { return safeErrorLog(e) } 
-    }
-    if (requester.status && requester.status.startsWith('chat_')) {
-        let text = 'Чат вже зайнятий іншим модератором';
-        if (requester.status.split('_')[1] === moderatorId.toString()) {
-            text = 'Ви вже відкрили чат з цим користувачем. Для його закриття напишіть боту /close_chat'
-        }
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-    } else if (moderator.status && moderator.status.startsWith('chat_')) {
-        let text = 'Ви вже відкрили чат з іншим користувачем. Для його закриття напишіть боту /close_chat';
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-    } else {
-        let text = 'Діалог ініціалізовано, для спілкування перейдіть у бот @perevir_bot';
-        try {
-            await bot.answerCallbackQuery(
-                callbackQuery.id,
-                {text: text, show_alert: true}
-            );
-        } catch (e) { safeErrorLog(e) } 
-        moderator.status = 'chat_' + requesterId;
-        requester.status = 'chat_' + moderatorId;
-        await moderator.save()
-        await requester.save()
-        try {
-            await bot.forwardMessage(moderatorId, message.chat.id, request.moderatorMsgID);
-        } catch (e) { safeErrorLog(e) } 
-        let moderatorText = 'За цим запитом розпочато діалог з ініціатором запиту.\n'
-            + 'Надалі текст всіх повідомлень, надісланих сюди, буде направлений користувачу від імені бота\n'
-            + 'Для того, щоб вийти з режиму діалогу напишіть /close_chat '
-            + 'або скористайтеся кнопкою внизу'
-        try {
-            await bot.sendMessage(
-                moderatorId,
-                moderatorText,
-                {
-                    reply_markup: {
-                        resize_keyboard: true,
-                        one_time_keyboard: false,
-                        keyboard: [[{ text: '📵 Завершити діалог'}]]
-                    }
-                }
-            )
-        } catch (e) { safeErrorLog(e) } 
-        
-        try {
-            await getText('open_chat', requester.language, async function(err, text){
-                if (err) return safeErrorLog(err);
-                try {
-                    await bot.sendMessage(requesterId, text);
-                } catch (e) { safeErrorLog(e) } 
-            });
-        } catch (e) { safeErrorLog(e) }
-
-    }
-}
-
 module.exports = {
     onFakeStatusQuery,
     onChangeStatusQuery,
@@ -544,11 +515,12 @@ module.exports = {
     onConfirmCommentQuery,
     onEscalateQuery,
     onUpdateCommentQuery,
-    onChatModeQuery,
     onNeedUpdate,
     onTakenRequest,
     onBackRequest,
-    onReqTakeQuery
+    onReqTakeQuery,
+    onMoreStatusesQuery,
+    onConfirmClosePending,
 }
 
 async function notifyViber(text, viberRequester) {

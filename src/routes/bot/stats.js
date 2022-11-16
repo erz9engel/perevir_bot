@@ -5,12 +5,14 @@ const schedule = require('node-schedule');
 
 const Request = mongoose.model('Request');
 const Moderator = mongoose.model('Moderator');
+const Escalation = mongoose.model('Escalation');
 const DailyStats = mongoose.model('DailyStats');
 const TelegramUser = mongoose.model('TelegramUser');
 const SourceStatistics = mongoose.model('SourceStatistics');
 
 schedule.scheduleJob("0 8 * * *", async () => sendStats());
 schedule.scheduleJob("1 8 * * *", async () => sendModeratorDailyStats());
+schedule.scheduleJob("2 8 * * *", async () => sendEscalationStats());
 schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 
 function sendStats() {
@@ -110,6 +112,74 @@ function sendModeratorDailyStats() {
             }
             bot.message(msg, true, {parse_mode: 'HTML'});
         });
+    });
+}
+
+function sendEscalationStats() {
+    Escalation.aggregate([{
+       $lookup:
+         {
+           from: 'requests',
+           localField: 'request',
+           foreignField: '_id',
+           as: 'request_data'
+         }
+    },{
+        $unwind: "$request_data"
+    },{
+        $project:
+            {
+                _id: 1,
+                isResolved: 1,
+                createdAt: 1,
+                fakeStatus: "$request_data.fakeStatus"
+            }
+    }], function (err, escalations){
+        var now = new Date(), stats = {};
+        var msg = "#СТАТИСТИКА ескалацій на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        //General
+        stats.rTotal = escalations.length;
+        msg += '\nВсього: <b>' + escalations.length + '</b>';
+
+        stats.rFake = escalations.filter(r => parseInt(r.fakeStatus) === -1).length;
+        msg += '\nФейк: ' + stats.rFake;
+
+        stats.rSemiTrue = escalations.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + stats.rSemiTrue;
+
+        stats.rNoProofs = escalations.filter(r => parseInt(r.fakeStatus) === -4).length;
+        msg += '\nВідсутні докази: ' + stats.rNoProofs;
+
+        stats.rTrue = escalations.filter(r => parseInt(r.fakeStatus) === 1).length;
+        msg += '\nПравда: ' + stats.rTrue;
+
+        stats.rPending = escalations.filter(r => parseInt(r.fakeStatus) === 0).length;
+        msg += '\nОчікує: ' + stats.rPending;
+
+        //Last 24 hours
+        msg += '\n\n<b>Остання доба:</b>';
+        now.setDate(now.getDate() - 1);
+        const lastrequests = escalations.filter(r => new Date(r.createdAt) >= now);
+
+        stats.rToday = lastrequests.length;
+        msg += '\nВсього: ' + lastrequests.length;
+
+        stats.rTodayFake = lastrequests.filter(r => parseInt(r.fakeStatus) === -1).length
+        msg += '\nФейк: ' + stats.rTodayFake;
+
+        stats.rTodaySemiTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === -5).length;
+        msg += '\nНапівправда: ' + stats.rTodaySemiTrue;
+
+        stats.rTodayNoProofs = lastrequests.filter(r => parseInt(r.fakeStatus) === -4).length;
+        msg += '\nВідсутні докази: ' + stats.rTodayNoProofs;
+
+        stats.rTodayTrue = lastrequests.filter(r => parseInt(r.fakeStatus) === 1).length;
+        msg += '\nПравда: ' + stats.rTodayTrue;
+
+        stats.rTodayPending = lastrequests.filter(r => parseInt(r.fakeStatus) === 0).length;
+        msg += '\nОчікує: ' + stats.rTodayPending;
+
+        bot.messageId(process.env.TGESCALATIONGROUP, msg, true, {parse_mode: 'HTML'});
     });
 }
 
