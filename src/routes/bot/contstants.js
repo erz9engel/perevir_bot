@@ -25,6 +25,24 @@ const UnsupportedContentText = {
 
 const SetFakesRequestText = "Надішліть нові фейки у відповідь на це повідомлення"
 const RequestTimeout = 14 // in days
+const FakeStatusesStrToInt = {
+    "true": 1,
+    "false": -1,
+    "manipulation": -5,
+    "noproof": -4,
+    "reject": -2,
+    "autoconfirm": 2,
+    "autodecline": -3,
+}
+const FakeStatusesStrToHuman = {
+    "true": "правда",
+    "false": "фейк",
+    "manipulation": "напівправда",
+    "noproof": "бракує доказів",
+    "reject": "відмова",
+    "autoconfirm": "підтверджено автоматичнр",
+    "autodecline": "відмовлено автоматично",
+}
 
 module.exports = {
     CheckContentText,
@@ -33,5 +51,7 @@ module.exports = {
     NoCurrentFakes,
     UnsupportedContentText,
     SetFakesRequestText,
-    RequestTimeout
+    RequestTimeout,
+    FakeStatusesStrToInt,
+    FakeStatusesStrToHuman,
 }

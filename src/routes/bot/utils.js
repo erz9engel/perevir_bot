@@ -45,6 +45,7 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
 
     await getText(textArg, null, async function(err, text){
         if (err) return safeErrorLog(err);
+        let lang;
         //Notify original requester
         if (foundRequest.viberReq) {
             notifyViber(text['ua'], foundRequest.viberRequester);
@@ -52,9 +53,9 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             let options = {
                 reply_to_message_id: foundRequest.requesterMsgID
             };
-    
+            lang = getRequesterLanguage(foundRequest.requesterId)
             try {
-                await bot.sendMessage(foundRequest.requesterTG, text[foundRequest.requesterId.language], options);
+                await bot.sendMessage(foundRequest.requesterTG, text[lang], options);
             } catch (e){ safeErrorLog(e) }
         }
         //Notify other requesters
@@ -62,8 +63,9 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             const optionsR = {
                 reply_to_message_id: foundRequest.otherUsetsTG[i].requesterMsgID
             };
+            lang = getRequesterLanguage(foundRequest.otherUsetsTG[i].requesterId)
             try {
-                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text[foundRequest.otherUsetsTG[i].requesterId.language], optionsR);
+                await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text[lang], optionsR);
             } catch (e){ safeErrorLog(e) }
         }
     });
@@ -119,16 +121,21 @@ async function closeRequestByTimeout(request, bot) {
     if (!request.commentChatId) {
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
     }
-
-    try {
-        await bot.editMessageText("#timeout", {
-            chat_id: process.env.TGMAINCHAT,
-            message_id: request.moderatorActionMsgID,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        });
-    } catch (e) { safeErrorLog(e) }
+    if (request.moderatorActionMsgID) {
+        try {
+            await bot.editMessageText("#timeout", {
+                chat_id: process.env.TGMAINCHAT,
+                message_id: request.moderatorActionMsgID,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+            });
+        } catch (e) {
+            safeErrorLog(e);
+            console.log("Close by timeout failed for message " + request.moderatorActionMsgID + ", sleeping for 30 seconds ")
+            await new Promise(resolve => setTimeout(resolve, 30000));
+        }
+    }
     await notifyUsers(request, "-6", bot)
     await Request.updateOne(request, {fakeStatus: "-6"});
 }
@@ -359,6 +366,16 @@ function getFakeText (fakeStatus) {
 
     return status;
 
+}
+
+function getRequesterLanguage(requester) {
+    let lang;
+    try {
+        lang = requester.language;
+    } catch (e) {
+        lang = 'ua';
+    }
+    return lang;
 }
 
 module.exports = {

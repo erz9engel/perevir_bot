@@ -38,7 +38,7 @@ const {
 } = require("./utils");
 
 const {
-    statusesKeyboardNEW
+    takeRequestKeyboard
 } = require("../keyboard");
 
 const onStart = async (msg, bot, lang, campaign) => {
@@ -423,7 +423,7 @@ const onCheckRequest = async (msg, bot) => {
     let inline_keyboard;
     if (!notified) {
     
-        inline_keyboard = await statusesKeyboardNEW(requestId);
+        inline_keyboard = await takeRequestKeyboard(requestId);
         var options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
@@ -553,7 +553,7 @@ const onCheckGroupRequest = async (msg, bot) => {
             const requestId = new mongoose.Types.ObjectId();
 
             //new
-            var inline_keyboard = await statusesKeyboardNEW(requestId);
+            var inline_keyboard = await takeRequestKeyboard(requestId);
             var options = {
                 reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({
@@ -719,20 +719,31 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 
 const onCloseOldRequests = async (msg, bot) => {
     if (admins.includes(String(msg.from.id))) {
-        var timeoutDate = new Date();
-        timeoutDate.setDate(timeoutDate.getDate() - RequestTimeout);
-        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
-        for (var index = 0; index < oldRequests.length; index++) {
-            await closeRequestByTimeout(oldRequests[index], bot);
-            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        let timeout = parseInt(msg.text.split(" ")[1]) || RequestTimeout
+        let timeoutDate = new Date();
+        let text;
+        let options = {};
+        timeoutDate.setDate(timeoutDate.getDate() - timeout);
+        let oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
+        if (oldRequests.length) {
+            let inline_keyboard = [
+                [{text: '✅️ Закрити застарілі запити', callback_data: 'CLOSETIMEOUT_' + timeoutDate.getTime()}],
+                [{text: '❌️ Скасувати', callback_data: 'CLOSETIMEOUT_'}]
+            ];
+            text = 'Знайдено ' + oldRequests.length + ' повідомлень, що створені до '
+                + timeoutDate.toLocaleDateString('uk-UA') + ' року та досі знаходяться в статусі #pending.\n' +
+                'Перевести їх в статус #timeout?'
+            options = {
+                reply_to_message_id: msg.message_id,
+                reply_markup: JSON.stringify({inline_keyboard}),
+            };
+        } else {
+            text = "Повідомлень , що створені до " + timeoutDate.toLocaleDateString('uk-UA')
+                + " року та досі знаходяться в статусі #pending немає. Ми все опрацювали 🥳"
         }
         try {
-            await bot.sendMessage(msg.chat.id, 'Закрито ' + index +
-                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-                ' року та досі були в статусі #pending');
+            await bot.sendMessage(msg.chat.id, text, options);
         } catch (e) { safeErrorLog(e); }
-
     } else {console.log('not allowed')}
 }
 
@@ -820,22 +831,6 @@ async function confirmComment(message, bot) {
     }
 }
 
-async function closeChat(user, recipient, bot) {
-    await TelegramUser.findOneAndUpdate({telegramID: user}, {status: ''});
-    const {language} = await TelegramUser.findOneAndUpdate({telegramID: recipient}, {status: ''});
-    const replyOptions = await getReplyOptions('ua');
-    try {
-        await bot.sendMessage(user, 'Діалог з ініціатором запиту завершено', replyOptions)
-    } catch (e) { safeErrorLog(e) }
-    
-    try {
-        await getText('close_chat', language, async function(err, text){
-            if (err) return safeErrorLog(err);
-            await bot.sendMessage(recipient, text)
-        });
-    } catch (e) { safeErrorLog(e) }
-}
-
 module.exports = {
     onStart,
     onCheckContent,
@@ -854,7 +849,7 @@ module.exports = {
     saveCommentToDB,
     confirmComment,
     informRequestersWithComment,
-    closeChat
+    getReplyOptions,
 }
 
 async function notifyViber(text, viberRequester) {
