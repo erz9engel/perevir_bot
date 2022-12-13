@@ -305,7 +305,8 @@ const onCheckRequest = async (msg, bot) => {
         requesterMsgID: msg.message_id,
         requesterUsername: msg.from.username,
         createdAt: new Date(),
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
+        language: language,
     });
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
@@ -686,10 +687,13 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
         reply_to_message_id: request.requesterMsgID
     };
 
+    let moderatorsChannel;
+    if (request.language && request.language === 'en') moderatorsChannel = process.env.TGENGLISHCHAT;
+    else moderatorsChannel = process.env.TGMAINCHAT;
     if (redactionGroup) {
         try {
-            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorMsgID);
-            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorActionMsgID);
+            await bot.forwardMessage(redactionGroup, moderatorsChannel, request.moderatorMsgID);
+            await bot.forwardMessage(redactionGroup, moderatorsChannel, request.moderatorActionMsgID);
             await bot.forwardMessage(redactionGroup, chatId, commentMsgId);
         } catch (e) {
             safeErrorLog(e)
