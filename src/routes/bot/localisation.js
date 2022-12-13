@@ -48,8 +48,11 @@ async function changeRequestLanguage(request, newLanguage, bot) {
 }
 
 function getLanguageTGChat(language) {
-    if (language === 'en') return process.env.TGENGLISHCHAT;
-    else return process.env.TGMAINCHAT;
+    let moderatorChat = process.env.TGMAINCHAT;
+    if (language === 'en' && process.env.TGENGLISHCHAT) {
+        moderatorChat = process.env.TGENGLISHCHAT;
+    }
+    return moderatorChat;
 }
 
 module.exports = {
