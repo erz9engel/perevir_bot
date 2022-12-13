@@ -18,7 +18,7 @@ const {
     NoCurrentFakes
 } = require('./contstants')
 const {informRequestersWithComment} = require("./message-handlers");
-const { getText, getLanguageTGChat} = require('./localisation');
+const { getText, getLanguageTGChat, changeRequestLanguage} = require('./localisation');
 const mongoose = require("mongoose");
 require('dotenv').config();
 
@@ -207,6 +207,7 @@ const onMoreStatusesQuery = async (callbackQuery, bot) => {
                 { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
                 { text: '⏭️ Пропустити', callback_data: 'SKIP_-2_' + requestId },
             ],
+            [{ text: '🌍 Іншомовний запит', callback_data: 'LANG_XX_' + requestId }],
             [{ text: '<--', callback_data: 'CS_' + requestId }],
         ]
     )
@@ -218,6 +219,58 @@ const onMoreStatusesQuery = async (callbackQuery, bot) => {
     } catch (e) {
         safeErrorLog(e);
     }
+}
+
+const onChangeLanguageQuery = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const [key, lang, requestId] = data.split('_');
+    if (lang === "XX") {
+        let inline_keyboard = changeInlineKeyboard(
+            message.reply_markup.inline_keyboard,
+            'decision',
+            [
+                [
+                    { text: '🇺🇦 ua', callback_data: 'LANG_ua_' + requestId },
+                    { text: '🇬🇧 en', callback_data: 'LANG_en_' + requestId },
+                ],
+                [{ text: '<--', callback_data: 'MORESTATUSES_' + requestId }],
+            ]
+        )
+        try {
+            await bot.editMessageReplyMarkup(
+                {inline_keyboard},
+                {chat_id: message.chat.id, message_id: message.message_id},
+            )
+        } catch (e) {
+            safeErrorLog(e);
+        }
+    } else {
+        let request = await Request.findById(requestId);
+        if (!request) {
+            try {
+                return await bot.answerCallbackQuery(
+                    callbackQuery.id,
+                    {
+                        text: "Помилка! Із даним запитом щось не так",
+                        show_alert: true,
+                    }
+                );
+            } catch (e) { return safeErrorLog(e) }
+        } else if (request.language === lang) {
+            try {
+                return await bot.answerCallbackQuery(
+                    callbackQuery.id,
+                    {
+                        text: "Цей запит вже знаходиться у приймальні вибраною вами мовою",
+                        show_alert: true,
+                    }
+                );
+            } catch (e) { return safeErrorLog(e) }
+        } else {
+            await changeRequestLanguage(request, lang, bot)
+        }
+    }
+
 }
 
 const onCommentQuery = async (callbackQuery, bot) => {
@@ -521,6 +574,7 @@ module.exports = {
     onReqTakeQuery,
     onMoreStatusesQuery,
     onConfirmClosePending,
+    onChangeLanguageQuery,
 }
 
 async function notifyViber(text, viberRequester) {

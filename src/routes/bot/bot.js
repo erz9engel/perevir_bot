@@ -30,6 +30,7 @@ const {
     onReqTakeQuery,
     onMoreStatusesQuery,
     onConfirmClosePending,
+    onChangeLanguageQuery,
 } = require('./query-callbacks')
 
 const {answerInlineQuery} = require("./inline-query")
@@ -175,6 +176,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onMoreStatusesQuery(callbackQuery, bot)
     } else if (data.startsWith('SKIP')) {
         await onFakeStatusQuery(callbackQuery, bot, true)
+    } else if (data.startsWith('LANG')) {
+        await onChangeLanguageQuery(callbackQuery, bot)
     }
 });
 

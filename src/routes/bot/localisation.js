@@ -1,5 +1,8 @@
 var fs = require('fs');
 const {safeErrorLog} = require("./utils");
+const {takeRequestKeyboard} = require("../keyboard");
+const mongoose = require("mongoose");
+const Request = mongoose.model('Request');
 
 async function changeRequestLanguage(request, newLanguage, bot) {
     let fromLanguageChat = getLanguageTGChat(request.language)
@@ -14,12 +17,21 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     } catch (e) {
         safeErrorLog(e)
     }
+    let inline_keyboard = await takeRequestKeyboard(request._id.toString());
+    try {
+        await bot.editMessageReplyMarkup(
+            {inline_keyboard},
+            {chat_id: toLanguageChat, message_id: moderatorActionMsgId.message_id},
+        )
+    } catch (e) {
+        safeErrorLog(e);
+    }
     await Request.updateOne(
         request,
         {
             language: newLanguage,
-            moderatorActionMsgID: moderatorActionMsgId,
-            moderatorMsgID: moderatorMsgId,
+            moderatorActionMsgID: parseInt(moderatorActionMsgId.message_id),
+            moderatorMsgID: parseInt(moderatorMsgId.message_id),
         },
     );
 }
