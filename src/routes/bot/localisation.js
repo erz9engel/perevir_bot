@@ -1,5 +1,5 @@
 var fs = require('fs');
-const {safeErrorLog} = require("./utils");
+const {safeErrorLog, getUserName} = require("./utils");
 const {takeRequestKeyboard} = require("../keyboard");
 const mongoose = require("mongoose");
 const Request = mongoose.model('Request');
@@ -10,21 +10,32 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     if (fromLanguageChat === toLanguageChat) return;
     let moderatorMsgId, moderatorActionMsgId;
     try {
-        moderatorMsgId = await bot.copyMessage(toLanguageChat, fromLanguageChat, request.moderatorMsgID)
-        moderatorActionMsgId = await bot.copyMessage(toLanguageChat, fromLanguageChat, request.moderatorActionMsgID)
+        moderatorMsgId = await bot.forwardMessage(toLanguageChat, request.requesterTG, request.requesterMsgID);
+    } catch (e) { safeErrorLog(e) }
+    let inline_keyboard = await takeRequestKeyboard(request._id);
+    let options = {
+        reply_to_message_id: moderatorMsgId.message_id,
+        reply_markup: JSON.stringify({
+            inline_keyboard
+        })
+    };
+    try {
+        let initiator = getUserName(moderatorMsgId.forward_from);
+        if (initiator.startsWith("@")) {
+            initiator = initiator.substring(1)
+        }
+        moderatorActionMsgId = await bot.sendMessage(
+            toLanguageChat,
+            '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending',
+            options,
+        );
+    } catch (e) {safeErrorLog(e)}
+
+    try {
         await bot.deleteMessage(fromLanguageChat, request.moderatorMsgID)
         await bot.deleteMessage(fromLanguageChat, request.moderatorActionMsgID)
     } catch (e) {
         safeErrorLog(e)
-    }
-    let inline_keyboard = await takeRequestKeyboard(request._id.toString());
-    try {
-        await bot.editMessageReplyMarkup(
-            {inline_keyboard},
-            {chat_id: toLanguageChat, message_id: moderatorActionMsgId.message_id},
-        )
-    } catch (e) {
-        safeErrorLog(e);
     }
     await Request.updateOne(
         request,
