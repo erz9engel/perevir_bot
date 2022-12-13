@@ -18,7 +18,7 @@ const {
     NoCurrentFakes
 } = require('./contstants')
 const {informRequestersWithComment} = require("./message-handlers");
-const { getText } = require('./localisation');
+const { getText, getLanguageTGChat} = require('./localisation');
 const mongoose = require("mongoose");
 require('dotenv').config();
 
@@ -76,7 +76,7 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
             });
         } catch (e) { safeErrorLog(e) }
         inline_keyboard = [[{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]]
-        messageChat = process.env.TGMAINCHAT
+        messageChat = getLanguageTGChat(req.language)
     }
     var request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
     if(!request) request = {requestId: ''};
@@ -120,7 +120,7 @@ const onNeedUpdate = async (request, bot) => {
     
     try {
         await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
-            chat_id: process.env.TGMAINCHAT,
+            chat_id: getLanguageTGChat(request.language),
             message_id: request.moderatorActionMsgID,
             reply_markup: JSON.stringify({
                 inline_keyboard
@@ -134,7 +134,7 @@ const onNeedUpdate = async (request, bot) => {
 const onTakenRequest = async (request, bot) => {  
     try {
         await bot.editMessageReplyMarkup({}, {
-            chat_id: process.env.TGMAINCHAT,
+            chat_id: getLanguageTGChat(request.language),
             message_id: request.moderatorActionMsgID
         });
     } catch (e) { safeErrorLog(e) }
@@ -148,7 +148,7 @@ const onBackRequest = async (request, bot) => {
         await bot.editMessageReplyMarkup({
             inline_keyboard: inline_keyboard
         }, {
-            chat_id: process.env.TGMAINCHAT,
+            chat_id: getLanguageTGChat(request.language),
             message_id: request.moderatorActionMsgID
         });
     } catch (e) {
@@ -234,11 +234,11 @@ const onCommentQuery = async (callbackQuery, bot) => {
                 message_id: message.message_id
             });
         } catch (e) { safeErrorLog(e) }
-        messageChat = process.env.TGMAINCHAT
     }
 
     const request = await Request.findById(requestId);
     if (!request) return
+    messageChat = getLanguageTGChat(request.language)
     let options = {}
     //Send message to moderator (forwarded + action)
     try {
@@ -424,7 +424,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
 
         const sentMsg = await bot.forwardMessage(
             process.env.TGESCALATIONGROUP,
-            process.env.TGMAINCHAT,
+            getLanguageTGChat(request.language),
             request.moderatorMsgID,
         );
         let inline_keyboard = [
