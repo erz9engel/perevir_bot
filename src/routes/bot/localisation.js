@@ -69,6 +69,6 @@ module.exports = {
                 }
             });
     },
-    getLanguageTGChat,
-    changeRequestLanguage,
+    getLanguageTGChat: getLanguageTGChat,
+    changeRequestLanguage: changeRequestLanguage,
 }
