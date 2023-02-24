@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { getText } = require('./localisation');
+const { getText, getLanguageTGChat} = require('./localisation');
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
@@ -122,9 +122,10 @@ async function closeRequestByTimeout(request, bot) {
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
     }
     if (request.moderatorActionMsgID) {
+        let moderatorsChannel = getLanguageTGChat(request.language)
         try {
             await bot.editMessageText("#timeout", {
-                chat_id: process.env.TGMAINCHAT,
+                chat_id: moderatorsChannel,
                 message_id: request.moderatorActionMsgID,
                 reply_markup: JSON.stringify({
                     inline_keyboard

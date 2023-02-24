@@ -20,7 +20,7 @@ const {
     SetFakesRequestText,
     RequestTimeout
 } = require('./contstants');
-const { getText } = require('./localisation');
+const { getText, getLanguageTGChat} = require('./localisation');
 const {
     getSubscriptionBtn,
     closeRequestByTimeout,
@@ -305,7 +305,8 @@ const onCheckRequest = async (msg, bot) => {
         requesterMsgID: msg.message_id,
         requesterUsername: msg.from.username,
         createdAt: new Date(),
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
+        language: language,
     });
 
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
@@ -408,9 +409,7 @@ const onCheckRequest = async (msg, bot) => {
     }
     
     //Send message to moderation
-    var moderatorsChanel;
-    if (language == 'en') moderatorsChanel = process.env.TGENGLISHCHAT;
-    else moderatorsChanel = process.env.TGMAINCHAT;
+    let moderatorsChanel = getLanguageTGChat(language)
 
     const reqsCount = await Request.countDocuments({});
     request.requestId = reqsCount + 1;
@@ -529,10 +528,8 @@ const onCheckGroupRequest = async (msg, bot) => {
                 const mediaFile = mediaGroups[index].mediaFiles[i];
                 mediaFiles.push({type: mediaFile.mediaType, media: mediaFile.mediaFileId})
             }
-            var sentMsg, moderatorsChanel;
-            if (language == 'en') moderatorsChanel = process.env.TGENGLISHCHAT;
-            else moderatorsChanel = process.env.TGMAINCHAT;
-
+            var sentMsg;
+            let moderatorsChanel = getLanguageTGChat(language);
 
             if (mediaGroups[index].text) {
                 var textpart;
@@ -686,10 +683,11 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
         reply_to_message_id: request.requesterMsgID
     };
 
+    let moderatorsChannel = getLanguageTGChat(request.language);
     if (redactionGroup) {
         try {
-            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorMsgID);
-            await bot.forwardMessage(redactionGroup, process.env.TGMAINCHAT, request.moderatorActionMsgID);
+            await bot.forwardMessage(redactionGroup, moderatorsChannel, request.moderatorMsgID);
+            await bot.forwardMessage(redactionGroup, moderatorsChannel, request.moderatorActionMsgID);
             await bot.forwardMessage(redactionGroup, chatId, commentMsgId);
         } catch (e) {
             safeErrorLog(e)

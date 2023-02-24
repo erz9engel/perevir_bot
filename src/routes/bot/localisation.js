@@ -1,5 +1,13 @@
 var fs = require('fs');
 
+function getLanguageTGChat(language) {
+    let moderatorChat = process.env.TGMAINCHAT;
+    if (language === 'en' && process.env.TGENGLISHCHAT) {
+        moderatorChat = process.env.TGENGLISHCHAT;
+    }
+    return moderatorChat;
+}
+
 module.exports = {
     getText: async function (name, lang, callback) {
         await fs.readFile('texts.json',
@@ -13,5 +21,6 @@ module.exports = {
                     } 
                 }
             });
-    }
+    },
+    getLanguageTGChat: getLanguageTGChat,
 }
