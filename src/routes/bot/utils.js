@@ -22,12 +22,13 @@ function getMailBtn () {
 }
 
 function getUserName(user) {
+    if (!user) return '';
     if (user.username) {
-        return "@" + user.username
+        return "@" + user.username;
     }
-    let fullname = user.first_name
+    let fullname = user.first_name;
     if (user.last_name) fullname = fullname + " " + user.last_name
-    return fullname
+    return fullname;
 }
 
 async function notifyUsers(foundRequest, fakeStatus, bot) {
