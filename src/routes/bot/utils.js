@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { getText, getLanguageTGChat} = require('./localisation');
+const {RequestThrottleLimit} = require("./contstants");
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
@@ -380,6 +381,19 @@ function getRequesterLanguage(requester) {
     return lang;
 }
 
+async function checkUserThrottling(userId, fromViber) {
+    let oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    let filters = {"createdAt": { $gt: oneHourAgo }};
+    if (fromViber) {
+        filters = { ...filters, viberRequester: userId };
+    } else {
+        filters = { ...filters, requesterId: userId };
+    }
+    let hourRequestsCount = await Request.countDocuments(filters);
+    return (hourRequestsCount > RequestThrottleLimit);
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -399,7 +413,8 @@ module.exports = {
     delay,
     parseSource,
     updateSource,
-    getFakeText
+    getFakeText,
+    checkUserThrottling,
 }
 
 async function notifyViber(text, viberRequester) {

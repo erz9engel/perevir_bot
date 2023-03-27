@@ -15,6 +15,8 @@ const {
 } = require("../keyboard");
 
 const mongoose = require('mongoose');
+const {checkUserThrottling, safeErrorLog} = require("../bot/utils");
+const {getText} = require("../bot/localisation");
 const User = mongoose.model('ViberUser');
 const Request = mongoose.model('Request');
 
@@ -134,7 +136,12 @@ async function onNewRequest (message, response) {
     const url = message.url;
     const text = message.text;
     const requester = response.userProfile.id;
-    
+    if (await checkUserThrottling(requester, true)) {
+        bot.sendMessage(response.userProfile, [
+            new TextMessage('Ви перевищили ліміт запитів. Відпочиньте і спробуйте пізніше.')
+        ]);
+        return;
+    }
     if (text || url) {
         const requestId = new mongoose.Types.ObjectId();
         const reqsCount = await Request.countDocuments({});
