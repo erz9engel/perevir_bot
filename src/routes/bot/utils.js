@@ -394,6 +394,39 @@ async function checkUserThrottling(userId, fromViber) {
     return (hourRequestsCount > RequestThrottleLimit);
 }
 
+function updateTextsList(oldList, newList) {
+  const oldMap = {};
+  for (const obj of oldList) {
+    oldMap[obj.name] = obj;
+  }
+
+  const result = [];
+
+  for (const newObj of newList) {
+    const oldObj = oldMap[newObj.name];
+
+    if (oldObj) {
+        let en, ua;
+      if (newObj.ua !== '') {
+          ua = newObj.ua;
+      } else {
+          ua = oldObj.ua;
+      }
+      if (newObj.en !== '') {
+          en = newObj.en;
+      } else {
+          en = oldObj.en;
+      }
+      result.push({name: newObj.name, en: en, ua: ua});
+      delete oldMap[newObj.name];
+    } else {
+      result.push(newObj);
+    }
+  }
+  return result;
+}
+
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -415,6 +448,7 @@ module.exports = {
     updateSource,
     getFakeText,
     checkUserThrottling,
+    updateTextsList,
 }
 
 async function notifyViber(text, viberRequester) {
