@@ -33,6 +33,7 @@ async function updateTexts(texts) {
                         if(texts[j].en != '') dbTexts[i].en = texts[j].en;
                         break;
                     }
+                    dbTexts.push(texts[j]);
                 }
             }
             fs.writeFile("texts.json", JSON.stringify(dbTexts), 'utf8', async function (err) {
