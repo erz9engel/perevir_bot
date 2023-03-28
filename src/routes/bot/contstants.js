@@ -25,6 +25,7 @@ const UnsupportedContentText = {
 
 const SetFakesRequestText = "Надішліть нові фейки у відповідь на це повідомлення"
 const RequestTimeout = 14 // in days
+const RequestThrottleLimit = 10 // 10 requests per 1 hour
 const FakeStatusesStrToInt = {
     "true": 1,
     "false": -1,
@@ -51,6 +52,7 @@ module.exports = {
     NoCurrentFakes,
     UnsupportedContentText,
     SetFakesRequestText,
+    RequestThrottleLimit,
     RequestTimeout,
     FakeStatusesStrToInt,
     FakeStatusesStrToHuman,
