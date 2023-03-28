@@ -391,7 +391,7 @@ async function checkUserThrottling(userId, fromViber) {
         filters = { ...filters, requesterId: userId };
     }
     let hourRequestsCount = await Request.countDocuments(filters);
-    return (hourRequestsCount > RequestThrottleLimit);
+    return (hourRequestsCount >= RequestThrottleLimit);
 }
 
 function updateTextsList(oldList, newList) {
