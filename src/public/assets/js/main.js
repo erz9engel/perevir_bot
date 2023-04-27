@@ -174,3 +174,18 @@ function getSourcestats() {
   });
 
 }
+
+function createQuiz() {
+  const name = document.getElementById('name').value;
+  const description = document.getElementById('description').value;
+
+  if (name == '' || description == '') return alert('Заповність назву та опис');
+  
+  fetch("../quizAPI/create", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({name: name, description: description})
+    }).then(res => {
+      return window.location.href = "../quiz";
+    });
+}
