@@ -230,6 +230,28 @@ var userSchema = Schema({
     createdAt: Date
 })
 
+var quizSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    code: {type: String, unique: true},
+    name: String,
+    description: String,
+    questions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
+    passed_times: { type: Number, default: 0 },
+    active: { type: Boolean, default: false}
+})
+
+var questionSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    name: String,
+    options: [{ type: Schema.Types.ObjectId, ref: 'Option' }]
+})
+
+var optionSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    name: String,
+    score: Number
+})
+
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
@@ -245,3 +267,6 @@ mongoose.model('DailyStats', dailyStatsSchema);
 mongoose.model('Escalation', escalationSchema);
 mongoose.model('SourceStatistics', sourceStatisticsSchema);
 mongoose.model('User', userSchema);
+mongoose.model('Quiz', quizSchema);
+mongoose.model('Question', questionSchema);
+mongoose.model('Option', optionSchema);

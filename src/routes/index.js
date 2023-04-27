@@ -26,6 +26,7 @@ var TelegramUser = mongoose.model('TelegramUser');
 var ViberUser = mongoose.model('ViberUser');
 var Request = mongoose.model('Request');
 var SourceStatistics = mongoose.model('SourceStatistics');
+var Quiz = mongoose.model('Quiz');
 
 require('./bot/bot');
 const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
@@ -243,6 +244,33 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
                 }
             );
         }
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/quiz', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const data = await Quiz.find({});
+            return res.render('quiz-list', {data: data}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/quiz/new', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            return res.render('quiz-new'); 
+        } 
     } else {
         return res.render('sign-in');
     }
