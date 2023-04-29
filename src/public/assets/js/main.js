@@ -189,3 +189,8 @@ function createQuiz() {
       return window.location.href = "../quiz";
     });
 }
+
+function addQuestion() {
+  var element = document.getElementById("addnew");
+  element.classList.add("show");
+}

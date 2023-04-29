@@ -276,4 +276,20 @@ router.get('/quiz/new', auth.optional, async (req, res) => {
     }
 });
 
+router.get('/quiz/:quizCode', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const {quizCode} = req.params;
+            const quiz = await Quiz.findOne({code: quizCode});
+            if(!quiz) return res.send('This quiz does not exist');
+            return res.render('quiz-edit', {data: quiz}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
 module.exports = router;
