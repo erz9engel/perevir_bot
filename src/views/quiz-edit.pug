@@ -183,10 +183,10 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
       hr.horizontal.dark.my-sm-4
       h6 Варіанти відповідей
       div
-        textarea(id="q-incorrect" placeholder="Правильна відповідь" rows="1" cols='32')
-        textarea(id="q-correct1" placeholder="Неправильна відповідь 1" rows="1" cols='32')
-        textarea(id="q-correct2" placeholder="Неправильна відповідь 2" rows="1" cols='32')
-        textarea(id="q-correct3" placeholder="Неправильна відповідь 3" rows="1" cols='32')
+        textarea(id="q-correct" placeholder="Правильна відповідь" rows="1" cols='32')
+        textarea(id="q-incorrect1" placeholder="Неправильна відповідь 1" rows="1" cols='32')
+        textarea(id="q-incorrect2" placeholder="Неправильна відповідь 2" rows="1" cols='32')
+        textarea(id="q-incorrect3" placeholder="Неправильна відповідь 3" rows="1" cols='32')
       hr.horizontal.dark.my-sm-4
       h6 Інше
       div
@@ -195,7 +195,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
         img#output(style='width: 100px; margin: 10px 0 10px 0')
         textarea(id="q-video" placeholder="URL відео (якщо відсутня картинка)" rows="1" cols='32')
         hr.horizontal.dark.my-sm-4
-      a.btn.bg-gradient-dark.w-100(href='javascript:addNewQuestion()') Додати питання
+      a.btn.bg-gradient-dark.w-100#submQ(href='javascript:addNewQuestion()') Додати питання
 
 
 // Core JS Files

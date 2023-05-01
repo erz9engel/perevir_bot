@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const mongoose = require('mongoose');
 const auth = require('./auth');
 const Quiz = mongoose.model('Quiz');
+const Question = mongoose.model('Question');
 
 //POST new quiz route
 router.post('/create', auth.required, async (req, res, next) => {
@@ -51,22 +52,32 @@ const upload = multer({ storage });
 
 router.post('/createQuestion', jsonParser, urlencodedParser, upload.any(), (req, res) => {
     
-    let url;
-    if (req.files && req.files.length > 0) {
-      // If a file was uploaded, use its filename to construct the URL
-      const file = req.files[0];
-      url = `http://localhost:3000/images/${file.filename}`;
-    } else {
-        url = 'no';
-    }
+    const data = req.body;
+    if(!data.quizCode) return res.send("No quizCode");
 
-    res.send(url);
+    const Qid = new mongoose.Types.ObjectId();
+    const newQuestion = new Question({
+        _id: Qid,
+        name: data.name,
+        correct: data.correct,
+        incorrect1: data.incorrect1,
+        incorrect2: data.incorrect2,
+        incorrect3: data.incorrect3,
+        explain: data.explain,
+        video: data.video,
+    });
+
+    if (req.files && req.files.length > 0) {
+      const file = req.files[0];
+      newQuestion.image = file.filename;
+    } 
+
+    return newQuestion.save()
+        .then(async function () {
+            await Quiz.findOneAndUpdate({code: data.quizCode}, {$push: { questions: Qid } });
+            return res.redirect('../quiz/' + data.quizCode);
+        });
 });
 
-// Error handling middleware
-router.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Internal server error' });
-  });
 
 module.exports = router

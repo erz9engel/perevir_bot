@@ -220,22 +220,26 @@ function addNewQuestion() {
 
   const formData = new FormData();
 
+  const loc = window.location.href;
+  const quizCode = loc.split('quiz/')[1];
+  formData.append('quizCode', quizCode);
+
   const name = document.getElementById('q-name').value;
   if (name == '') return alert('Заповність назву питання');
   formData.append('name', name);
 
-  const incorrect = document.getElementById('q-incorrect').value;
-  if (incorrect == '') return alert('Заповність правильну відповідь');
-  formData.append('incorrect', incorrect);
+  const correct = document.getElementById('q-correct').value;
+  if (correct == '') return alert('Заповність правильну відповідь');
+  formData.append('correct', correct);
   
-  const correct1 = document.getElementById('q-correct1').value;
-  if (correct1 == '') return alert('Заповність першу неправильну відповідь');
-  formData.append('correct1', name);
+  const incorrect1 = document.getElementById('q-incorrect1').value;
+  if (incorrect1 == '') return alert('Заповність першу неправильну відповідь');
+  formData.append('incorrect1', incorrect1);
 
-  const correct2 = document.getElementById('q-correct2').value;
-  if (correct2 != '') formData.append('correct2', correct2);
-  const correct3 = document.getElementById('q-correct3').value;
-  if (correct3 != '') formData.append('correct3', correct3);
+  const incorrect2 = document.getElementById('q-incorrect2').value;
+  if (incorrect2 != '') formData.append('incorrect2', incorrect2);
+  const incorrect3 = document.getElementById('q-incorrect3').value;
+  if (incorrect3 != '') formData.append('incorrect3', incorrect3);
 
   const explain = document.getElementById('q-explain').value;
   if (explain == '') return alert('Заповність пояснення');
@@ -248,12 +252,14 @@ function addNewQuestion() {
     const video = document.getElementById('q-video').value;
     if(video) formData.append('video', video);
   }
+  
+  document.getElementById('submQ').style.display = 'none';
 
   fetch("../quizAPI/createQuestion", {
       method: "POST", 
       body: formData
     }).then(res => {
-      alert(res);
+      location.reload();
     });
 
 }
