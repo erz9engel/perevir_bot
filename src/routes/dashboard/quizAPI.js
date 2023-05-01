@@ -32,6 +32,14 @@ async function generateCode() {
     return (Math.random() + 1).toString(36).substring(7);
 }
 
+router.post('/update', auth.required, async (req, res, next) => {
+
+    const data = req.body;
+    await Quiz.findByIdAndUpdate(data.Qid, {name: data.name, description: data.description, maxQuestions: data.maxQuestions, active: data.active});
+
+    return res.send('Updated');
+});
+
 // Increase the maximum request size to 50MB
 const jsonParser = bodyParser.json({ limit: '50mb' });
 const urlencodedParser = bodyParser.urlencoded({ limit: '50mb', extended: true });

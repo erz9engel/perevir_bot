@@ -190,6 +190,24 @@ function createQuiz() {
     });
 }
 
+
+function updateQuiz(Qid) {
+  const name = document.getElementById('name').value;
+  const description = document.getElementById('description').value;
+  const maxQ = document.getElementById('maxQ').value;
+  const active = document.getElementById('active').checked;
+
+  if (name == '' || description == '' || maxQ == '') return alert('Заповність назву, опис та кількість днів');
+  
+  fetch("../quizAPI/update", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({name: name, description: description, maxQuestions: maxQ, active: active, Qid: Qid})
+    }).then(res => {
+      return window.location.href = "../quiz";
+    });
+}
+
 function addQuestion() {
   var element = document.getElementById("addnew");
   element.classList.add("show");
