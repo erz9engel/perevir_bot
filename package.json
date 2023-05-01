@@ -23,14 +23,17 @@
     "fs": "^0.0.1-security",
     "mongoose": "^6.0.12",
     "morgan": "^1.7.0",
+    "multer": "^1.4.5-lts.1",
     "node-schedule": "^2.1.0",
     "node-telegram-bot-api": "^0.56.0",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
+    "path": "^0.12.7",
     "pug": "^3.0.2",
     "request": "^2.88.2",
     "serve-favicon": "^2.3.0",
+    "uuid": "^9.0.0",
     "viber-bot": "^1.0.18"
   },
   "engines": {

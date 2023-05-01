@@ -194,3 +194,66 @@ function addQuestion() {
   var element = document.getElementById("addnew");
   element.classList.add("show");
 }
+
+function openFile(event) {
+  var input = event.target;
+  
+  if(input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(){
+      var dataURL = reader.result;
+      var output = document.getElementById('output');
+      output.src = dataURL;
+    };
+    reader.readAsDataURL(input.files[0]);
+    //Hide video URL input
+    document.getElementById('q-video').style.display = 'none';
+  } else {
+    var output = document.getElementById('output');
+    output.src = '';
+    //Show video URL input
+    document.getElementById('q-video').style.display = 'block';
+  }
+};
+
+function addNewQuestion() {
+
+  const formData = new FormData();
+
+  const name = document.getElementById('q-name').value;
+  if (name == '') return alert('Заповність назву питання');
+  formData.append('name', name);
+
+  const incorrect = document.getElementById('q-incorrect').value;
+  if (incorrect == '') return alert('Заповність правильну відповідь');
+  formData.append('incorrect', incorrect);
+  
+  const correct1 = document.getElementById('q-correct1').value;
+  if (correct1 == '') return alert('Заповність першу неправильну відповідь');
+  formData.append('correct1', name);
+
+  const correct2 = document.getElementById('q-correct2').value;
+  if (correct2 != '') formData.append('correct2', correct2);
+  const correct3 = document.getElementById('q-correct3').value;
+  if (correct3 != '') formData.append('correct3', correct3);
+
+  const explain = document.getElementById('q-explain').value;
+  if (explain == '') return alert('Заповність пояснення');
+  formData.append('explain', explain);
+
+  const imageInput = document.getElementById('q-image');
+  const file = imageInput.files[0];
+  if (file) formData.append('image', file);
+  else {
+    const video = document.getElementById('q-video').value;
+    if(video) formData.append('video', video);
+  }
+
+  fetch("../quizAPI/createQuestion", {
+      method: "POST", 
+      body: formData
+    }).then(res => {
+      alert(res);
+    });
+
+}

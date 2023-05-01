@@ -177,7 +177,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
       .float-end.mt-4
         button.btn.btn-link.text-dark.p-0.fixed-plugin-close-button
           i.fa.fa-close(aria-hidden='true')
-    .card-body.pt-sm-3.pt-0
+    .card-body.pt-sm-3.pt-0(style='overflow-y: scroll; overflow-x: hidden')
       div
         textarea(id="q-name" placeholder="Питання" rows="2" cols='32')
       hr.horizontal.dark.my-sm-4
@@ -190,10 +190,11 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
       hr.horizontal.dark.my-sm-4
       h6 Інше
       div
-        textarea(id="q-img" placeholder="URL медіа (зображення, відео)" rows="1" cols='32')
-      div
         textarea(id="q-explain" placeholder="Пояснення до відповіді" rows="2" cols='32')
-      hr.horizontal.dark.my-sm-4
+        input(id="q-image" type='file' accept='image/*' onchange='openFile(event)')
+        img#output(style='width: 100px; margin: 10px 0 10px 0')
+        textarea(id="q-video" placeholder="URL відео (якщо відсутня картинка)" rows="1" cols='32')
+        hr.horizontal.dark.my-sm-4
       a.btn.bg-gradient-dark.w-100(href='javascript:addNewQuestion()') Додати питання
 
 
