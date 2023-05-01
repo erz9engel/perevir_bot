@@ -263,3 +263,23 @@ function addNewQuestion() {
     });
 
 }
+
+function removeQuestion(Qid) {
+
+  if (!confirm('Підтвердіть видалення питання?')) return
+
+  const data = {};
+  const loc = window.location.href;
+  const quizCode = loc.split('quiz/')[1];
+  data.question = Qid;
+  data.quizCode = quizCode;
+
+  fetch("../quizAPI/deleteQuestion", {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'}, 
+    body: JSON.stringify(data)
+  }).then(res => {
+    location.reload();
+  });
+
+}

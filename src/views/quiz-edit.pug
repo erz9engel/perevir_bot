@@ -155,20 +155,23 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                   a(href='javascript:addQuestion();')
                     i.fa.fa-plus.text-secondary.mb-3(aria-hidden='true')
                     h5.text-secondary  Додати питання
-            .col-xl-3.col-md-6.mb-xl-0.mb-4
-              .card.card-blog.card-plain
-                .position-relative
-                  a.d-block.shadow-xl.border-radius-xl
-                    img.img-fluid.shadow.border-radius-xl(src='../assets/img/home-decor-1.jpg' alt='img-blur-shadow')
-                .card-body.px-1.pb-0
-                  a(href='javascript:;')
+            each question in data.questions
+              .col-xl-3.col-md-6.mb-xl-0.mb-4
+                .card.card-blog.card-plain
+                  .position-relative
+                    a.d-block.shadow-xl.border-radius-xl
+                      if question.image
+                        img.img-fluid.shadow.border-radius-xl(src='../images/' + question.image  alt='img-blur-shadow')
+                      else
+                        img.img-fluid.shadow.border-radius-xl(src='https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg' alt='img-blur-shadow')
+                  .card-body.px-1.pb-0
                     p.mb-4.text-sm
-                      | As Uber works through a huge amount of internal management turmoil.
-                  .d-flex.align-items-center.justify-content-between
-                    button.btn.btn-outline-primary.btn-sm.mb-0(type='button') Редагувати
-                    .avatar-group.mt-2
-                      a(href='javascript:removeQuestion();')
-                        i.fa.fa-trash
+                      | #{question.name}
+                    .d-flex.align-items-center.justify-content-between
+                      button.btn.btn-outline-primary.btn-sm.mb-0(type='button') Редагувати
+                      .avatar-group.mt-2
+                        a(href='javascript:removeQuestion("'+ question._id+'");')
+                          i.fa.fa-trash
 #addnew.fixed-plugin
   .card.shadow-lg
     .card-header.pb-0.pt-3

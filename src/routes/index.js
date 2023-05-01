@@ -283,7 +283,7 @@ router.get('/quiz/:quizCode', auth.optional, async (req, res) => {
         if (!admin) return res.render('sign-in'); 
         else {
             const {quizCode} = req.params;
-            const quiz = await Quiz.findOne({code: quizCode});
+            const quiz = await Quiz.findOne({code: quizCode}).populate('questions');
             if(!quiz) return res.send('This quiz does not exist');
             return res.render('quiz-edit', {data: quiz}); 
         } 

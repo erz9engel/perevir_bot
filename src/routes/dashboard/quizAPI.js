@@ -80,4 +80,15 @@ router.post('/createQuestion', jsonParser, urlencodedParser, upload.any(), (req,
 });
 
 
+//POST new quiz route
+router.post('/deleteQuestion', async (req, res, next) => {
+
+    const data = req.body;
+    console.log(req.body);
+    await Question.deleteOne({_id: data.question});
+    await Quiz.findOneAndUpdate({code: data.quizCode}, { $pull: {questions: data.question}});
+
+    return res.send('deleted');
+});
+
 module.exports = router
