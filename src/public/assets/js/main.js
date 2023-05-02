@@ -190,7 +190,6 @@ function createQuiz() {
     });
 }
 
-
 function updateQuiz(Qid) {
   const name = document.getElementById('name').value;
   const description = document.getElementById('description').value;
@@ -208,9 +207,60 @@ function updateQuiz(Qid) {
     });
 }
 
+var editingQ = null;
 function addQuestion() {
-  var element = document.getElementById("addnew");
+  var element = document.getElementById("questionP");
   element.classList.add("show");
+  editingQ = null;
+  fillInData({
+    name: '',
+    correct: '',
+    incorrect1: '',
+    explain: '',
+    video: ''
+  });
+}
+
+function updateQuestion(id) {
+  var element = document.getElementById("questionP");
+  element.classList.add("show");
+  editingQ = id;
+
+  fetch('../quizAPI/question?' + editingQ)
+  .then(response => response.json())
+  .then(data => {
+    fillInData(data);
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+  });
+
+}
+
+function fillInData(data) {
+
+  document.getElementById('q-name').value = data.name;
+  document.getElementById('q-correct').value = data.correct;
+  document.getElementById('q-incorrect1').value = data.incorrect1;
+  if(data.incorrect2) document.getElementById('q-incorrect2').value = data.incorrect2;
+  else document.getElementById('q-incorrect2').value = '';
+  if(data.incorrect3) document.getElementById('q-incorrect3').value = data.incorrect3;
+  else document.getElementById('q-incorrect3').value = '';
+  document.getElementById('q-explain').value = data.explain;
+  if(data.video) document.getElementById('q-video').value = data.video;
+  else document.getElementById('q-video').value = '';
+  
+  if (data.image) {
+    var dataURL = "../images/" + data.image;
+    var output = document.getElementById('output');
+    output.src = dataURL;
+    document.getElementById('q-video').style.display = 'none';
+  } else {
+    var output = document.getElementById('output');
+    output.src = '';
+    //Show video URL input
+    document.getElementById('q-video').style.display = 'block';
+  }
 }
 
 function openFile(event) {
@@ -273,13 +323,22 @@ function addNewQuestion() {
   
   document.getElementById('submQ').style.display = 'none';
 
-  fetch("../quizAPI/createQuestion", {
+  if(!editingQ) {
+    fetch("../quizAPI/createQuestion", {
       method: "POST", 
       body: formData
     }).then(res => {
       location.reload();
     });
-
+  } else {
+    formData.append('Qid', editingQ);
+    fetch("../quizAPI/updateQuestion", {
+      method: "POST", 
+      body: formData
+    }).then(res => {
+      location.reload();
+    });
+  }
 }
 
 function removeQuestion(Qid) {

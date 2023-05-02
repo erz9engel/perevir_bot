@@ -171,15 +171,16 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                     p.mb-4.text-sm
                       | #{question.name}
                     .d-flex.align-items-center.justify-content-between
-                      button.btn.btn-outline-primary.btn-sm.mb-0(type='button') Редагувати
+                      a(href='javascript:updateQuestion("'+ question._id+'");')
+                        button.btn.btn-outline-primary.btn-sm.mb-0(type='button') Редагувати
                       .avatar-group.mt-2
                         a(href='javascript:removeQuestion("'+ question._id+'");')
                           i.fa.fa-trash
-#addnew.fixed-plugin
+#questionP.fixed-plugin
   .card.shadow-lg
     .card-header.pb-0.pt-3
       .float-start
-        h5.mt-3.mb-0 Нове питання
+        h5.mt-3.mb-0 Питання
       .float-end.mt-4
         button.btn.btn-link.text-dark.p-0.fixed-plugin-close-button
           i.fa.fa-close(aria-hidden='true')
@@ -201,8 +202,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
         img#output(style='width: 100px; margin: 10px 0 10px 0')
         textarea(id="q-video" placeholder="URL відео (якщо відсутня картинка)" rows="1" cols='32')
         hr.horizontal.dark.my-sm-4
-      a.btn.bg-gradient-dark.w-100#submQ(href='javascript:addNewQuestion()') Додати питання
-
+      a.btn.bg-gradient-dark.w-100#submQ(href='javascript:addNewQuestion()') Зберегти
 
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')

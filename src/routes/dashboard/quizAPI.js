@@ -88,15 +88,54 @@ router.post('/createQuestion', jsonParser, urlencodedParser, upload.any(), (req,
 });
 
 
+router.post('/updateQuestion', jsonParser, urlencodedParser, upload.any(), async (req, res) => {
+    
+    const data = req.body;
+    if(!data.quizCode) return res.send("No quizCode");
+    else if (!data.Qid) return res.send("No Qid");
+    
+    const questionData = {
+        name: data.name,
+        correct: data.correct,
+        incorrect1: data.incorrect1,
+        incorrect2: data.incorrect2,
+        incorrect3: data.incorrect3,
+        explain: data.explain,
+        video: data.video,
+    };
+
+    if (req.files && req.files.length > 0) {
+      const file = req.files[0];
+      questionData.image = file.filename;
+    } 
+
+    await Question.findByIdAndUpdate(data.Qid, questionData);
+    return res.redirect('../quiz/' + data.quizCode);
+    
+});
+
 //POST new quiz route
-router.post('/deleteQuestion', async (req, res, next) => {
+router.post('/deleteQuestion', auth.required, async (req, res, next) => {
 
     const data = req.body;
-    console.log(req.body);
+
     await Question.deleteOne({_id: data.question});
     await Quiz.findOneAndUpdate({code: data.quizCode}, { $pull: {questions: data.question}});
 
     return res.send('deleted');
 });
+
+router.get('/question', auth.required, async (req, res, next) => {
+
+    try {
+        const q = await Question.findById({_id: req._parsedOriginalUrl.query});
+        return res.send(q);
+    } catch (e) {
+        return res.status(500)
+    }
+
+});
+
+
 
 module.exports = router
