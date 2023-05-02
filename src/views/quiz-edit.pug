@@ -148,7 +148,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                     textarea(id="description" placeholder="Опис квіза" rows="3" cols='100') #{data.description}
                 .card.card-body.border.card-plain.border-radius-lg.d-flex.align-items-center.flex-row.texts 
                     | Кількість запитань для користувача: 
-                    input(id="maxQ" type='number' min='1' value=data.maxQuestions)
+                    input(id="maxQ" type='number' min='1' value=data.maxQuestions style='border: none; border-bottom: solid 1px #dee2e6; margin-left: 10px; max-width: 50px')
                 li.list-group-item.border-0.px-0
                   .form-check.form-switch.ps-0
                     input#active.form-check-input.ms-auto(type='checkbox' checked=data.active)
