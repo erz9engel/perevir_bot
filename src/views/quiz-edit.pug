@@ -135,6 +135,13 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
         .card-body.p-3
           .row
             .col-md-6.mb-md-0.mb-4
+                p.text-sm.mb-0
+                  i.fa.fa-share.text-info(aria-hidden='true')
+                  span.font-weight-bold.ms-1 https://t.me/perevir_bot?start=quiz_#{data.code}
+                p.text-sm.mb-0
+                  i.fa.fa-share.text-info(aria-hidden='true')
+                  span.font-weight-bold.ms-1 /quiz_#{data.code}
+                br
                 .card.card-body.border.card-plain.border-radius-lg.d-flex.align-items-center.flex-row.texts
                     textarea(id="name" placeholder="Назва квіза" rows="1" cols='100') #{data.name}
                 .card.card-body.border.card-plain.border-radius-lg.d-flex.align-items-center.flex-row.texts
