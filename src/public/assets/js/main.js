@@ -189,3 +189,174 @@ function createQuiz() {
       return window.location.href = "../quiz";
     });
 }
+
+function updateQuiz(Qid) {
+  const name = document.getElementById('name').value;
+  const description = document.getElementById('description').value;
+  const maxQ = document.getElementById('maxQ').value;
+  const active = document.getElementById('active').checked;
+
+  if (name == '' || description == '' || maxQ == '') return alert('Заповність назву, опис та кількість днів');
+  
+  fetch("../quizAPI/update", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({name: name, description: description, maxQuestions: maxQ, active: active, Qid: Qid})
+    }).then(res => {
+      return window.location.href = "../quiz";
+    });
+}
+
+var editingQ = null;
+function addQuestion() {
+  var element = document.getElementById("questionP");
+  element.classList.add("show");
+  editingQ = null;
+  fillInData({
+    name: '',
+    correct: '',
+    incorrect1: '',
+    explain: '',
+    video: ''
+  });
+}
+
+function updateQuestion(id) {
+  var element = document.getElementById("questionP");
+  element.classList.add("show");
+  editingQ = id;
+
+  fetch('../quizAPI/question?' + editingQ)
+  .then(response => response.json())
+  .then(data => {
+    fillInData(data);
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+  });
+
+}
+
+function fillInData(data) {
+
+  document.getElementById('q-name').value = data.name;
+  document.getElementById('q-correct').value = data.correct;
+  document.getElementById('q-incorrect1').value = data.incorrect1;
+  if(data.incorrect2) document.getElementById('q-incorrect2').value = data.incorrect2;
+  else document.getElementById('q-incorrect2').value = '';
+  if(data.incorrect3) document.getElementById('q-incorrect3').value = data.incorrect3;
+  else document.getElementById('q-incorrect3').value = '';
+  document.getElementById('q-explain').value = data.explain;
+  if(data.video) document.getElementById('q-video').value = data.video;
+  else document.getElementById('q-video').value = '';
+  
+  if (data.image) {
+    var dataURL = "../images/" + data.image;
+    var output = document.getElementById('output');
+    output.src = dataURL;
+    document.getElementById('q-video').style.display = 'none';
+  } else {
+    var output = document.getElementById('output');
+    output.src = '';
+    //Show video URL input
+    document.getElementById('q-video').style.display = 'block';
+  }
+}
+
+function openFile(event) {
+  var input = event.target;
+  
+  if(input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(){
+      var dataURL = reader.result;
+      var output = document.getElementById('output');
+      output.src = dataURL;
+    };
+    reader.readAsDataURL(input.files[0]);
+    //Hide video URL input
+    document.getElementById('q-video').style.display = 'none';
+  } else {
+    var output = document.getElementById('output');
+    output.src = '';
+    //Show video URL input
+    document.getElementById('q-video').style.display = 'block';
+  }
+};
+
+function addNewQuestion() {
+
+  const formData = new FormData();
+
+  const loc = window.location.href;
+  const quizCode = loc.split('quiz/')[1];
+  formData.append('quizCode', quizCode);
+
+  const name = document.getElementById('q-name').value;
+  if (name == '') return alert('Заповність назву питання');
+  formData.append('name', name);
+
+  const correct = document.getElementById('q-correct').value;
+  if (correct == '') return alert('Заповність правильну відповідь');
+  formData.append('correct', correct);
+  
+  const incorrect1 = document.getElementById('q-incorrect1').value;
+  if (incorrect1 == '') return alert('Заповність першу неправильну відповідь');
+  formData.append('incorrect1', incorrect1);
+
+  const incorrect2 = document.getElementById('q-incorrect2').value;
+  if (incorrect2 != '') formData.append('incorrect2', incorrect2);
+  const incorrect3 = document.getElementById('q-incorrect3').value;
+  if (incorrect3 != '') formData.append('incorrect3', incorrect3);
+
+  const explain = document.getElementById('q-explain').value;
+  if (explain == '') return alert('Заповність пояснення');
+  formData.append('explain', explain);
+
+  const imageInput = document.getElementById('q-image');
+  const file = imageInput.files[0];
+  if (file) formData.append('image', file);
+  else {
+    const video = document.getElementById('q-video').value;
+    if(video) formData.append('video', video);
+  }
+  
+  document.getElementById('submQ').style.display = 'none';
+
+  if(!editingQ) {
+    fetch("../quizAPI/createQuestion", {
+      method: "POST", 
+      body: formData
+    }).then(res => {
+      location.reload();
+    });
+  } else {
+    formData.append('Qid', editingQ);
+    fetch("../quizAPI/updateQuestion", {
+      method: "POST", 
+      body: formData
+    }).then(res => {
+      location.reload();
+    });
+  }
+}
+
+function removeQuestion(Qid) {
+
+  if (!confirm('Підтвердіть видалення питання?')) return
+
+  const data = {};
+  const loc = window.location.href;
+  const quizCode = loc.split('quiz/')[1];
+  data.question = Qid;
+  data.quizCode = quizCode;
+
+  fetch("../quizAPI/deleteQuestion", {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'}, 
+    body: JSON.stringify(data)
+  }).then(res => {
+    location.reload();
+  });
+
+}

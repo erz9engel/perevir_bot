@@ -236,6 +236,7 @@ var quizSchema = Schema({
     name: String,
     description: String,
     questions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
+    maxQuestions: { type: Number, default: 10 },
     passed_times: { type: Number, default: 0 },
     active: { type: Boolean, default: false}
 })
@@ -243,14 +244,15 @@ var quizSchema = Schema({
 var questionSchema = Schema({
     _id: Schema.Types.ObjectId,
     name: String,
-    options: [{ type: Schema.Types.ObjectId, ref: 'Option' }]
+    correct: String,
+    incorrect1: String,
+    incorrect2: String, 
+    incorrect3: String,
+    explain: String,
+    image: String,
+    video: String
 })
 
-var optionSchema = Schema({
-    _id: Schema.Types.ObjectId,
-    name: String,
-    score: Number
-})
 
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
@@ -269,4 +271,3 @@ mongoose.model('SourceStatistics', sourceStatisticsSchema);
 mongoose.model('User', userSchema);
 mongoose.model('Quiz', quizSchema);
 mongoose.model('Question', questionSchema);
-mongoose.model('Option', optionSchema);
