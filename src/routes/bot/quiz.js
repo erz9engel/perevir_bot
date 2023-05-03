@@ -67,7 +67,7 @@ const onSpecificQuizQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
     let quizCode = data.split('_')[1];
     const quiz = await Quiz.findOne({code: quizCode});
-    if (quiz || quiz.active) return
+    if (!quiz || !quiz.active) return
 
     var inline_keyboard = [
         [{text: "🚀 Розпочати", callback_data: 'STARTQUIZ_' + quiz.code}],
@@ -175,7 +175,7 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     ];
 
     var explain = '\n\n';
-    if(correctAnswer == '1') explain += "Вірно!\n"
+    if (correctAnswer == '0') explain += "Вірно!\n"
     else explain += "Невірно\n"
     explain += question.explain;
 
