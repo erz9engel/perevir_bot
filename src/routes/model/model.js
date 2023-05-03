@@ -212,7 +212,7 @@ var sourceStatisticsSchema = Schema({
     noproofCount: {type : Number , "default" : 0},
     rejectCount: {type : Number , "default" : 0},
     totalRequests: {type : Number , "default" : 0},
-    createdAt: {type: Date, default: new Date()},
+    createdAt: {type: Date, default: new Date()}
 })
 
 //Volunteer bot user
@@ -253,6 +253,23 @@ var questionSchema = Schema({
     video: String
 })
 
+var answerSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    quiz: { type: Schema.Types.ObjectId, ref: 'Quiz' },
+    question: { type: Schema.Types.ObjectId, ref: 'Question' },
+    correct: Boolean,
+    passedAt: {type: Date, default: new Date()}
+})
+
+var passingQuizSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    user: { type: Schema.Types.ObjectId, ref: 'TelegramUser' },
+    quiz: { type: Schema.Types.ObjectId, ref: 'Quiz' },
+    answers: [{ type: Schema.Types.ObjectId, ref: 'Answers' }],
+    startedAt: {type: Date, default: new Date()},
+    finishedAt: Date
+});
+
 
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
@@ -271,3 +288,5 @@ mongoose.model('SourceStatistics', sourceStatisticsSchema);
 mongoose.model('User', userSchema);
 mongoose.model('Quiz', quizSchema);
 mongoose.model('Question', questionSchema);
+mongoose.model('Answer', answerSchema);
+mongoose.model('PassingQuiz', passingQuizSchema);
