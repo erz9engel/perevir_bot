@@ -3,6 +3,7 @@ const TelegramUser = mongoose.model('TelegramUser');
 const Quiz = mongoose.model('Quiz');
 const Question = mongoose.model('Question');
 const PassingQuiz = mongoose.model('PassingQuiz');
+const Answer = mongoose.model('Answer');
 
 const {
     safeErrorLog, shuffle, getImageUrl, deleteMessage
@@ -118,15 +119,32 @@ const onStartQuizQuery = async (callbackQuery, bot) => {
 
 async function getQuestion(PQId) {
 
-    const passingQuiz = await PassingQuiz.findById(PQId).populate('quiz');
+    const passingQuiz = await PassingQuiz.findById(PQId).populate('quiz answers');
     var allQuestions = passingQuiz.quiz.questions;
 
     if (passingQuiz.answers.length >= passingQuiz.quiz.maxQuestions) return false; // After last question
 
+    allQuestions = removeAnswered(allQuestions, passingQuiz.answers);
+    if (allQuestions.length == 0) return false;//No more questions
     allQuestions = shuffle(allQuestions);
-    const question = await Question.findById(allQuestions[0]);
+    var question = await Question.findById(allQuestions[0]);
+    
+    question.Qn = passingQuiz.answers.length + 1; //Number of current question
+    question.Qf = passingQuiz.quiz.maxQuestions; //Max questions
 
     return question;
+
+}
+
+function removeAnswered(allQuestions, answers) {
+
+    var answersQids = [];
+    for (var i in answers) {
+        answersQids.push(answers[i].question);
+    }
+    const filteredArray = allQuestions.filter(objectId => !answersQids.some(id => id.equals(objectId)));
+    
+    return filteredArray;
 
 }
 
@@ -139,9 +157,12 @@ async function sendQuestion(question, PQId, message, bot) {
     if (question.incorrect2) inline_keyboard.push([{text: question.incorrect2, callback_data: 'ANS_2_' + PQId + '_' + question._id}]);
     if (question.incorrect3) inline_keyboard.push([{text: question.incorrect3, callback_data: 'ANS_3_' + PQId + '_' + question._id}]);
 
+    inline_keyboard = shuffle(inline_keyboard);
+    var text = "Питання " + question.Qn + " з " + question.Qf;
+    text += "\n\n" + question.name;
     if (question.image) {
         const options = {
-            caption: question.name,
+            caption: text,
             reply_markup: JSON.stringify({inline_keyboard})
         };
 
@@ -156,7 +177,7 @@ async function sendQuestion(question, PQId, message, bot) {
             reply_markup: JSON.stringify({inline_keyboard})
         };
         try {
-            await bot.sendMessage(message.chat.id, question.name, options);
+            await bot.sendMessage(message.chat.id, text, options);
         } catch (e) {safeErrorLog(e);}
     }
 }
@@ -169,19 +190,23 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     const QuestionId = data.split('_')[3];
 
     const question = await Question.findById(QuestionId);
+    const passingQuiz = await PassingQuiz.findById(PQId);
+    if(!question || !passingQuiz) return
 
     var inline_keyboard = [
         [{text: "Далі", callback_data: 'NEXTQ_' + PQId}]
     ];
 
-    var explain = '\n\n';
-    if (correctAnswer == '0') explain += "Вірно!\n"
-    else explain += "Невірно\n"
+    var explain = '\n\n', trueAnswer = false;
+    if (correctAnswer == '0') {
+        trueAnswer = true;
+        explain += "Вірно!\n"
+    } else { explain += "Невірно\n" }
     explain += question.explain;
-
+    
     if (question.image) {
         try {
-            await bot.editMessageCaption(question.name + explain, {
+            await bot.editMessageCaption(message.caption + explain, {
                 reply_markup: {
                     inline_keyboard
                 },
@@ -193,7 +218,7 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
         }
     } else {
         try {
-            await bot.editMessageText(question.name + explain, {
+            await bot.editMessageText(message.text + explain, {
                 reply_markup: {
                     inline_keyboard
                 },
@@ -204,6 +229,61 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
             safeErrorLog(e);
         }
     }
+    //SAVE ANSWER
+    const answerId = new mongoose.Types.ObjectId();
+    const newAnswer = new Answer({
+        _id: answerId,
+        quiz: passingQuiz.quiz,
+        question: QuestionId,
+        correct: trueAnswer,
+        passedAt: new Date()
+    });
+    
+    await newAnswer.save();
+    await PassingQuiz.findByIdAndUpdate(passingQuiz._id, {$push: { answers: answerId }});
+
+};
+
+const onNextQuestionQuery = async (callbackQuery, bot) => {
+
+    const {data, message} = callbackQuery;
+    await deleteMessage(message, bot);
+
+    let PQId = data.split('_')[1];
+    const question = await getQuestion(PQId);
+    if (question == false) return showResults(PQId, callbackQuery, bot);
+    
+    await sendQuestion(question, PQId, message, bot);
+
+};
+
+const showResults = async (PQId, callbackQuery, bot) => {
+
+    const {message} = callbackQuery;
+
+    const PQ = await PassingQuiz.findByIdAndUpdate(PQId, {finishedAt: new Date()}).populate('answers');
+    //Analyze answers
+    var correct = 0, incorrect = 0;
+    for (var i in PQ.answers) {
+        const answer = PQ.answers[i];
+        if (answer.correct) correct++
+        else incorrect++
+    }
+    
+    const pc = correct / (correct+incorrect) * 100;
+    var results;
+    if (pc < 20) results = 'quiz_result20';
+    else if (pc < 50) results = 'quiz_result50';
+    else if (pc < 80) results = 'quiz_result80';
+    else results = 'quiz_result100';
+
+
+    await getText(results, 'ua', async function(err, text){
+        if (err) return safeErrorLog(err);
+        try {
+            await bot.sendMessage(message.chat.id, text);
+        } catch (e) { safeErrorLog(e) }
+    });
 
 };
 
@@ -212,5 +292,6 @@ module.exports = {
     onSpecificQuizQuery,
     onSpecificQuiz,
     onStartQuizQuery,
-    onAnswerQuizQuery
+    onAnswerQuizQuery,
+    onNextQuestionQuery
 }

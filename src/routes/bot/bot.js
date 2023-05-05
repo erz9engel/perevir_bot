@@ -38,7 +38,8 @@ const {
     onSpecificQuizQuery,
     onSpecificQuiz,
     onStartQuizQuery,
-    onAnswerQuizQuery
+    onAnswerQuizQuery,
+    onNextQuestionQuery
 } = require('./quiz.js');
 
 const {answerInlineQuery} = require("./inline-query")
@@ -201,6 +202,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onStartQuizQuery(callbackQuery, bot)
     } else if (data.startsWith('ANS_')) {
         await onAnswerQuizQuery(callbackQuery, bot)
+    } else if (data.startsWith('NEXTQ_')) {
+        await onNextQuestionQuery(callbackQuery, bot)
     }
 });
 

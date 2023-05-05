@@ -265,7 +265,7 @@ var passingQuizSchema = Schema({
     _id: Schema.Types.ObjectId,
     user: { type: Schema.Types.ObjectId, ref: 'TelegramUser' },
     quiz: { type: Schema.Types.ObjectId, ref: 'Quiz' },
-    answers: [{ type: Schema.Types.ObjectId, ref: 'Answers' }],
+    answers: [{ type: Schema.Types.ObjectId, ref: 'Answer' }],
     startedAt: {type: Date, default: new Date()},
     finishedAt: Date
 });
