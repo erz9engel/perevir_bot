@@ -379,6 +379,46 @@ function getRequesterLanguage(requester) {
     return lang;
 }
 
+async function deleteMessage(message, bot) {
+    try {
+        return await bot.deleteMessage(message.chat.id, message.message_id);
+    } catch (e) { safeErrorLog(e) }
+}
+
+function shuffle(array) {
+    let currentIndex = array.length,  randomIndex;
+
+    while (currentIndex != 0) {
+  
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
+}
+
+const ENV = process.env.C_ENV;
+
+function getImageUrl(imageName) {
+
+    let baseUrl;
+    switch (ENV) {
+      case 'dev':
+        baseUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/SMPTE_Color_Bars.svg/200px-SMPTE_Color_Bars.svg.png';
+        return baseUrl;
+      case 'staging':
+        baseUrl = 'https://staging.perevirka.gwaramedia.com/images/';
+        break;
+      default:
+        baseUrl = 'https://perevirka.gwaramedia.com/images/';
+    }
+    
+    return baseUrl + imageName;
+  }
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -398,7 +438,10 @@ module.exports = {
     delay,
     parseSource,
     updateSource,
-    getFakeText
+    getFakeText,
+    deleteMessage,
+    shuffle,
+    getImageUrl
 }
 
 async function notifyViber(text, viberRequester) {

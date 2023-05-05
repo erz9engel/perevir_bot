@@ -247,19 +247,14 @@ function fillInData(data) {
   if(data.incorrect3) document.getElementById('q-incorrect3').value = data.incorrect3;
   else document.getElementById('q-incorrect3').value = '';
   document.getElementById('q-explain').value = data.explain;
-  if(data.video) document.getElementById('q-video').value = data.video;
-  else document.getElementById('q-video').value = '';
   
   if (data.image) {
     var dataURL = "../images/" + data.image;
     var output = document.getElementById('output');
     output.src = dataURL;
-    document.getElementById('q-video').style.display = 'none';
   } else {
     var output = document.getElementById('output');
     output.src = '';
-    //Show video URL input
-    document.getElementById('q-video').style.display = 'block';
   }
 }
 
@@ -274,13 +269,9 @@ function openFile(event) {
       output.src = dataURL;
     };
     reader.readAsDataURL(input.files[0]);
-    //Hide video URL input
-    document.getElementById('q-video').style.display = 'none';
   } else {
     var output = document.getElementById('output');
     output.src = '';
-    //Show video URL input
-    document.getElementById('q-video').style.display = 'block';
   }
 };
 
@@ -316,10 +307,6 @@ function addNewQuestion() {
   const imageInput = document.getElementById('q-image');
   const file = imageInput.files[0];
   if (file) formData.append('image', file);
-  else {
-    const video = document.getElementById('q-video').value;
-    if(video) formData.append('video', video);
-  }
   
   document.getElementById('submQ').style.display = 'none';
 
