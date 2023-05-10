@@ -114,7 +114,6 @@ router.post('/updateQuestion', jsonParser, urlencodedParser, upload.any(), async
     
 });
 
-//POST new quiz route
 router.post('/deleteQuestion', auth.required, async (req, res, next) => {
 
     const data = req.body;
@@ -135,7 +134,6 @@ router.get('/question', auth.required, async (req, res, next) => {
     }
 
 });
-
 
 
 module.exports = router

@@ -261,7 +261,9 @@ const showResults = async (PQId, callbackQuery, bot) => {
 
     const {message} = callbackQuery;
 
-    const PQ = await PassingQuiz.findByIdAndUpdate(PQId, {finishedAt: new Date()}).populate('answers');
+    const PQ = await PassingQuiz.findByIdAndUpdate(PQId, {finishedAt: new Date(), $inc: {passed_times: 1}}).populate('answers');
+    await Quiz.findByIdAndUpdate(PQ.quiz, {$inc: {passed_times: 1}});
+
     //Analyze answers
     var correct = 0, incorrect = 0;
     for (var i in PQ.answers) {
