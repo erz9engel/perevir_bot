@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const auth = require('./auth');
 const Quiz = mongoose.model('Quiz');
 const Question = mongoose.model('Question');
+const PassingQuiz = mongoose.model('PassingQuiz');
 
 //POST new quiz route
 router.post('/create', auth.required, async (req, res, next) => {
@@ -114,7 +115,6 @@ router.post('/updateQuestion', jsonParser, urlencodedParser, upload.any(), async
     
 });
 
-//POST new quiz route
 router.post('/deleteQuestion', auth.required, async (req, res, next) => {
 
     const data = req.body;
@@ -136,6 +136,33 @@ router.get('/question', auth.required, async (req, res, next) => {
 
 });
 
+router.get('/stat', auth.required, async (req, res, next) => {
+    console.log(42)
+    PassingQuiz.aggregate([
+        { $group: {
+            _id: '$quiz',
+            answers: { $push: { $size: '$answers' } }
+        }},
+        { $lookup: {
+            from: 'quizzes',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'Quiz'
+        }},
+        { $project: {
+            _id: 1,
+            answers: 1,
+            Quiz: { $arrayElemAt: ['$Quiz', 0] }
+        }}
+    ]).exec((err, result) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(result);
+        }
+    }); 
+
+});
 
 
 module.exports = router
