@@ -26,6 +26,7 @@ const onGetQuiz = async (msg, bot) => {
     }
 
     const options = {
+        parse_mode: "HTML",
         reply_markup: JSON.stringify({inline_keyboard}),
     };
 
@@ -52,6 +53,7 @@ const onSpecificQuiz = async (msg, bot) => {
     ];
 
     const options = {
+        parse_mode: "HTML",
         reply_markup: JSON.stringify({inline_keyboard}),
     };
     
@@ -77,6 +79,7 @@ const onSpecificQuizQuery = async (callbackQuery, bot) => {
     
     try {
         await bot.editMessageText(quiz.description, {
+            parse_mode: "HTML",
             reply_markup: {
                 inline_keyboard
             },
@@ -162,6 +165,7 @@ async function sendQuestion(question, PQId, message, bot) {
     text += "\n\n" + question.name;
     if (question.image) {
         const options = {
+            parse_mode: "HTML",
             caption: text,
             reply_markup: JSON.stringify({inline_keyboard})
         };
@@ -174,6 +178,7 @@ async function sendQuestion(question, PQId, message, bot) {
     
     } else {
         const options = {
+            parse_mode: "HTML",
             reply_markup: JSON.stringify({inline_keyboard})
         };
         try {
