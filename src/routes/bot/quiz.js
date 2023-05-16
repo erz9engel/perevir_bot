@@ -170,11 +170,18 @@ async function sendQuestion(question, PQId, message, bot) {
             reply_markup: JSON.stringify({inline_keyboard})
         };
 
-        const imageUrl = getImageUrl(question.image);
+        var imageUrl = getImageUrl(question.image);
         
-        try {
-            await bot.sendPhoto(message.chat.id, imageUrl, options);
-        } catch (e) {safeErrorLog(e);}
+        if (imageUrl.endsWith('.gif')) {
+            try {
+                await bot.sendAnimation(message.chat.id, imageUrl, options);
+            } catch (e) {safeErrorLog(e);}
+        } else {
+            try {
+                await bot.sendPhoto(message.chat.id, imageUrl, options);
+            } catch (e) {safeErrorLog(e);}
+        }
+        
     
     } else {
         const options = {
