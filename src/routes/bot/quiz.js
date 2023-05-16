@@ -205,13 +205,14 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     var explain = '\n\n', trueAnswer = false;
     if (correctAnswer == '0') {
         trueAnswer = true;
-        explain += "Вірно!\n"
-    } else { explain += "Невірно\n" }
+        explain += "🟢 <b>Вірно!</b>\n"
+    } else { explain += "🔴 <b>Невірно</b>\n" }
     explain += question.explain;
     
     if (question.image) {
         try {
             await bot.editMessageCaption(message.caption + explain, {
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard
                 },
@@ -224,6 +225,7 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     } else {
         try {
             await bot.editMessageText(message.text + explain, {
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard
                 },
@@ -284,11 +286,14 @@ const showResults = async (PQId, callbackQuery, bot) => {
     else if (pc < 80) results = 'quiz_result80';
     else results = 'quiz_result100';
 
+    const options = {
+        parse_mode: "HTML"
+    };
 
     await getText(results, 'ua', async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await bot.sendMessage(message.chat.id, text);
+            await bot.sendMessage(message.chat.id, text, options);
         } catch (e) { safeErrorLog(e) }
     });
 
