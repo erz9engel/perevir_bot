@@ -26,6 +26,7 @@ const onGetQuiz = async (msg, bot) => {
     }
 
     const options = {
+        parse_mode: "HTML",
         reply_markup: JSON.stringify({inline_keyboard}),
     };
 
@@ -52,6 +53,7 @@ const onSpecificQuiz = async (msg, bot) => {
     ];
 
     const options = {
+        parse_mode: "HTML",
         reply_markup: JSON.stringify({inline_keyboard}),
     };
     
@@ -77,6 +79,7 @@ const onSpecificQuizQuery = async (callbackQuery, bot) => {
     
     try {
         await bot.editMessageText(quiz.description, {
+            parse_mode: "HTML",
             reply_markup: {
                 inline_keyboard
             },
@@ -158,22 +161,31 @@ async function sendQuestion(question, PQId, message, bot) {
     if (question.incorrect3) inline_keyboard.push([{text: question.incorrect3, callback_data: 'ANS_3_' + PQId + '_' + question._id}]);
 
     inline_keyboard = shuffle(inline_keyboard);
-    var text = "Питання " + question.Qn + " з " + question.Qf;
+    var text = "<b>Питання " + question.Qn + "</b> з " + question.Qf + ' 🔎';
     text += "\n\n" + question.name;
     if (question.image) {
         const options = {
+            parse_mode: "HTML",
             caption: text,
             reply_markup: JSON.stringify({inline_keyboard})
         };
 
-        const imageUrl = getImageUrl(question.image);
+        var imageUrl = getImageUrl(question.image);
         
-        try {
-            await bot.sendPhoto(message.chat.id, imageUrl, options);
-        } catch (e) {safeErrorLog(e);}
+        if (imageUrl.endsWith('.gif')) {
+            try {
+                await bot.sendAnimation(message.chat.id, imageUrl, options);
+            } catch (e) {safeErrorLog(e);}
+        } else {
+            try {
+                await bot.sendPhoto(message.chat.id, imageUrl, options);
+            } catch (e) {safeErrorLog(e);}
+        }
+        
     
     } else {
         const options = {
+            parse_mode: "HTML",
             reply_markup: JSON.stringify({inline_keyboard})
         };
         try {
@@ -200,13 +212,17 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     var explain = '\n\n', trueAnswer = false;
     if (correctAnswer == '0') {
         trueAnswer = true;
-        explain += "Вірно!\n"
-    } else { explain += "Невірно\n" }
-    explain += question.explain;
+        explain += "🟢 <b>Вірно!</b>\n"
+    } else { 
+        explain += "🔴 <b>Невірно</b>\n" 
+        explain += question.explain;
+    }
+    
     
     if (question.image) {
         try {
             await bot.editMessageCaption(message.caption + explain, {
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard
                 },
@@ -219,6 +235,7 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     } else {
         try {
             await bot.editMessageText(message.text + explain, {
+                parse_mode: "HTML",
                 reply_markup: {
                     inline_keyboard
                 },
@@ -279,11 +296,14 @@ const showResults = async (PQId, callbackQuery, bot) => {
     else if (pc < 80) results = 'quiz_result80';
     else results = 'quiz_result100';
 
+    const options = {
+        parse_mode: "HTML"
+    };
 
     await getText(results, 'ua', async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await bot.sendMessage(message.chat.id, text);
+            await bot.sendMessage(message.chat.id, text, options);
         } catch (e) { safeErrorLog(e) }
     });
 
