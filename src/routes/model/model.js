@@ -238,6 +238,7 @@ var quizSchema = Schema({
     questions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
     maxQuestions: { type: Number, default: 10 },
     passed_times: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
     active: { type: Boolean, default: false}
 })
 
