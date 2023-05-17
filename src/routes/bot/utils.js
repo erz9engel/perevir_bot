@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { URL } = require('url');
 const { getText, getLanguageTGChat} = require('./localisation');
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
@@ -419,6 +420,17 @@ function getImageUrl(imageName) {
     return baseUrl + imageName;
   }
 
+function removeQueryParamsFromLink(link) {
+  try {
+    const url = new URL(link);
+    url.search = '';
+    return url.href;
+  } catch (error) {
+    // If the input is not a valid URL, return the input as it is.
+    return link;
+  }
+}
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -441,7 +453,8 @@ module.exports = {
     getFakeText,
     deleteMessage,
     shuffle,
-    getImageUrl
+    getImageUrl,
+    removeQueryParamsFromLink,
 }
 
 async function notifyViber(text, viberRequester) {
