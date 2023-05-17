@@ -114,7 +114,7 @@ bot.on('message', async (msg) => {
         await onSpecificQuiz(msg, bot);
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
-    } else if (isTextFromDict(text, SubscribtionText) || text === '/daily_fakes') {
+    } else if (isTextFromDict(text, SubscribtionText) || text === '/weekly_fakes') {
         await onSubscription(msg, bot)
     } else if (isTextFromDict(text, ChangeLanguage) || text === '/change_language') {
         await onChangeLanguage(msg, bot)

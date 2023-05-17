@@ -141,6 +141,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
               thead
                 tr
                   th.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Назва
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Переглядів
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Пройдено разів
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Статус
                   th.text-secondary.opacity-7
@@ -151,6 +152,8 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                       .d-flex.px-2.py-1
                         .d-flex.flex-column.justify-content-center
                           h6.mb-0.text-sm #{quiz.name}
+                    td.align-middle.text-center.text-sm
+                      span #{quiz.views}
                     td.align-middle.text-center.text-sm
                       span #{quiz.passed_times}
                     td.align-middle.text-center.text-sm

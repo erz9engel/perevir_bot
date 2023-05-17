@@ -62,6 +62,8 @@ const onSpecificQuiz = async (msg, bot) => {
     } catch (e) {
         safeErrorLog(e);
     }
+
+    await addViews(quiz._id);
 }
 
 //Queries
@@ -89,6 +91,12 @@ const onSpecificQuizQuery = async (callbackQuery, bot) => {
     } catch (e) {
         safeErrorLog(e);
     }
+
+    await addViews(quiz._id);
+}
+
+async function addViews(quiz_id) {
+    await Quiz.findByIdAndUpdate(quiz_id, {$inc: {views: 1}});
 }
 
 const onStartQuizQuery = async (callbackQuery, bot) => {
