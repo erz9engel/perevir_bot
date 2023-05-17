@@ -161,7 +161,7 @@ async function sendQuestion(question, PQId, message, bot) {
     if (question.incorrect3) inline_keyboard.push([{text: question.incorrect3, callback_data: 'ANS_3_' + PQId + '_' + question._id}]);
 
     inline_keyboard = shuffle(inline_keyboard);
-    var text = "Питання " + question.Qn + " з " + question.Qf;
+    var text = "<b>Питання " + question.Qn + "</b> з " + question.Qf + ' 🔎';
     text += "\n\n" + question.name;
     if (question.image) {
         const options = {
@@ -213,8 +213,11 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     if (correctAnswer == '0') {
         trueAnswer = true;
         explain += "🟢 <b>Вірно!</b>\n"
-    } else { explain += "🔴 <b>Невірно</b>\n" }
-    explain += question.explain;
+    } else { 
+        explain += "🔴 <b>Невірно</b>\n" 
+        explain += question.explain;
+    }
+    
     
     if (question.image) {
         try {
