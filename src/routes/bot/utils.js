@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { getText, getLanguageTGChat} = require('./localisation');
+const {RequestThrottleLimit} = require("./contstants");
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
@@ -22,12 +23,13 @@ function getMailBtn () {
 }
 
 function getUserName(user) {
+    if (!user) return '';
     if (user.username) {
-        return "@" + user.username
+        return "@" + user.username;
     }
-    let fullname = user.first_name
+    let fullname = user.first_name;
     if (user.last_name) fullname = fullname + " " + user.last_name
-    return fullname
+    return fullname;
 }
 
 async function notifyUsers(foundRequest, fakeStatus, bot) {
@@ -379,6 +381,7 @@ function getRequesterLanguage(requester) {
     return lang;
 }
 
+
 async function deleteMessage(message, bot) {
     try {
         return await bot.deleteMessage(message.chat.id, message.message_id);
@@ -419,6 +422,52 @@ function getImageUrl(imageName) {
     return baseUrl + imageName;
   }
 
+async function checkUserThrottling(userId, fromViber) {
+    let oneHourAgo = new Date();
+    oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+    let filters = {"createdAt": { $gt: oneHourAgo }};
+    if (fromViber) {
+        filters = { ...filters, viberRequester: userId };
+    } else {
+        filters = { ...filters, requesterId: userId };
+    }
+    let hourRequestsCount = await Request.countDocuments(filters);
+    return (hourRequestsCount >= RequestThrottleLimit);
+}
+
+function updateTextsList(oldList, newList) {
+  const oldMap = {};
+  for (const obj of oldList) {
+    oldMap[obj.name] = obj;
+  }
+
+  const result = [];
+
+  for (const newObj of newList) {
+    const oldObj = oldMap[newObj.name];
+
+    if (oldObj) {
+        let en, ua;
+      if (newObj.ua !== '') {
+          ua = newObj.ua;
+      } else {
+          ua = oldObj.ua;
+      }
+      if (newObj.en !== '') {
+          en = newObj.en;
+      } else {
+          en = oldObj.en;
+      }
+      result.push({name: newObj.name, en: en, ua: ua});
+      delete oldMap[newObj.name];
+    } else {
+      result.push(newObj);
+    }
+  }
+  return result;
+}
+
+
 module.exports = {
     getSubscriptionBtn,
     notifyUsers,
@@ -441,7 +490,9 @@ module.exports = {
     getFakeText,
     deleteMessage,
     shuffle,
-    getImageUrl
+    getImageUrl,
+    checkUserThrottling,
+    updateTextsList
 }
 
 async function notifyViber(text, viberRequester) {

@@ -23,7 +23,6 @@ const {
 const { getText, getLanguageTGChat} = require('./localisation');
 const {
     getSubscriptionBtn,
-    closeRequestByTimeout,
     getDomainWithoutSubdomain,
     newFacebookSource,
     newTwitterSource,
@@ -35,6 +34,7 @@ const {
     parseSource,
     updateSource,
     getUserName,
+    checkUserThrottling,
 } = require("./utils");
 
 const {
@@ -298,6 +298,15 @@ const onCheckRequest = async (msg, bot) => {
     const requestId = new mongoose.Types.ObjectId();
     var mediaId, newImage, newVideo, notified = false;
     const {language, id} = await getLanguage(msg.chat.id);
+    if (await checkUserThrottling(id, false)) {
+        await getText("throttling", language, async function(err, text){
+            if (err) return safeErrorLog(err);
+            try {
+                await bot.sendMessage(msg.chat.id, text);
+            } catch (e) { safeErrorLog(e) }
+        });
+        return;
+    }
     var request = new Request({
         _id: requestId,
         requesterTG: msg.chat.id,

@@ -3,6 +3,7 @@ var router = express.Router();
 const mongoose = require('mongoose');
 const auth = require('./auth');
 const fs = require('fs');
+const {updateTextsList} = require("../bot/utils");
 var Data = mongoose.model('Data');
 
 //POST new user route (optional, everyone has access)
@@ -26,23 +27,15 @@ async function updateTexts(texts) {
         await function(err, data) {       
             if (err) throw err;
             var dbTexts = JSON.parse(data);
-            for (var i in dbTexts) {
-                for (var j in texts) {
-                    if  (dbTexts[i].name == texts[j].name) {
-                        if(texts[j].ua != '') dbTexts[i].ua = texts[j].ua;
-                        if(texts[j].en != '') dbTexts[i].en = texts[j].en;
-                        break;
-                    }
-                }
-            }
-            fs.writeFile("texts.json", JSON.stringify(dbTexts), 'utf8', async function (err) {
+            let newTexts = updateTextsList(dbTexts, texts);
+            fs.writeFile("texts.json", JSON.stringify(newTexts), 'utf8', async function (err) {
                 if (err) {
                     console.log("An error occured while writing JSON Object to File.");
                     return console.log(err);
                 }
                 console.log("Texts file has been updated.");
                 //Write to DB
-                await Data.findOneAndUpdate({name: 'texts'}, {value: JSON.stringify(dbTexts)});
+                await Data.findOneAndUpdate({name: 'texts'}, {value: JSON.stringify(newTexts)});
             });
         });
 }
