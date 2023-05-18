@@ -83,6 +83,7 @@ var telegramUserSchema = Schema({
     language: String, //Preffered language
     status: String, //Status for the user TBD:(blocked/suspended/chat etc)
     joinedCampaign: String, //Name of Campaign from where pressed /start
+    quizPoints: Number,
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 
@@ -211,7 +212,7 @@ var sourceStatisticsSchema = Schema({
     noproofCount: {type : Number , "default" : 0},
     rejectCount: {type : Number , "default" : 0},
     totalRequests: {type : Number , "default" : 0},
-    createdAt: {type: Date, default: new Date()},
+    createdAt: {type: Date, default: new Date()}
 })
 
 //Volunteer bot user
@@ -229,6 +230,48 @@ var userSchema = Schema({
     createdAt: Date
 })
 
+var quizSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    code: {type: String, unique: true},
+    name: String,
+    description: String,
+    questions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
+    maxQuestions: { type: Number, default: 10 },
+    passed_times: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+    active: { type: Boolean, default: false}
+})
+
+var questionSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    name: String,
+    correct: String,
+    incorrect1: String,
+    incorrect2: String, 
+    incorrect3: String,
+    explain: String,
+    image: String,
+    video: String
+})
+
+var answerSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    quiz: { type: Schema.Types.ObjectId, ref: 'Quiz' },
+    question: { type: Schema.Types.ObjectId, ref: 'Question' },
+    correct: Boolean,
+    passedAt: {type: Date, default: new Date()}
+})
+
+var passingQuizSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    user: { type: Schema.Types.ObjectId, ref: 'TelegramUser' },
+    quiz: { type: Schema.Types.ObjectId, ref: 'Quiz' },
+    answers: [{ type: Schema.Types.ObjectId, ref: 'Answer' }],
+    startedAt: {type: Date, default: new Date()},
+    finishedAt: Date
+});
+
+
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
@@ -244,3 +287,7 @@ mongoose.model('DailyStats', dailyStatsSchema);
 mongoose.model('Escalation', escalationSchema);
 mongoose.model('SourceStatistics', sourceStatisticsSchema);
 mongoose.model('User', userSchema);
+mongoose.model('Quiz', quizSchema);
+mongoose.model('Question', questionSchema);
+mongoose.model('Answer', answerSchema);
+mongoose.model('PassingQuiz', passingQuizSchema);

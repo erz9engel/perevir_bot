@@ -31,7 +31,16 @@ const {
     onMoreStatusesQuery,
     onConfirmClosePending,
     onChangeLanguageQuery,
-} = require('./query-callbacks')
+} = require('./query-callbacks');
+
+const {
+    onGetQuiz,
+    onSpecificQuizQuery,
+    onSpecificQuiz,
+    onStartQuizQuery,
+    onAnswerQuizQuery,
+    onNextQuestionQuery
+} = require('./quiz.js');
 
 const {answerInlineQuery} = require("./inline-query")
 
@@ -49,7 +58,7 @@ const {
     ChangeLanguage,
     SetFakesRequestText
 } = require('./contstants');
-const {safeErrorLog, delay} = require("./utils");
+const {safeErrorLog, delay, deleteMessage} = require("./utils");
 const {
     isValidCheckRequest,
     isReplyWithCommentRequest,
@@ -97,9 +106,15 @@ bot.on('message', async (msg) => {
         var lang = 'ua', campaign = text.split(' c_')[1];
         if (campaign && campaign.startsWith('en_')) lang = 'en';
         await onStart(msg, bot, lang, campaign);
+    } else if (text === '/quiz') {
+        await onGetQuiz(msg, bot);
+    } else if (text.startsWith('/start quiz_')) {
+        await onSpecificQuiz(msg, bot);
+    } else if (text.startsWith('/quiz_')) {
+        await onSpecificQuiz(msg, bot);
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
-    } else if (isTextFromDict(text, SubscribtionText) || text === '/daily_fakes') {
+    } else if (isTextFromDict(text, SubscribtionText) || text === '/weekly_fakes') {
         await onSubscription(msg, bot)
     } else if (isTextFromDict(text, ChangeLanguage) || text === '/change_language') {
         await onChangeLanguage(msg, bot)
@@ -130,7 +145,7 @@ bot.on('message', async (msg) => {
 });
 
 bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
-    const {data} = callbackQuery;
+    const {data, message} = callbackQuery;
     if (!data) {
         return console.error('INVALID callback query, no action provided', callbackQuery)
     }
@@ -168,7 +183,7 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onUpdateCommentQuery(callbackQuery, bot)
     } else if (data.startsWith('CHAT_')) {
         await onChatModeQuery(callbackQuery, bot)
-    }  else if (data.startsWith('TAKEREQ_')) {
+    } else if (data.startsWith('TAKEREQ_')) {
         await onReqTakeQuery(callbackQuery, bot)
     } else if (data.startsWith('UNPAUSE_')) {
         await unpauseCallback(callbackQuery, bot)
@@ -178,6 +193,17 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onFakeStatusQuery(callbackQuery, bot, true)
     } else if (data.startsWith('LANG')) {
         await onChangeLanguageQuery(callbackQuery, bot)
+    } else if (data === 'QUIZ') {
+        await deleteMessage(message, bot)
+        await onGetQuiz(message, bot)
+    } else if (data.startsWith('QUIZ_')) {
+        await onSpecificQuizQuery(callbackQuery, bot)
+    } else if (data.startsWith('STARTQUIZ_')) {
+        await onStartQuizQuery(callbackQuery, bot)
+    } else if (data.startsWith('ANS_')) {
+        await onAnswerQuizQuery(callbackQuery, bot)
+    } else if (data.startsWith('NEXTQ_')) {
+        await onNextQuestionQuery(callbackQuery, bot)
     }
 });
 

@@ -13,6 +13,7 @@ var textsAPIRouter = require("./routes/dashboard/textsAPI");
 var newsletterAPIRouter = require("./routes/dashboard/newsletterAPI");
 var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
 var sourcestatsAPIRouter = require("./routes/dashboard/sourcestatsAPI");
+var quizAPIRouter = require("./routes/dashboard/quizAPI");
 var authAPIRouter = require("./routes/dashboard/authAPI");
 require('./routes/config/passport');
 
@@ -33,6 +34,7 @@ app.use("/newsletterAPI", newsletterAPIRouter);
 app.use("/leaderboardAPI", leaderboardAPIRouter);
 app.use("/sourcestatsAPI", sourcestatsAPIRouter);
 app.use("/textsAPI", textsAPIRouter);
+app.use("/quizAPI", quizAPIRouter);
 app.use("/authAPI", authAPIRouter);
 
 app.use('/', routes);

@@ -44,6 +44,7 @@ const FakeStatusesStrToHuman = {
     "autoconfirm": "підтверджено автоматичнр",
     "autodecline": "відмовлено автоматично",
 }
+const BackNav = "🔙 Назад";
 
 module.exports = {
     CheckContentText,
@@ -56,4 +57,5 @@ module.exports = {
     RequestTimeout,
     FakeStatusesStrToInt,
     FakeStatusesStrToHuman,
+    BackNav
 }

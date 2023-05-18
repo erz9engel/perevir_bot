@@ -60,5 +60,4 @@ async function getTextsFromDB (){
     })
 }
 
-
 module.exports = router

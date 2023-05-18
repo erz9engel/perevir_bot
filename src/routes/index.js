@@ -19,13 +19,15 @@ fs.readdirSync(__dirname + '/model').forEach(function (filename) {
     if (~filename.indexOf('.js')) require(__dirname + '/model/' + filename)
 });
 
-var Admin = mongoose.model('Admin');
-var DailyStats = mongoose.model('DailyStats');
-var Requests = mongoose.model('Request');
-var TelegramUser = mongoose.model('TelegramUser');
-var ViberUser = mongoose.model('ViberUser');
-var Request = mongoose.model('Request');
-var SourceStatistics = mongoose.model('SourceStatistics');
+const Admin = mongoose.model('Admin');
+const DailyStats = mongoose.model('DailyStats');
+const Requests = mongoose.model('Request');
+const TelegramUser = mongoose.model('TelegramUser');
+const ViberUser = mongoose.model('ViberUser');
+const Request = mongoose.model('Request');
+const SourceStatistics = mongoose.model('SourceStatistics');
+const Quiz = mongoose.model('Quiz');
+const PassingQuiz = mongoose.model('PassingQuiz');
 
 require('./bot/bot');
 const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
@@ -243,6 +245,108 @@ router.get('/channelrequests', auth.optional, async (req, res) => {
                 }
             );
         }
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/quiz', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const data = await Quiz.find({});
+            return res.render('quiz-list', {data: data}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/quiz/new', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            return res.render('quiz-new'); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+router.get('/quiz/stat', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            PassingQuiz.aggregate([
+                { $group: {
+                    _id: '$quiz',
+                    answers: { $push: { $size: '$answers' } }
+                }},
+                { $lookup: {
+                    from: 'quizzes',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'Quiz'
+                }},
+                { $project: {
+                    _id: 1,
+                    answers: 1,
+                    Quiz: { $arrayElemAt: ['$Quiz', 0] }
+                }}
+            ]).exec((err, result) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    var answer = [];
+                    for (var i in result) {
+                        const counts = countDuplicates(result[i].answers);
+                        const quiz = {
+                            id: result[i]._id,
+                            name: result[i].Quiz.name,
+                            answers: counts
+                        }
+                        answer.push(quiz);
+                    }
+        
+                    return res.render('quiz-stat', {data: answer}); 
+                }
+            }); 
+            
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+function countDuplicates(arr) {
+    const counts = {};
+    for (const val of arr) {
+        counts[val] = (counts[val] || 0) + 1;
+    }
+    const result = [];
+    for (const [value, count] of Object.entries(counts)) {
+        result.push({ value: Number(value), count });
+    }
+    return result;
+}
+
+router.get('/quiz/:quizCode', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const {quizCode} = req.params;
+            const quiz = await Quiz.findOne({code: quizCode}).populate('questions');
+            if(!quiz) return res.send('This quiz does not exist');
+            return res.render('quiz-edit', {data: quiz}); 
+        } 
     } else {
         return res.render('sign-in');
     }
