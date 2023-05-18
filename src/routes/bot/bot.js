@@ -108,9 +108,9 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, lang, campaign);
     } else if (text === '/quiz') {
         await onGetQuiz(msg, bot);
-    } else if (text.startsWith('/start quiz_')) {
+    } else if (text && text.startsWith('/start quiz_')) {
         await onSpecificQuiz(msg, bot);
-    } else if (text.startsWith('/quiz_')) {
+    } else if (text && text.startsWith('/quiz_')) {
         await onSpecificQuiz(msg, bot);
     } else if (isTextFromDict(text, CheckContentText)) {
         await onCheckContent(msg, bot)
