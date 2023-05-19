@@ -109,6 +109,7 @@ const onSubscription = async (msg, bot) => {
             return await bot.sendMessage(message.chat.id, NoCurrentFakes);
         } catch (e) { return safeErrorLog(e) }
     }
+    console.log(fakeNews);
     const message_id = fakeNews.value.split('_')[0];
     const chat_id = fakeNews.value.split('_')[1];
     try {

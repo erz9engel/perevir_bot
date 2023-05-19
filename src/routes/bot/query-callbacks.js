@@ -386,7 +386,9 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await bot.sendMessage(message.chat.id, "🚀 Розсилка запущена");
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
-    } catch (e) { safeErrorLog(e); }
+    } catch (e) {
+         safeErrorLog(e); 
+    }
 
 }
 
