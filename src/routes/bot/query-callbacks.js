@@ -386,7 +386,9 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await bot.sendMessage(message.chat.id, "🚀 Розсилка запущена");
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
-    } catch (e) { safeErrorLog(e); }
+    } catch (e) {
+         safeErrorLog(e); 
+    }
 
 }
 
@@ -567,7 +569,9 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     let moderatorMsgId, moderatorActionMsgId;
     try {
         moderatorMsgId = await bot.forwardMessage(toLanguageChat, request.requesterTG, request.requesterMsgID);
-    } catch (e) { safeErrorLog(e) }
+    } catch (e) {
+        return safeErrorLog(e) 
+    }
     let inline_keyboard = await takeRequestKeyboard(request._id);
     let options = {
         reply_to_message_id: moderatorMsgId.message_id,

@@ -98,21 +98,26 @@ const onSubscription = async (msg, bot) => {
     const user = await TelegramUser.findOne({telegramID: msg.chat.id});
     if (!user) return console.log("User not found 1.1")
     const inline_keyboard = getSubscriptionBtn(user.subscribed, user._id);
-    var options = {
-        reply_markup: JSON.stringify({
-            inline_keyboard
-        })
-    };
-    const fakeNews = await Data.findOne({name: 'fakeNews'});
+
+    const fakeNews = await Data.findOne({name: 'fakeNewsText'});
     if (!fakeNews) { 
         try {
             return await bot.sendMessage(message.chat.id, NoCurrentFakes);
         } catch (e) { return safeErrorLog(e) }
     }
-    const message_id = fakeNews.value.split('_')[0];
-    const chat_id = fakeNews.value.split('_')[1];
+    const content = JSON.parse(fakeNews.value);
+    const text = content.text;
+    const entities = content.entities;
+    
+    var options = {
+        entities: JSON.stringify(entities),
+        reply_markup: JSON.stringify({
+            inline_keyboard
+        })
+    };
+
     try {
-        await bot.copyMessage(msg.chat.id, chat_id, message_id, options);
+        await bot.sendMessage(msg.chat.id, text, options);
     } catch (e) { safeErrorLog(e) }
 }
 
@@ -250,11 +255,23 @@ const onSetFakes = async (msg, bot) => {
 
     if (admins.includes(String(msg.from.id))) {
         const fakeNews = msg.message_id + '_' + msg.chat.id;
-        Data.findOneAndUpdate({name: 'fakeNews'}, {value: fakeNews }, function(){});
+        await Data.findOneAndUpdate({name: 'fakeNews'}, {value: fakeNews });
         try {
             await bot.sendMessage(msg.chat.id, 'Зміни збережено');
             await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
         } catch (e) { safeErrorLog(e) }
+        //save text as well
+        var content = {text: msg.text, entities: msg.entities};
+        content = JSON.stringify(content)
+        const fakeNewsText = await Data.findOneAndUpdate({name: 'fakeNewsText'}, {value: content });
+        if (fakeNewsText == null) {
+            var newData = new Data({
+                _id: new mongoose.Types.ObjectId(),
+                name: 'fakeNewsText',
+                value: content
+            });
+            await newData.save()
+        }
     } else {console.log('not allowed')}
 }
 
