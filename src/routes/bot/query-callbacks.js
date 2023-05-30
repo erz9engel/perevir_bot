@@ -569,7 +569,9 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     let moderatorMsgId, moderatorActionMsgId;
     try {
         moderatorMsgId = await bot.forwardMessage(toLanguageChat, request.requesterTG, request.requesterMsgID);
-    } catch (e) { safeErrorLog(e) }
+    } catch (e) {
+        return safeErrorLog(e) 
+    }
     let inline_keyboard = await takeRequestKeyboard(request._id);
     let options = {
         reply_to_message_id: moderatorMsgId.message_id,
