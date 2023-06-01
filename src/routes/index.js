@@ -28,6 +28,8 @@ const Request = mongoose.model('Request');
 const SourceStatistics = mongoose.model('SourceStatistics');
 const Quiz = mongoose.model('Quiz');
 const PassingQuiz = mongoose.model('PassingQuiz');
+const SourceTelegram = mongoose.model('SourceTelegram');
+const SourceDomain = mongoose.model('SourceDomain');
 
 require('./bot/bot');
 const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
@@ -346,6 +348,23 @@ router.get('/quiz/:quizCode', auth.optional, async (req, res) => {
             const quiz = await Quiz.findOne({code: quizCode}).populate('questions');
             if(!quiz) return res.send('This quiz does not exist');
             return res.render('quiz-edit', {data: quiz}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+//Black/White Lists
+router.get('/blacklist', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const dataTg = await SourceTelegram.find({});
+            const dataDom = await SourceDomain.find({});
+            var data = dataTg.concat(dataDom);
+            return res.render('blacklist-tg', {data: data}); 
         } 
     } else {
         return res.render('sign-in');
