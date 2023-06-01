@@ -271,7 +271,6 @@ var passingQuizSchema = Schema({
     finishedAt: Date
 });
 
-
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
