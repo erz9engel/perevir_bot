@@ -168,11 +168,38 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                           if source.fake
                             span.badge.badge-sm.bg-gradient-secondary Фейк
                           else
-                            span.badge.badge-sm.bg-gradient-success Прадва
+                            span.badge.badge-sm.bg-gradient-success Правда
                           span.tooltiptextX #{source.description}
                     td.align-middle.text-center.text-sm
                       span #{source.requestsAmount}
+                    td.align-middle
+                      if source.telegramUsername
+                        a.text-secondary.font-weight-bold.text-xs(href='javascript:getSourceData("T_'+ source._id+'");')
+                         | Редагувати
+                      else 
+                        a.text-secondary.font-weight-bold.text-xs(href='javascript:getSourceData("D_'+ source._id+'");')
+                         | Редагувати
+
+#sourceP.fixed-plugin
+  .card.shadow-lg
+    .card-header.pb-0.pt-3
+      .float-start
+        h5.mt-3.mb-0 Джерело
+      .float-end.mt-4
+        button.btn.btn-link.text-dark.p-0.fixed-plugin-close-button
+          i.fa.fa-close(aria-hidden='true')
+    .card-body.pt-sm-3.pt-0(style='overflow-y: scroll; overflow-x: hidden')
+      h6#s-name
+      hr.horizontal.dark.my-sm-4
+      div
+        .form-check.form-switch.ps-0
+          input#s-active.form-check-input.ms-auto(type='checkbox')
+          label.form-check-label.text-body.ms-3.text-truncate.w-80.mb-0(for='flexSwitchCheckDefault') Фейк  
+        textarea(id="s-description" placeholder="Опис" rows="3" cols='32')
+      a#s-update.btn.bg-gradient-dark.w-100(href='javascript:updateSource()') Оновити
+
                   
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')
+script(src='../assets/js/soft-ui-dashboard.min.js')
 script(src='../assets/js/main.js')

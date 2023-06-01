@@ -347,3 +347,42 @@ function removeQuestion(Qid) {
   });
 
 }
+
+//Black/White lists
+function getSourceData(id) {
+  var element = document.getElementById("sourceP");
+  element.classList.add("show");
+  editingQ = id;
+
+  fetch('../blacklistAPI/source?' + editingQ)
+  .then(response => response.json())
+  .then(data => {
+    fillInSourceData(data);
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+  });
+
+}
+
+function fillInSourceData(data) {
+
+  document.getElementById('s-name').innerHTML = data.name;
+  document.getElementById('s-active').checked = data.fake;
+  document.getElementById('s-description').value = data.description;
+  document.getElementById('s-update').href = 'javascript:updateSource("'+ data.id +'")';
+
+}
+
+function updateSource(id) {
+  const fake = document.getElementById('s-active').checked;
+  const description = document.getElementById('s-description').value;
+  
+  fetch("../blacklistAPI/update", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({id: id, fake: fake, description: description})
+    }).then(res => {
+      return window.location.href = "../blacklist";
+    });
+}
