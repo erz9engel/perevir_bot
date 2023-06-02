@@ -386,3 +386,17 @@ function updateSource(id) {
       return window.location.href = "../blacklist";
     });
 }
+
+function removeSource(id) {
+
+  if (!confirm('Підтвердіть видалення джерела?')) return
+
+  fetch("../blacklistAPI/deleteSource", {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'}, 
+    body: JSON.stringify({id: id})
+  }).then(res => {
+    location.reload();
+  });
+
+}
