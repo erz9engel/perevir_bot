@@ -51,4 +51,19 @@ router.post('/update', auth.required, async (req, res, next) => {
 });
 
 
+router.post('/deleteSource', auth.required, async (req, res, next) => {
+
+    const id = req.body.id;
+    const source = id.split('_')[0];
+    const sourceId = id.split('_')[1];
+
+    if (source == 'T') {
+        await SourceTelegram.deleteOne({_id: sourceId});
+    } else {
+        await SourceDomain.deleteOne({_id: sourceId});
+    }
+
+    return res.send('Updated');
+});
+
 module.exports = router

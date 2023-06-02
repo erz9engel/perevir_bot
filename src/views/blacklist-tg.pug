@@ -149,6 +149,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                 tr
                   th.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Назва
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Вердикт
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Опис
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Кількість запитів
                   th.text-secondary.opacity-7
               tbody
@@ -164,12 +165,12 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                             a(target='blank' href='https://' + source.domain)
                               h6.mb-0.text-sm #{source.domain}
                     td.align-middle.text-center.text-sm
-                      .tooltipX
-                          if source.fake
-                            span.badge.badge-sm.bg-gradient-secondary Фейк
-                          else
-                            span.badge.badge-sm.bg-gradient-success Правда
-                          span.tooltiptextX #{source.description}
+                      if source.fake
+                        span.badge.badge-sm.bg-gradient-secondary Фейк
+                      else
+                        span.badge.badge-sm.bg-gradient-success Правда
+                    td.align-middle.text-center.text-sm(style='max-width: 200px; overflow-x: overlay;')
+                      span #{source.description}
                     td.align-middle.text-center.text-sm
                       span #{source.requestsAmount}
                     td.align-middle
@@ -179,6 +180,15 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                       else 
                         a.text-secondary.font-weight-bold.text-xs(href='javascript:getSourceData("D_'+ source._id+'");')
                          | Редагувати
+                    td.align-middle
+                      .avatar-group.mt-2
+                        if source.telegramUsername
+                          a(href='javascript:removeSource("T_'+ source._id+'");')
+                            i.fa.fa-trash
+                        else 
+                          a(href='javascript:removeSource("D_'+ source._id+'");')
+                            i.fa.fa-trash
+                        
 
 #sourceP.fixed-plugin
   .card.shadow-lg

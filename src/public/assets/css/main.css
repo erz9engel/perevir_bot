@@ -14,24 +14,3 @@
 .date {
     margin-right: 20px;
 }
-.tooltipX {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-}
-  
-.tooltipX .tooltiptextX {
-    visibility: hidden;
-    background-color: #252946;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 1px 5px;
-    position: absolute;
-    z-index: 1;
-    margin: 0 5px;
-}
-  
-.tooltipX:hover .tooltiptextX {
-    visibility: visible;
-}
