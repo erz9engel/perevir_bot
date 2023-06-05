@@ -9,6 +9,9 @@ var requestSchema = Schema({
     viberReq: Boolean, //If request from Viber 
     viberRequester: String, //Viber requester ID
     viberMediaUrl: String, //Viber media URL
+    whatsappReq: Boolean, //If request from WhatsApp 
+    whatsappRequester: String, //WhatsApp requester ID
+    whatsappMediaUrl: String, //WhatsApp media URL
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
