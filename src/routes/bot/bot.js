@@ -230,6 +230,12 @@ module.exports = {
             return sentMsg;
         } catch (e){ safeErrorLog(e) }
     },
+    sendImage: async function (id, imageUrl, options) {
+        try {
+            const sentMsg = await bot.sendPhoto(id, imageUrl, options);
+            return sentMsg;
+        } catch (e){ safeErrorLog(e) }
+    },
     sendLetters: async function (ids, msg) {
         sendLettersF(ids, msg)
     }

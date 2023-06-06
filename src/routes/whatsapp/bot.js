@@ -1,15 +1,14 @@
 var express = require("express");
 var router = express.Router();
-var request = require('request');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const Request = mongoose.model('Request');
+const User = mongoose.model('WhatsappUser');
+const { sendTextMessage, getImageObj, getImageUrl, registerUser } = require("./functions");
 const { getText } = require("../bot/localisation");
-require('dotenv').config();
-const {safeErrorLog} = require("../bot/utils");
-const { messageId } = require("../bot/bot");
+const { safeErrorLog } = require("../bot/utils");
+const { messageId, sendImage } = require("../bot/bot");
 const { statusesKeyboard } = require("../keyboard");
-
-const GRAPH_V = 'v16.0';
 
 //WhatsApp
 router.get('/whatsapp', async (req, res) => {
@@ -26,6 +25,8 @@ router.post('/whatsapp', async (req, res) => {
         return res.send('ok');
     } 
     const messageData = req.body.entry[0].changes[0].value.messages[0];
+
+    await registerUser(messageData.from);
     
     if (messageData.text || messageData.image) {
         await onMessage(messageData);
@@ -40,7 +41,7 @@ router.post('/whatsapp', async (req, res) => {
 async function onMessage(messageData) {
     console.log('NEW REQ WHATSAPP');
 
-    var text, media;
+    var text;
     if (messageData.text) {
         text = messageData.text.body;
         await createNewRequest(messageData, text);
@@ -53,7 +54,6 @@ async function onMessage(messageData) {
             const imageObj = JSON.parse(dataObj);
             //Get image URL
             try {
-                console.log(imageObj.url);
                 const imageURL = await getImageUrl(imageObj.url);
                 await createNewRequest(messageData, text, imageURL);
             } catch (error) {
@@ -67,19 +67,27 @@ async function onMessage(messageData) {
 
 async function onUnsupportedContent(messageData) {
     const from = messageData.from;
-    await sendTextMessage(from, 'I do not support this type of content');
+    const id = messageData.id;
+
+    await getText('unsupported_request', 'en', async function(err, text){
+        if (err) return safeErrorLog(err);
+        try {
+            await sendTextMessage(from, text, id);
+        } catch (e) { safeErrorLog(e) }
+    });
 }
 
 async function createNewRequest(messageData, text, imageURL) {
     const from = messageData.from;
+    const id = messageData.id;
     const requestId = new mongoose.Types.ObjectId();
     const reqsCount = await Request.countDocuments({});
     var request = new Request({
         _id: requestId,
         text: text,
-        viberReq: true, 
-        viberRequester: from, 
-        viberMediaUrl: imageURL,
+        whatsappReq: true, 
+        whatsappRequester: from, 
+        whatsappMessageId: id,
         requestId: reqsCount + 1,
         createdAt: new Date(),
         lastUpdate: new Date()
@@ -88,11 +96,20 @@ async function createNewRequest(messageData, text, imageURL) {
     if(text) msgText += text + '\n\n';
     //Send to moderation
     const moderatorsChanel = process.env.TGMAINCHAT;
-    const options = {
+    var options = {
         parse_mode: "HTML"
     };
-    const sentMsg = await messageId(moderatorsChanel, msgText, false, options);
-    
+    var sentMsg;
+    if (!imageURL) {
+        sentMsg = await messageId(moderatorsChanel, msgText, false, options);
+    } else {
+        try {
+            if (text) options.caption = text;
+            sentMsg = await sendImage(moderatorsChanel, imageURL, options);
+        } catch (e) {
+            console.log(e);
+        }
+    }
     const inline_keyboard = await statusesKeyboard(requestId, true);
     const optionsMod = {
         reply_to_message_id: sentMsg.message_id,
@@ -109,77 +126,9 @@ async function createNewRequest(messageData, text, imageURL) {
     await getText('new_requests', 'en', async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await sendTextMessage(from, text);
+            await sendTextMessage(from, text, id);
         } catch (e) { safeErrorLog(e) }
     });
 }
 
-async function sendTextMessage(recipient, text) {
-    var options = {
-      'method': 'POST',
-      'url': 'https://graph.facebook.com/'+ GRAPH_V +'/' + process.env.WHATSAPP_PHONE_ID + '/messages',
-      'headers': {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + process.env.WHATSAPP_BEARER
-      },
-      body: JSON.stringify({
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": recipient,
-        "type": "text",
-        "text": {
-          "preview_url": false,
-          "body": text
-        }
-      })
-    
-    };
-    request(options, function (error, response) {
-      if (error) throw new Error(error);
-    });
-}
-
-async function getImageObj(id) {
-
-    return new Promise(function (resolve, reject) {
-        var options = {
-            'method': 'GET',
-            'url': 'https://graph.facebook.com/'+ GRAPH_V +'/' + id,
-            'headers': {
-                'Authorization': 'Bearer ' + process.env.WHATSAPP_BEARER
-            }
-          };
-        request(options, function (error, res, body) {
-            if (!error && res.statusCode === 200) {
-                resolve(body);
-            } else {
-                reject(error);
-            }
-        });
-    });
-      
-}
-
-async function getImageUrl(url) {
-
-    return new Promise(function (resolve, reject) {
-        var options = {
-            'method': 'GET',
-            'url': url,
-            'headers': {
-                'Authorization': 'Bearer ' + process.env.WHATSAPP_BEARER
-            }
-        };
-        request(options, function (error, res, body) {
-            if (!error && res.statusCode === 200) {
-                console.log(body);
-                resolve(body);
-            } else {
-                reject(error);
-            }
-        });
-    });
-    
-}
-
-module.exports = router
+module.exports = router;

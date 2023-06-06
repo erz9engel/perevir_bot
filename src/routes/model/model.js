@@ -11,7 +11,7 @@ var requestSchema = Schema({
     viberMediaUrl: String, //Viber media URL
     whatsappReq: Boolean, //If request from WhatsApp 
     whatsappRequester: String, //WhatsApp requester ID
-    whatsappMediaUrl: String, //WhatsApp media URL
+    whatsappMessageId: String, //WhatsApp message ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
@@ -205,6 +205,12 @@ var viberUserSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
+var whatsappUserSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    whatsappId: {type: String, unique: true}, 
+    createdAt: {type: Date, default: new Date()}
+});
+
 var sourceStatisticsSchema = Schema({
     _id: Schema.Types.ObjectId,
     sourceTgId: String,
@@ -275,6 +281,7 @@ var passingQuizSchema = Schema({
 });
 
 mongoose.model('ViberUser', viberUserSchema); 
+mongoose.model('WhatsappUser', whatsappUserSchema);
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
 mongoose.model('Image', imageSchema);
