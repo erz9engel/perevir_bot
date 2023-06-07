@@ -2,7 +2,6 @@ var request = require('request');
 var axios = require('axios');
 const mongoose = require('mongoose');
 const User = mongoose.model('WhatsappUser');
-
 const GRAPH_V = 'v16.0';
 
 async function sendTextMessage(recipient, text, replyId) {
