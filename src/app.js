@@ -16,6 +16,7 @@ var sourcestatsAPIRouter = require("./routes/dashboard/sourcestatsAPI");
 var quizAPIRouter = require("./routes/dashboard/quizAPI");
 var blacklistAPIRouter = require("./routes/dashboard/blacklistAPI");
 var authAPIRouter = require("./routes/dashboard/authAPI");
+var whatsappAPIRouter = require("./routes/whatsapp/bot");
 require('./routes/config/passport');
 
 var app = express();
@@ -38,6 +39,7 @@ app.use("/textsAPI", textsAPIRouter);
 app.use("/quizAPI", quizAPIRouter);
 app.use("/blacklistAPI", blacklistAPIRouter);
 app.use("/authAPI", authAPIRouter);
+app.use("/whatsappAPI", whatsappAPIRouter);
 
 app.use('/', routes);
 
