@@ -12,6 +12,8 @@ var requestSchema = Schema({
     whatsappReq: Boolean, //If request from WhatsApp 
     whatsappRequester: String, //WhatsApp requester ID
     whatsappMessageId: String, //WhatsApp message ID
+    messengerReq: Boolean, //If request from Messanger 
+    messengerRequester: String, //Messanger requester ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
