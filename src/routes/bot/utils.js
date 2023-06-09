@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { getText, getLanguageTGChat} = require('./localisation');
 const {RequestThrottleLimit} = require("./contstants");
 const { sendTextMessage } = require("../whatsapp/functions");
+const { sendTextMessageMessenger } = require("../messenger/functions");
 const Request = mongoose.model('Request');
 const TelegramUser = mongoose.model('TelegramUser');
 const Moderator = mongoose.model('Moderator');
@@ -54,6 +55,8 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             notifyViber(text['ua'], foundRequest.viberRequester);
         } else if (foundRequest.whatsappReq) {
             sendTextMessage(foundRequest.whatsappRequester, text['en'], foundRequest.whatsappMessageId);
+        } else if (foundRequest.messengerReq) {
+            sendTextMessageMessenger(foundRequest.messengerRequester, text['en']);
         } else {
             let options = {
                 reply_to_message_id: foundRequest.requesterMsgID

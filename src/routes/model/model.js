@@ -213,6 +213,12 @@ var whatsappUserSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
+var messengerUserSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    messengerId: {type: String, unique: true}, 
+    createdAt: {type: Date, default: new Date()}
+});
+
 var sourceStatisticsSchema = Schema({
     _id: Schema.Types.ObjectId,
     sourceTgId: String,
@@ -284,6 +290,7 @@ var passingQuizSchema = Schema({
 
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('WhatsappUser', whatsappUserSchema);
+mongoose.model('MessengerUser', messengerUserSchema);
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
 mongoose.model('Image', imageSchema);

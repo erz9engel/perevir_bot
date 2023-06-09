@@ -1,4 +1,3 @@
-const { MessengerClient } = require('messaging-api-messenger');
 var express = require("express");
 var router = express.Router();
 require('dotenv').config();
@@ -8,10 +7,7 @@ const { getText } = require('../bot/localisation');
 const { safeErrorLog } = require('../bot/utils');
 const { messageId, sendMediaGroup } = require('../bot/bot');
 const { statusesKeyboard } = require('../keyboard');
-
-const client = new MessengerClient({
-    accessToken: process.env.MESSENGER_TOKEN
-});
+const { sendTextMessageMessenger, registerUser } = require('./functions');
 
 //Messenger
 router.get('/messenger', async (req, res) => {
@@ -31,7 +27,9 @@ router.post('/messenger', async (req, res) => {
         const { messaging } = body.entry[0];
 
         messaging.forEach((event) => {
-            const { message } = event;
+            const { sender, message } = event;
+
+            registerUser(sender.id);
 
             if (message.text || ( message.attachments && (message.attachments[0].type == 'image' || message.attachments[0].type == 'video'))) {
                 onMessage(event);
@@ -52,6 +50,7 @@ async function onMessage(event) {
     if (message.text) {
         await createNewRequest(sender, message.text);
     } else if (message.attachments && (message.attachments[0].type == 'image' || message.attachments[0].type == 'video')) {
+        if (message.attachments[0].payload.sticker_id) return console.log('sent sticket in messenger');
         await createNewRequest(sender, null, message.attachments);
     }
 }
@@ -62,7 +61,7 @@ async function onUnsupportedContent(event) {
     await getText('unsupported_request', 'en', async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await client.sendText(sender.id, text, { messaging_type: "RESPONSE"});
+            await sendTextMessageMessenger(sender.id, text);
         } catch (e) { safeErrorLog(e) }
     });
 }
@@ -85,10 +84,11 @@ async function createNewRequest(sender, text, attachments) {
     var options = {
         parse_mode: "HTML"
     };
-    var sentMsg, sentActionMsg;
+    var sentMsgId, sentActionMsg;
     if (text) {
         try {
-            sentMsg = await messageId(moderatorsChanel, text, false, options);
+            const sentMsg = await messageId(moderatorsChanel, text, false, options);
+            sentMsgId = sentMsg.message_id;
         } catch (e) { return safeErrorLog(e) }
     } else {
         var mediaFiles = [];
@@ -97,14 +97,15 @@ async function createNewRequest(sender, text, attachments) {
                 var type = "photo";
                 if (attachments[i].type == 'video') type = 'video';
                 mediaFiles.push({type: type, media: atURL})
-        }
+            }
         try {
-            sentMsg = await sendMediaGroup(moderatorsChanel, mediaFiles, options); 
+            const sentMsg = await sendMediaGroup(moderatorsChanel, mediaFiles, options); 
+            sentMsgId = sentMsg[0].message_id;
         } catch (e) { return safeErrorLog(e) }
     }
     const inline_keyboard = await statusesKeyboard(requestId, true);
     const optionsMod = {
-        reply_to_message_id: sentMsg.message_id,
+        reply_to_message_id: sentMsgId,
         reply_markup: JSON.stringify({
             inline_keyboard
         })
@@ -112,7 +113,7 @@ async function createNewRequest(sender, text, attachments) {
     try {
         sentActionMsg = await messageId(moderatorsChanel, "№" + request.requestId + '\n#pending | #messenger', false, optionsMod);
     } catch (e) { return safeErrorLog(e) }
-    request.moderatorMsgID = sentMsg.message_id;
+    request.moderatorMsgID = sentMsgId;
     request.moderatorActionMsgID = sentActionMsg.message_id;
     request.save();
 
@@ -120,7 +121,7 @@ async function createNewRequest(sender, text, attachments) {
     await getText('new_requests', 'en', async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await client.sendText(sender.id, text, { messaging_type: "RESPONSE"});
+            await sendTextMessageMessenger(sender.id, text);
         } catch (e) { safeErrorLog(e) }
     });
 }
