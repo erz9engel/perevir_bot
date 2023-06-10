@@ -32,6 +32,8 @@
 
 *WHATSAPP_BEARER=* WHATSAPP TOKEN
 
+*MESSENGER_TOKEN=* MESSENGER TOKEN
+
 *C_ENV=* dev/staging/prod
 
 Для того, щоб бот коректно міг зберігати коментарі до бази його треба додати до відповідної групи, а також через Botfather вимкнути Group Privacy в Bot Settings

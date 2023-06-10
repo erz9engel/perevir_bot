@@ -236,6 +236,12 @@ module.exports = {
             return sentMsg;
         } catch (e){ safeErrorLog(e) }
     },
+    sendMediaGroup: async function (id, mediaGroup, options) {
+        try {
+            const sentMsg = await bot.sendMediaGroup(id, mediaGroup, options);
+            return sentMsg;
+        } catch (e){ safeErrorLog(e) }
+    },
     sendLetters: async function (ids, msg) {
         sendLettersF(ids, msg)
     }

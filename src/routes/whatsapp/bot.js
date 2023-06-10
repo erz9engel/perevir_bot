@@ -3,7 +3,6 @@ var router = express.Router();
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Request = mongoose.model('Request');
-const User = mongoose.model('WhatsappUser');
 const { sendTextMessage, getImageObj, getImageUrl, registerUser } = require("./functions");
 const { getText } = require("../bot/localisation");
 const { safeErrorLog } = require("../bot/utils");
@@ -22,7 +21,7 @@ router.get('/whatsapp', async (req, res) => {
 
 router.post('/whatsapp', async (req, res) => {
     if (!req.body.entry || !req.body.entry[0] || !req.body.entry[0].changes[0] || !req.body.entry[0].changes[0].value || !req.body.entry[0].changes[0].value.messages || !req.body.entry[0].changes[0].value.messages[0]) {
-        return res.send('ok');
+        return res.sendStatus(200);
     } 
     const messageData = req.body.entry[0].changes[0].value.messages[0];
 
@@ -35,7 +34,7 @@ router.post('/whatsapp', async (req, res) => {
         console.log(messageData);
     }
 
-    return res.send('ok')
+    return res.sendStatus(200);
 });
 
 async function onMessage(messageData) {
