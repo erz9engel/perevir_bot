@@ -29,10 +29,9 @@ async function registerUser (id) {
 
 async function reportStatusMessenger(foundRequest, sender, bannedChat) {
 
-    var description = '', textArg = '';
+    var textArg = '';
     if (bannedChat) {
         textArg = bannedChat.fake ? 'black_source' : 'white_source';
-        description = bannedChat.description ? bannedChat.description : '';
     } else {
         if (foundRequest.fakeStatus === 1) textArg = "true_status"
         else if (foundRequest.fakeStatus === -1) textArg = "fake_status"
@@ -43,8 +42,7 @@ async function reportStatusMessenger(foundRequest, sender, bannedChat) {
         await getText(textArg, 'en', async function(err, text){
             if (err) return console.log(err);
             try {
-                if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await sendTextMessageMessenger(sender.id, text + '\n\n' + description);
-                else await sendTextMessageMessenger(sender.id, text);
+                await sendTextMessageMessenger(sender.id, text);
             } catch (e) { console.log(e) }
         });
         

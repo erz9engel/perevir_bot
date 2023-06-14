@@ -89,7 +89,7 @@ async function createNewRequest(sender, text, attachments) {
         lastUpdate: new Date()
     });
     //Send to moderation
-    const moderatorsChanel = process.env.TGMAINCHAT;
+    const moderatorsChanel = process.env.TGENGLISHCHAT;
     var options = {
         parse_mode: "HTML"
     };

@@ -3,9 +3,9 @@ var router = express.Router();
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Request = mongoose.model('Request');
-const { sendTextMessage, getImageObj, getImageUrl, registerUser } = require("./functions");
+const { sendTextMessage, getImageObj, getImageUrl, registerUser, reportStatusWhatsapp, reportAutoStatusWhatsapp } = require("./functions");
 const { getText } = require("../bot/localisation");
-const { safeErrorLog } = require("../bot/utils");
+const { safeErrorLog, getLabeledSource } = require("../bot/utils");
 const { messageId, sendImage } = require("../bot/bot");
 const { statusesKeyboard } = require("../keyboard");
 
@@ -38,12 +38,20 @@ router.post('/whatsapp', async (req, res) => {
 });
 
 async function onMessage(messageData) {
-    console.log('NEW REQ WHATSAPP');
-
     var text;
     if (messageData.text) {
         text = messageData.text.body;
-        await createNewRequest(messageData, text);
+
+        const labeledSource = await getLabeledSource(text);
+        const foundText = await Request.findOne({text: text}, '_id fakeStatus commentChatId commentMsgId');
+        if (foundText && foundText.fakeStatus != 0) {
+            return reportStatusWhatsapp(foundText, messageData, labeledSource); //Yes, no waiting list here
+        } else if (labeledSource) {
+            await reportAutoStatusWhatsapp(labeledSource, messageData);
+        }  else {
+            await createNewRequest(messageData, text);
+        }
+
     } else if (messageData.image) {
         const imageData = messageData.image;
         if (imageData.caption) text = imageData.caption;
@@ -94,7 +102,7 @@ async function createNewRequest(messageData, text, imageURL) {
     var msgText = '';
     if(text) msgText += text + '\n\n';
     //Send to moderation
-    const moderatorsChanel = process.env.TGMAINCHAT;
+    const moderatorsChanel = process.env.TGENGLISHCHAT;
     var options = {
         parse_mode: "HTML"
     };
