@@ -191,7 +191,13 @@ const port = process.env.VIBER_WEBHOOK_SERVER_PORT;
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
         console.log('Set the new webhook to', publicUrl);
-        http.createServer(bot.middleware()).listen(8080, () => bot.setWebhook(publicUrl));
+        http.createServer(bot.middleware()).listen(8080, () => bot.setWebhook(publicUrl)
+          .then((m) => console.log(m))
+          .catch(async (e) => {
+              console.log('err')
+              console.log(e)
+          })
+        );
     }).catch(error => {
         console.log('Can not connect to ngrok server. Is it running?\nIf you dont work with Viber, please IGNORE');
         console.error(error);

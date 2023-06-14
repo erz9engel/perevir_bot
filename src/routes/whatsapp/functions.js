@@ -1,6 +1,7 @@
 var request = require('request');
 var axios = require('axios');
 const mongoose = require('mongoose');
+const { getText } = require('../bot/localisation');
 const User = mongoose.model('WhatsappUser');
 const GRAPH_V = 'v16.0';
 
@@ -93,9 +94,52 @@ async function registerUser (phone) {
     });
 }
 
+async function reportStatusWhatsapp(foundRequest, messageData, bannedChat) {
+
+    const from = messageData.from;
+    const id = messageData.id;
+
+    var textArg = '';
+    if (bannedChat) {
+        textArg = bannedChat.fake ? 'black_source' : 'white_source';
+    } else {
+        if (foundRequest.fakeStatus === 1) textArg = "true_status"
+        else if (foundRequest.fakeStatus === -1) textArg = "fake_status"
+        else if (foundRequest.fakeStatus === -2) textArg = "reject_status"
+    }
+
+    try {
+        await getText(textArg, 'en', async function(err, text){
+            if (err) return console.log(err);
+            try {
+                await sendTextMessage(from, text, id);
+            } catch (e) { console.log(e) }
+        });
+        
+    } catch (e){ console.log(e) }
+}
+
+async function reportAutoStatusWhatsapp(labeledSource, messageData) {
+
+    const from = messageData.from;
+    const id = messageData.id;
+
+    const sourceText = labeledSource.fake ? 'black_source' : 'white_source';
+    try {
+        await getText(sourceText, 'en', async function(err, text){
+            if (err) return safeErrorLog(err);
+            try {
+                await sendTextMessage(from, text, id);
+            } catch (e) { safeErrorLog(e) }
+        });
+    } catch (e) {safeErrorLog(e)}
+}
+
 module.exports = {
     sendTextMessage,
     getImageObj,
     getImageUrl,
-    registerUser
+    registerUser,
+    reportStatusWhatsapp,
+    reportAutoStatusWhatsapp
 };
