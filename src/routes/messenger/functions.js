@@ -1,5 +1,6 @@
 const { MessengerClient } = require('messaging-api-messenger');
 const mongoose = require('mongoose');
+const { getText } = require('../bot/localisation');
 const User = mongoose.model('MessengerUser');
 
 const client = new MessengerClient({
@@ -26,7 +27,45 @@ async function registerUser (id) {
     });
 }
 
+async function reportStatusMessenger(foundRequest, sender, bannedChat) {
+
+    var description = '', textArg = '';
+    if (bannedChat) {
+        textArg = bannedChat.fake ? 'black_source' : 'white_source';
+        description = bannedChat.description ? bannedChat.description : '';
+    } else {
+        if (foundRequest.fakeStatus === 1) textArg = "true_status"
+        else if (foundRequest.fakeStatus === -1) textArg = "fake_status"
+        else if (foundRequest.fakeStatus === -2) textArg = "reject_status"
+    }
+
+    try {
+        await getText(textArg, 'en', async function(err, text){
+            if (err) return console.log(err);
+            try {
+                if (foundRequest.fakeStatus === -3 || foundRequest.fakeStatus === 2) await sendTextMessageMessenger(sender.id, text + '\n\n' + description);
+                else await sendTextMessageMessenger(sender.id, text);
+            } catch (e) { console.log(e) }
+        });
+        
+    } catch (e){ console.log(e) }
+}
+
+async function reportAutoStatusMessenger(labeledSource, sender) {
+    const sourceText = labeledSource.fake ? 'black_source' : 'white_source';
+    try {
+        await getText(sourceText, 'en', async function(err, text){
+            if (err) return safeErrorLog(err);
+            try {
+                await sendTextMessageMessenger(sender.id, text);
+            } catch (e) { safeErrorLog(e) }
+        });
+    } catch (e) {safeErrorLog(e)}
+}
+
 module.exports = {
     sendTextMessageMessenger,
-    registerUser
+    registerUser,
+    reportStatusMessenger,
+    reportAutoStatusMessenger
 };

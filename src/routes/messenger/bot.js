@@ -4,10 +4,10 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Request = mongoose.model('Request');
 const { getText } = require('../bot/localisation');
-const { safeErrorLog } = require('../bot/utils');
+const { safeErrorLog, getLabeledSource } = require('../bot/utils');
 const { messageId, sendMediaGroup } = require('../bot/bot');
 const { statusesKeyboard } = require('../keyboard');
-const { sendTextMessageMessenger, registerUser } = require('./functions');
+const { sendTextMessageMessenger, registerUser, reportStatusMessenger, reportAutoStatusMessenger } = require('./functions');
 
 //Messenger
 router.get('/messenger', async (req, res) => {
@@ -44,11 +44,20 @@ router.post('/messenger', async (req, res) => {
 });
 
 async function onMessage(event) {
-    console.log('NEW REQ MESSENGER');
 
     const { sender, message } = event;
     if (message.text) {
-        await createNewRequest(sender, message.text);
+
+        const labeledSource = await getLabeledSource(message.text);
+        const foundText = await Request.findOne({text: message.text}, '_id fakeStatus commentChatId commentMsgId');
+        if (foundText && foundText.fakeStatus != 0) {
+            return reportStatusMessenger(foundText, sender, labeledSource); //Yes, no waiting list here
+        } else if (labeledSource) {
+            await reportAutoStatusMessenger(labeledSource, sender);
+        }  else {
+            await createNewRequest(sender, message.text);
+        }
+
     } else if (message.attachments && (message.attachments[0].type == 'image' || message.attachments[0].type == 'video')) {
         if (message.attachments[0].payload.sticker_id) return console.log('sent sticket in messenger');
         await createNewRequest(sender, null, message.attachments);
