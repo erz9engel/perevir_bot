@@ -288,6 +288,23 @@ var passingQuizSchema = Schema({
     finishedAt: Date
 });
 
+var parsingSourceSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    username: {type: String, unique: true}, //Parsing Source username: durov
+    posts: [{ type: Schema.Types.ObjectId, ref: 'ParsingPost' }], //objects of parsed posts
+    keywords: [String], //Array of keywords to iteract with: ['харків', 'харківська']
+    addedAt: {type: Date, default: new Date()}
+});
+
+var parsingPostSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    source: { type: Schema.Types.ObjectId, ref: 'ParsingSource' }, //object of origin source
+    id: Number, //Parsing Post id: 1
+    text: String, //Post text
+    hasKeyword: Boolean, //If has any of keywords
+    parsedAt: {type: Date, default: new Date()}
+});
+
 mongoose.model('ViberUser', viberUserSchema); 
 mongoose.model('WhatsappUser', whatsappUserSchema);
 mongoose.model('MessengerUser', messengerUserSchema);
@@ -309,3 +326,5 @@ mongoose.model('Quiz', quizSchema);
 mongoose.model('Question', questionSchema);
 mongoose.model('Answer', answerSchema);
 mongoose.model('PassingQuiz', passingQuizSchema);
+mongoose.model('ParsingSource', parsingSourceSchema);
+mongoose.model('ParsingPost', parsingPostSchema);

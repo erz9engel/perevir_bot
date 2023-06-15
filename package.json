@@ -13,6 +13,7 @@
     "@binance/connector": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.15.0",
+    "cheerio": "^1.0.0-rc.12",
     "cookie-parser": "^1.4.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

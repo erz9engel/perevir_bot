@@ -32,6 +32,7 @@ const SourceTelegram = mongoose.model('SourceTelegram');
 const SourceDomain = mongoose.model('SourceDomain');
 
 require('./bot/bot');
+require('./parser-bot/parser');
 const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
 //router.use(require('./api'));
 
