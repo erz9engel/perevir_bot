@@ -30,6 +30,7 @@ const Quiz = mongoose.model('Quiz');
 const PassingQuiz = mongoose.model('PassingQuiz');
 const SourceTelegram = mongoose.model('SourceTelegram');
 const SourceDomain = mongoose.model('SourceDomain');
+const ParsingSource = mongoose.model('ParsingSource');
 
 require('./bot/bot');
 require('./parser-bot/parser');
@@ -366,6 +367,21 @@ router.get('/blacklist', auth.optional, async (req, res) => {
             const dataDom = await SourceDomain.find({});
             var data = dataTg.concat(dataDom);
             return res.render('blacklist-tg', {data: data}); 
+        } 
+    } else {
+        return res.render('sign-in');
+    }
+});
+
+//Monitoring
+router.get('/monitoring', auth.optional, async (req, res) => {
+    if (req.auth && req.auth.id) {
+        const id = req.auth.id;
+        const admin = await Admin.findById(id, 'username');
+        if (!admin) return res.render('sign-in'); 
+        else {
+            const data = await ParsingSource.find({});
+            return res.render('monitoring', {data: data}); 
         } 
     } else {
         return res.render('sign-in');

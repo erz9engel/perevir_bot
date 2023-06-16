@@ -290,8 +290,7 @@ var passingQuizSchema = Schema({
 
 var parsingSourceSchema = Schema({
     _id: Schema.Types.ObjectId,
-    username: {type: String, unique: true}, //Parsing Source username: durov
-    posts: [{ type: Schema.Types.ObjectId, ref: 'ParsingPost' }], //objects of parsed posts
+    username: {type: String, unique: true}, //Parsing Source username: durov\
     keywords: [String], //Array of keywords to iteract with: ['харків', 'харківська']
     addedAt: {type: Date, default: new Date()}
 });

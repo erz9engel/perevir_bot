@@ -1,8 +1,11 @@
 const request = require('request');
 const cheerio = require('cheerio');
 const mongoose = require('mongoose');
+const { messageId } = require('../bot/bot');
+const { text } = require('body-parser');
 const ParsingSource = mongoose.model('ParsingSource');
 const ParsingPost = mongoose.model('ParsingPost');
+const notifyGroup = process.env.TGPARSEGROUP;
 
 const baseURL = 'https://t.me/s/';
 
@@ -17,6 +20,10 @@ async function parseNewTelegramChannel(channelName, keywords) {
         request(url, async (error, response, body) => {
             if (!error && response.statusCode === 200) {
                 answer = await parseBody(body, channelName, keywords);
+                if (!answer) {
+                    const err = `Error fetching channel ${channelName}: ${error}`;
+                    return reject(err);
+                }
                 saveNewSoure(answer); //Save channel and last post
                 resolve(answer); //Answer
             } else {
@@ -35,8 +42,8 @@ async function parseSources() {
         const channelName = sources[i].username;
         const url = `${baseURL}${channelName}`;
         const lastPost = await ParsingPost.findOne({source: sources[i]._id}, {}, { sort: {parsedAt: -1} });
-        const lastPostId = lastPost.url;
-        
+        const lastPostId = lastPost.id;
+
         request(url, (error, response, body) => {
             if (!error && response.statusCode === 200) {
                 parseLastPostsBody(body, lastPostId, sources[i]);
@@ -55,7 +62,7 @@ async function parseBody(body, channelName, keywords) {
     const lastMessageDiv = $('.tgme_widget_message_bubble').last();
     const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').text().trim();
     const lastMessageLink = lastMessageDiv.find('.tgme_widget_message_date').attr('href');
-    if (!lastMessageLink) return reject(`No fetching channel ${channelName}`);
+    if (!lastMessageLink) return false;
     const parts = lastMessageLink.split('/');
     const lastMessageId = parts[parts.length - 1];
 
@@ -72,30 +79,35 @@ async function parseLastPostsBody(body, lastPostId, source) {
     const $ = cheerio.load(body);
     const messageDivs = $('.tgme_widget_message_bubble').get().reverse();
 
-    messageDivs.forEach((div) => {
+    for (var i in messageDivs) {
+        const div = messageDivs[i];
         const lastMessageDiv = $(div);
         const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').text().trim();
         const lastMessageLink = lastMessageDiv.find('.tgme_widget_message_date').attr('href');
         const parts = lastMessageLink.split('/');
         const lastMessageId = parts[parts.length - 1];
 
-        if (lastMessageId == lastPostId) {
+        if (lastMessageId <= lastPostId) {
             return console.log('no new posts for ' + source.username);
         } else {
-            console.log('NEW: ' + lastMessageLink + ' for ' + lastPostId);
+            saveNewPost({
+                sourceId: source._id,
+                username: source.username,
+                keywords: source.keywords,
+                id: lastMessageId,
+                text: lastMessageText
+            })
         }
-    });
+    }
 }
 
 async function saveNewSoure(answer) {
     const {channelName, keywords, text, id } = answer;
     //Save new source
     const sourceId = new mongoose.Types.ObjectId();
-    const postId = new mongoose.Types.ObjectId();
     var newParsingSource = new ParsingSource({
         _id: sourceId,
         username: channelName,
-        posts: [postId],
         keywords: keywords,
         addedAt: new Date()
     });
@@ -104,9 +116,29 @@ async function saveNewSoure(answer) {
     }).catch(async (e) => {
         return console.log(e); 
     });
+    
+    saveNewPost({
+        sourceId: sourceId,
+        username: channelName,
+        keywords: keywords,
+        id: id,
+        text: text
+    });
+}
+
+async function saveNewPost(answer) {
+    const {sourceId, username, keywords, id, text} = answer;
     //Check if has text & keywords
     const hasKeyword = await checkKeyword(text, keywords);
+    //Alert to the chat
+    if (hasKeyword) {
+        const options = {parse_mode: "HTML"};
+        const msgText = baseURL + username + "/" + id + "\n\n" + text;
+        await messageId(notifyGroup, msgText, false, options);
+    }
+
     //Save last post
+    const postId = new mongoose.Types.ObjectId();
     var newParsingPost = new ParsingPost({
         _id: postId,
         source: sourceId,
@@ -118,13 +150,8 @@ async function saveNewSoure(answer) {
 
     await newParsingPost.save().then(async () => {
     }).catch(async (e) => {
-        console.log('creation post err')
         return console.log(e); 
     });
-}
-
-async function saveNewPost(answer) {
-    console.log(answer);
 }
 
 async function checkKeyword(text, keywords) {
@@ -139,14 +166,9 @@ async function checkKeyword(text, keywords) {
     return false;
 }
 
-f()
-async function f() {
-    try {
-        const channel = await parseNewTelegramChannel('durov', ['telegram']);
-    } catch (e) {
-        console.log("Error on adding parsing source: " + e);
-    }
-}
+// Schedule parseSources to run every 5 minutes
+const interval = 5 * 60 * 1000; 
+setInterval(parseSources, interval);
 
 module.exports = {
     parseNewTelegramChannel //'Genesis_Academy', ['telegram']
