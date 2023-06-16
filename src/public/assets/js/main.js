@@ -400,3 +400,38 @@ function removeSource(id) {
   });
 
 }
+
+function removeMonitoring(id) {
+
+  if (!confirm('Підтвердіть видалення джерела?')) return
+
+  fetch("../monitoringAPI/deleteSource", {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'}, 
+    body: JSON.stringify({id: id})
+  }).then(res => {
+    location.reload();
+  });
+
+}
+
+function showAddMonitoring() {
+  var element = document.getElementById("monitoringP");
+  element.classList.add("show");
+}
+
+function addMonitoring() {
+  var username = document.getElementById('m-username').value;
+  if (username.startsWith('@')) username = username.substring(1);
+  const keywords = document.getElementById('m-keywords').value;
+
+  if (username == '' || keywords == '') return alert('Заповність username та keywords');
+  
+  fetch("../monitoringAPI/create", {
+      method: "POST",
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify({username: username, keywords: keywords})
+    }).then(res => {
+      return window.location.href = "../monitoring";
+    });
+}

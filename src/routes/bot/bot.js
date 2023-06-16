@@ -15,7 +15,7 @@ const {
     onUnsupportedContent,
     onCloseOldRequests,
     saveCommentToDB,
-    confirmComment,
+    confirmComment
 } = require('./message-handlers');
 
 const {
@@ -102,7 +102,7 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, 'ua');
         await delay(3000);
         await onSubscription(msg, bot);
-    }  else if (text && text.startsWith('/start c_')) {
+    } else if (text && text.startsWith('/start c_')) {
         var lang = 'ua', campaign = text.split(' c_')[1];
         if (campaign && campaign.startsWith('en_')) lang = 'en';
         await onStart(msg, bot, lang, campaign);
