@@ -8,6 +8,7 @@ const ParsingPost = mongoose.model('ParsingPost');
 const notifyGroup = process.env.TGPARSEGROUP;
 
 const baseURL = 'https://t.me/s/';
+const oririnalURL = 'https://t.me/'
 
 async function parseNewTelegramChannel(channelName, keywords) {
     //Check if alsredy added
@@ -130,10 +131,11 @@ async function saveNewPost(answer) {
     const {sourceId, username, keywords, id, text} = answer;
     //Check if has text & keywords
     const hasKeyword = await checkKeyword(text, keywords);
+    console.log(hasKeyword)
     //Alert to the chat
-    if (hasKeyword) {
+    if (hasKeyword == true) {
         const options = {parse_mode: "HTML"};
-        const msgText = baseURL + username + "/" + id + "\n\n" + text;
+        const msgText = oririnalURL + username + "/" + id + "\n\n" + text;
         await messageId(notifyGroup, msgText, false, options);
     }
 
