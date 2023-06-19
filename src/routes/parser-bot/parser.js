@@ -42,7 +42,7 @@ async function parseSources() {
     for (var i in sources) {
         const channelName = sources[i].username;
         const url = `${baseURL}${channelName}`;
-        const lastPost = await ParsingPost.findOne({source: sources[i]._id}, {}, { sort: {parsedAt: -1} });
+        const lastPost = await ParsingPost.findOne({source: sources[i]._id}, {}, { sort: {id: -1} });
         const lastPostId = lastPost.id;
 
         request(url, (error, response, body) => {
