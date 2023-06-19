@@ -6,17 +6,14 @@ const VideoMessage = require('viber-bot').Message.Video;
 const KeyboardMessage = require('viber-bot').Message.Keyboard;
 require('dotenv').config();
 var {messageId} = require('../bot/bot');
+const { statusesKeyboard } = require("../keyboard");
 
 const ngrok = require('../get_public_url');
 const request = require('request');
 const http = require('http');
-const {
-    statusesKeyboard
-} = require("../keyboard");
 
 const mongoose = require('mongoose');
 const {checkUserThrottling, safeErrorLog} = require("../bot/utils");
-const {getText} = require("../bot/localisation");
 const User = mongoose.model('ViberUser');
 const Request = mongoose.model('Request');
 
@@ -193,8 +190,14 @@ const port = process.env.VIBER_WEBHOOK_SERVER_PORT;
 
 if (local == parseInt(1)) {
     ngrok.getPublicUrl().then(publicUrl => {
-        console.log('Set the new webhook to"', publicUrl);
-        http.createServer(bot.middleware()).listen(8080, () => bot.setWebhook(publicUrl));
+        console.log('Set the new webhook to', publicUrl);
+        http.createServer(bot.middleware()).listen(8080, () => bot.setWebhook(publicUrl)
+          .then((m) => console.log(m))
+          .catch(async (e) => {
+              console.log('err')
+              console.log(e)
+          })
+        );
     }).catch(error => {
         console.log('Can not connect to ngrok server. Is it running?\nIf you dont work with Viber, please IGNORE');
         console.error(error);

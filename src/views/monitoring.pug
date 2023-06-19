@@ -5,7 +5,7 @@ head
   link(rel='apple-touch-icon' sizes='76x76' href='../assets/img/apple-icon.png')
   link(rel='icon' type='image/png' href='../assets/img/favicon.png')
   title
-    | &Dcy;&acy;&shcy;&bcy;&ocy;&rcy;&dcy;
+    | Моніторинг
   // Fonts and icons
   link(href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700' rel='stylesheet')
   // Nucleo Icons
@@ -78,7 +78,7 @@ aside#sidenav-main.sidenav.navbar.navbar-vertical.navbar-expand-xs.border-0.bord
                       path.color-background(d='M13,28 C17.432,28 21,22.529 21,18 C21,13.589 17.411,10 13,10 C8.589,10 5,13.589 5,18 C5,22.529 8.568,28 13,28 Z')
           span.nav-link-text.ms-1 &Tcy;&iecy;&kcy;&scy;&tcy;&icy;
       li.nav-item
-        a.nav-link.active(href='../sourcestats')
+        a.nav-link(href='../sourcestats')
           .icon.icon-shape.icon-sm.shadow.border-radius-md.bg-white.text-center.me-2.d-flex.align-items-center.justify-content-center
             svg(width='16px' height='16px' viewbox='0 0 16 16' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink')
               title graph
@@ -116,7 +116,7 @@ aside#sidenav-main.sidenav.navbar.navbar-vertical.navbar-expand-xs.border-0.bord
                       path.color-background.opacity-6(d='M20.4472136,21.5347318 L1.4472136,12.0347318 C0.953235098,11.7877425 0.352562058,11.9879669 0.105572809,12.4819454 C0.0361450918,12.6208008 6.47121774e-16,12.7739139 0,12.929159 L0,30.1875 L0,30.1875 C0,30.6849375 0.280875,31.1390625 0.7258125,31.3621875 L19.5528096,40.7750766 C20.0467945,41.0220531 20.6474623,40.8218132 20.8944388,40.3278283 C20.963859,40.1889789 21,40.0358742 21,39.8806379 L21,22.429159 C21,22.0503869 20.7859976,21.7041238 20.4472136,21.5347318 Z')
           span.nav-link-text.ms-1 Чорний/білий списки
       li.nav-item
-        a.nav-link(href='../monitoring')
+        a.nav-link.active(href='../monitoring')
           .icon.icon-shape.icon-sm.shadow.border-radius-md.bg-white.text-center.me-2.d-flex.align-items-center.justify-content-center
             svg(width='12px' height='12px' viewbox='0 0 42 42' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink')
               title box-3d-50
@@ -150,54 +150,55 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
   .row
     .col-12
       .card.mb-4
-        .card-header.pb-0
-          h6 #{title}
-            br
-            | #{channelname}
-          h10 Телеграм айді каналу: #{channelid}
-            br
-            | Сторінка #{page}
+        .card-header.pb-0.p-3
+          .row
+            .col-6.d-flex.align-items-center
+              h6.mb-0 Список джерел монірингу
+            .col-6.text-end
+              a.btn.bg-gradient-dark.mb-0(href='javascript:showAddMonitoring();')
+                i.fa.fa-plus-circle(aria-hidden='true')
+                | &nbsp;&nbsp; Додати моніторинг
+        
         .card-body.px-0.pt-0.pb-2
           .table-responsive.p-0
             table.table.align-items-center.mb-0
               thead
                 tr
-                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Айді повідомлення
-                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Зміст
-              tbody#channelrequests
-                each val in requests
+                  th.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Джерело
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Ключові слова
+                  th.text-secondary.opacity-7
+              tbody
+                each source in data
                   tr
-                    td.text-center
-                      a(href='https://t.me/c/' + `${mainchatid}` + '/' + `${val.moderatorMsgID}`)
-                        span#font-weight-bold #{val.moderatorMsgID}
-                    if val.text
-                      td.text-left
-                        span#font-weight-bold #{val.text}
-                    else if val.image
-                      td.text-left
-                        span(style="color: #669900") Зображення
-                    else if val.video
-                      td.text-left
-                        span(style="color: #669900") Відеофайл
-                    else
-                      td.text-left
-                        span(style="color: #669900") Нерозпізнаний тип контенту
-        .card-header.pb-0
-          if page > 1
-            if filterstatus
-                a(href='../channelrequests?channel_id=' + `${channelid}` + '&fakeStatus=' + `${filterstatus}` + '&page=' + `${previouspage}`) Попередня сторінка
-            else
-                a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${previouspage}`) Попередня сторінка
-          br
-          if requests.length
-            if filterstatus
-                a(href='../channelrequests?channel_id=' + `${channelid}` + '&fakeStatus=' + `${filterstatus}` + '&page=' + `${nextpage}`) Наступна сторінка
-            else
-                a(href='../channelrequests?channel_id=' + `${channelid}` + '&page=' + `${nextpage}`) Наступна сторінка
+                    td(style='max-width: 200px; overflow-x: overlay;')
+                      .d-flex.px-2.py-1
+                        .d-flex.flex-column.justify-content-center
+                          a(target='blank' href='https://t.me/' + source.username)
+                              h6.mb-0.text-sm @#{source.username}
+                    td.align-middle.text-center.text-sm(style='max-width: 200px; overflow-x: overlay;')
+                      span #{source.keywords}
+                    td.align-middle
+                      .avatar-group.mt-2
+                        a(href='javascript:removeMonitoring("'+ source._id+'");')
+                          i.fa.fa-trash
+                        
 
+#monitoringP.fixed-plugin
+  .card.shadow-lg
+    .card-header.pb-0.pt-3
+      .float-start
+        h5.mt-3.mb-0 Джерело
+      .float-end.mt-4
+        button.btn.btn-link.text-dark.p-0.fixed-plugin-close-button
+          i.fa.fa-close(aria-hidden='true')
+    .card-body.pt-sm-3.pt-0(style='overflow-y: scroll; overflow-x: hidden')
+      div
+        textarea(id="m-username" placeholder="Username: @durov, durov" rows="1" cols='32')
+        textarea(id="m-keywords" placeholder="Keywords: telegram new (через пробіл)" rows="2" cols='32')
+      a#s-update.btn.bg-gradient-dark.w-100(href='javascript:addMonitoring()') Додати
 
+                  
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')
-script(src='../assets/js/plugins/chartjs.min.js')
+script(src='../assets/js/soft-ui-dashboard.min.js')
 script(src='../assets/js/main.js')
-

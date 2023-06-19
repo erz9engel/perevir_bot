@@ -28,6 +28,8 @@ const Data = mongoose.model('Data');
 const Escalation = mongoose.model('Escalation');
 const Comment = mongoose.model('Comment');
 const {takeRequestKeyboard} = require("../keyboard");
+const { sendTextMessage } = require("../whatsapp/functions");
+const { sendTextMessageMessenger } = require("../messenger/functions");
 
 const onReqTakeQuery = async (callbackQuery, bot) => {
 
@@ -66,6 +68,9 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
         var req = await Request.findById(requestId, 'requestId viberReq');
         if(!req) req = {requestId: ''};
         sourceTxt = req.viberReq ? "#viber | " : "";
+        if (req.whatsappReq) sourceTxt = "#whatsapp | ";
+        else if (req.messengerReq) sourceTxt = "#messenger | ";
+
         
         try {
             await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nРедактор: " + moderator, {
@@ -88,6 +93,8 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
         [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]]
     )
     sourceTxt = request.viberReq ? "#viber | " : "";
+    if (request.whatsappReq) sourceTxt = "#whatsapp | ";
+    else if (request.messengerReq) sourceTxt = "#messenger | ";
         
     try {
         await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
@@ -113,6 +120,8 @@ const onNeedUpdate = async (request, bot) => {
     const actionMsgText = "№" + request.requestId;
     let status = getFakeText(fakeStatus), sourceTxt;
     sourceTxt = request.viberReq ? "#viber | " : "";
+    if (request.whatsappReq) sourceTxt = "#whatsapp | ";
+    else if (request.messengerReq) sourceTxt = "#messenger | ";
     var moderator;
     if (request.takenModerator) moderator = await involveModerator(request._id, request.takenModerator);
     else moderator = 'невідомий';
@@ -182,7 +191,9 @@ const onChangeStatusQuery = async (callbackQuery, bot) => {
         ]
     )
 
-    const sourceTxt = request.viberReq ? " | #viber " : "";
+    var sourceTxt = request.viberReq ? " | #viber " : "";
+    if (request.whatsappReq) sourceTxt = " | #whatsapp ";
+    else if (request.messengerReq) sourceTxt = " | #messenger ";
 
     try {
         await bot.editMessageText("№" + request.requestId + "\n#pending" + sourceTxt, {
@@ -460,7 +471,13 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             createdAt: new Date(),
         });
 
-        const {language,id} = await getLanguage(request.requesterTG);
+
+        var {language} = await getLanguage(request.requesterTG);
+        if (request.viberReq) {
+            language = 'ua';
+        } else if (request.whatsappReq || request.messengerReq) {
+            language = 'en';
+        }
         await getText('request_escalated', language, async function(err, text) {
             if (err) return safeErrorLog(err);
             let options = {
@@ -469,6 +486,10 @@ const onEscalateQuery = async (callbackQuery, bot) => {
 
             if (request.viberReq) {
                 notifyViber(text, request.viberRequester);
+            } else if (request.whatsappReq) {
+                sendTextMessage(request.whatsappRequester, text, request.whatsappMessageId);
+            } else if (request.messengerReq) {
+                sendTextMessageMessenger(request.messengerRequester, text);
             } else {
                 try {
                     await bot.sendMessage(request.requesterTG, text, options);

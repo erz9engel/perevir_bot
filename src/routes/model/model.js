@@ -9,6 +9,11 @@ var requestSchema = Schema({
     viberReq: Boolean, //If request from Viber 
     viberRequester: String, //Viber requester ID
     viberMediaUrl: String, //Viber media URL
+    whatsappReq: Boolean, //If request from WhatsApp 
+    whatsappRequester: String, //WhatsApp requester ID
+    whatsappMessageId: String, //WhatsApp message ID
+    messengerReq: Boolean, //If request from Messanger 
+    messengerRequester: String, //Messanger requester ID
     requesterTG: Number, //Telegram ID of requester | REMOVE after migration
     requesterId: { type: mongoose.Schema.Types.ObjectId, ref: 'TelegramUser' },
     requesterMsgID: Number, //Telegram message ID
@@ -202,6 +207,18 @@ var viberUserSchema = Schema({
     createdAt: {type: Date, default: new Date()}
 });
 
+var whatsappUserSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    whatsappId: {type: String, unique: true}, 
+    createdAt: {type: Date, default: new Date()}
+});
+
+var messengerUserSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    messengerId: {type: String, unique: true}, 
+    createdAt: {type: Date, default: new Date()}
+});
+
 var sourceStatisticsSchema = Schema({
     _id: Schema.Types.ObjectId,
     sourceTgId: String,
@@ -271,7 +288,25 @@ var passingQuizSchema = Schema({
     finishedAt: Date
 });
 
+var parsingSourceSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    username: {type: String, unique: true}, //Parsing Source username: durov\
+    keywords: [String], //Array of keywords to iteract with: ['харків', 'харківська']
+    addedAt: {type: Date, default: new Date()}
+});
+
+var parsingPostSchema = Schema({
+    _id: Schema.Types.ObjectId,
+    source: { type: Schema.Types.ObjectId, ref: 'ParsingSource' }, //object of origin source
+    id: Number, //Parsing Post id: 1
+    text: String, //Post text
+    hasKeyword: Boolean, //If has any of keywords
+    parsedAt: {type: Date, default: new Date()}
+});
+
 mongoose.model('ViberUser', viberUserSchema); 
+mongoose.model('WhatsappUser', whatsappUserSchema);
+mongoose.model('MessengerUser', messengerUserSchema);
 mongoose.model('Admin', adminSchema);
 mongoose.model('Request', requestSchema);
 mongoose.model('Image', imageSchema);
@@ -290,3 +325,5 @@ mongoose.model('Quiz', quizSchema);
 mongoose.model('Question', questionSchema);
 mongoose.model('Answer', answerSchema);
 mongoose.model('PassingQuiz', passingQuizSchema);
+mongoose.model('ParsingSource', parsingSourceSchema);
+mongoose.model('ParsingPost', parsingPostSchema);

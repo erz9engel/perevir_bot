@@ -26,6 +26,15 @@
 
 *VIBER_WEBHOOK_SERVER_PORT=*PORT FOR VIBER WEBHOOK*
 
+*WHATSAPP_VERIFY_TOKEN=* WHATSAPP TOKEN FOR WEBHOOK VERIFICATION
+
+*WHATSAPP_PHONE_ID=* WHATSAPP PHONE ID
+
+*WHATSAPP_BEARER=* WHATSAPP TOKEN
+
+*MESSENGER_TOKEN=* MESSENGER TOKEN
+
+*C_ENV=* dev/staging/prod
 
 Для того, щоб бот коректно міг зберігати коментарі до бази його треба додати до відповідної групи, а також через Botfather вимкнути Group Privacy в Bot Settings
 Для роботи в inline режимі слід включити цю опцію через /setinlinemode в https://t.me/BotFather

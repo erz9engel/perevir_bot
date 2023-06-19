@@ -15,7 +15,10 @@ var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
 var sourcestatsAPIRouter = require("./routes/dashboard/sourcestatsAPI");
 var quizAPIRouter = require("./routes/dashboard/quizAPI");
 var blacklistAPIRouter = require("./routes/dashboard/blacklistAPI");
+var monitoringAPIRouter = require("./routes/dashboard/monitoringAPI");
 var authAPIRouter = require("./routes/dashboard/authAPI");
+var whatsappAPIRouter = require("./routes/whatsapp/bot");
+var messengerAPIRouter = require("./routes/messenger/bot");
 require('./routes/config/passport');
 
 var app = express();
@@ -37,7 +40,10 @@ app.use("/sourcestatsAPI", sourcestatsAPIRouter);
 app.use("/textsAPI", textsAPIRouter);
 app.use("/quizAPI", quizAPIRouter);
 app.use("/blacklistAPI", blacklistAPIRouter);
+app.use("/monitoringAPI", monitoringAPIRouter);
 app.use("/authAPI", authAPIRouter);
+app.use("/whatsappAPI", whatsappAPIRouter);
+app.use("/messengerAPI", messengerAPIRouter);
 
 app.use('/', routes);
 

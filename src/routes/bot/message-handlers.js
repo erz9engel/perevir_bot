@@ -40,6 +40,8 @@ const {
 const {
     takeRequestKeyboard
 } = require("../keyboard");
+const { sendTextMessage } = require('../whatsapp/functions');
+const { sendTextMessageMessenger } = require('../messenger/functions');
 
 const onStart = async (msg, bot, lang, campaign) => {
 
@@ -724,6 +726,10 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 
     if (request.viberReq) {
         if(text) notifyViber(text, request.viberRequester);
+    } else if (request.whatsappReq) {
+        if(text) sendTextMessage(request.whatsappRequester, text, request.whatsappMessageId);
+    } else if (request.messengerReq) {
+        if(text) sendTextMessageMessenger(request.messengerRequester, text);
     } else {
         try {
             await bot.copyMessage(request.requesterTG, chatId, commentMsgId, options);
