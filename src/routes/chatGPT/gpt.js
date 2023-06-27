@@ -59,11 +59,15 @@ const getGoogleResulte = async(requestSummary, lang) => {
                 console.log(domain);
                 const source = await SourceDomain.findOne({$and: [{domain: domain}, {fake: false}]});
                 if (source) {
-                    var result = await parser(response.results[i].url);
-                    var metadata = result.meta.title;
-                    if (result.meta.description) metadata += '. ' + result.meta.description;
-                    answer.description += '- ' + metadata + '\n';
-                    answer.sources.push(response.results[i].url);
+                    try {
+                        var result = await parser(response.results[i].url);
+                        var metadata = result.meta.title;
+                        if (result.meta.description) metadata += '. ' + result.meta.description;
+                        answer.description += '- ' + metadata + '\n';
+                        answer.sources.push(response.results[i].url);
+                    } catch (e) {
+                        console.log("Error with a source " + response.results[i].url)
+                    }
                 }
             }
             resolve(answer); //Answer
@@ -94,7 +98,7 @@ async function automatedCheckGPT(text, lang) {
         return replyText;
 
     } catch (e) {
-        console.log(e);
+        if(e.response && e.response.statusText) console.log("GPT error: " + e.response.statusText);
         return false;
     }
 }
