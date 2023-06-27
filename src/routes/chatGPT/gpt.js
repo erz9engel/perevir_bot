@@ -94,7 +94,7 @@ async function automatedCheckGPT(text, lang) {
         return replyText;
 
     } catch (e) {
-        console.log(e);
+        if(e.response && e.response.statusText) console.log("GPT error: " + e.response.statusText);
         return false;
     }
 }

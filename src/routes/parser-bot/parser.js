@@ -170,7 +170,7 @@ async function checkKeyword(text, keywords) {
 
 // Schedule parseSources to run every 5 minutes
 const interval = 5 * 60 * 1000; 
-//setInterval(parseSources, interval);
+setInterval(parseSources, interval);
 
 module.exports = {
     parseNewTelegramChannel //'Genesis_Academy', ['telegram']
