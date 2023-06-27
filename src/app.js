@@ -9,6 +9,7 @@ var cors = require('cors');
 
 var routes = require('./routes/index');
 require('./routes/bot/stats');
+require('./routes/chatGPT/gpt');
 var textsAPIRouter = require("./routes/dashboard/textsAPI");
 var newsletterAPIRouter = require("./routes/dashboard/newsletterAPI");
 var leaderboardAPIRouter = require("./routes/dashboard/leaderboardAPI");
