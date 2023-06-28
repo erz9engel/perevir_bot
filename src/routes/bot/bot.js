@@ -31,6 +31,7 @@ const {
     onMoreStatusesQuery,
     onConfirmClosePending,
     onChangeLanguageQuery,
+    onAutoAsnwerQuery,
 } = require('./query-callbacks');
 
 const {
@@ -204,6 +205,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onAnswerQuizQuery(callbackQuery, bot)
     } else if (data.startsWith('NEXTQ_')) {
         await onNextQuestionQuery(callbackQuery, bot)
+    } else if (data.startsWith('AUTOANSWER_')) {
+        await onAutoAsnwerQuery(callbackQuery, bot)
     }
 });
 

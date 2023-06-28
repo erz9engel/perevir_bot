@@ -42,7 +42,6 @@ const {
 } = require("../keyboard");
 const { sendTextMessage } = require('../whatsapp/functions');
 const { sendTextMessageMessenger } = require('../messenger/functions');
-const { automatedCheckGPT } = require('../chatGPT/gpt');
 
 const onStart = async (msg, bot, lang, campaign) => {
 
@@ -464,13 +463,6 @@ const onCheckRequest = async (msg, bot) => {
             let initiator = getUserName(msg.from);
             if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
             var moderatorMsg = '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending';
-            //Get autoreply
-            if (msg.text) {
-                const autoReply = await automatedCheckGPT(msg.text, 'ua');
-                if (autoReply != false) {
-                    moderatorMsg += "\n\nАвтоматична відповідь:\n" + autoReply;
-                }
-            }
             //Forward original  msg
             try {
                 sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
