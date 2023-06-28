@@ -207,7 +207,7 @@ const onSetSource = async (msg, bot, fake) => {
             var hostname, username, params, url, host;
             try {
                 url = new URL(source);
-                host = getDomainWithoutSubdomain(url.hostname);
+                host = getDomainWithoutSubdomain(url.origin);
             } catch (e) {
                 safeErrorLog(e)
                 try {
@@ -336,7 +336,6 @@ const onCheckRequest = async (msg, bot) => {
         lastUpdate: new Date(),
         language: language,
     });
-
     if (msg.forward_from_chat) { //Check if message has forwarded data (chat)
         request.telegramForwardedChat = msg.forward_from_chat.id;
         request.telegramForwardedMsg = msg.forward_from_message_id;
@@ -442,32 +441,8 @@ const onCheckRequest = async (msg, bot) => {
     const reqsCount = await Request.countDocuments({});
     request.requestId = reqsCount + 1;
 
-    var sentMsg;
-    try {
-        sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
-        request.moderatorMsgID = sentMsg.message_id;
-    } catch (e) { safeErrorLog(e) }
-    let inline_keyboard;
+    var sentMsg, inline_keyboard;
     if (!notified) {
-    
-        inline_keyboard = await takeRequestKeyboard(requestId);
-        var options = {
-            reply_to_message_id: sentMsg.message_id,
-            reply_markup: JSON.stringify({
-                inline_keyboard
-            })
-        };
-        var sentActionMsg;
-        try {
-            let initiator = getUserName(msg.from);
-            if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
-            sentActionMsg = await bot.sendMessage(
-                moderatorsChanel,
-                '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending',
-                options,
-            );
-            request.moderatorActionMsgID = sentActionMsg.message_id;
-        } catch (e) { safeErrorLog(e) }
         
         //Inform user
         var informOptions = {
@@ -479,8 +454,42 @@ const onCheckRequest = async (msg, bot) => {
                 await bot.sendMessage(msg.chat.id, text, informOptions);
             } catch (e) { safeErrorLog(e) }
         });
+
+        //Inform moderators
+        inline_keyboard = await takeRequestKeyboard(requestId);
+        
+        var sentActionMsg;
+        try {
+            let initiator = getUserName(msg.from);
+            if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
+            var moderatorMsg = '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending';
+            //Forward original  msg
+            try {
+                sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
+                request.moderatorMsgID = sentMsg.message_id;
+            } catch (e) { safeErrorLog(e) }
+            //Send moderator message
+            var options = {
+                reply_to_message_id: sentMsg.message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                }),
+                disable_web_page_preview: true
+            };
+            sentActionMsg = await bot.sendMessage(
+                moderatorsChanel,
+                moderatorMsg,
+                options
+            );
+            request.moderatorActionMsgID = sentActionMsg.message_id;
+        } catch (e) { safeErrorLog(e) }
     
     } else {
+
+        try {
+            sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
+            request.moderatorMsgID = sentMsg.message_id;
+        } catch (e) { safeErrorLog(e) }
 
         inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
@@ -535,7 +544,8 @@ const onCheckGroupRequest = async (msg, bot) => {
         else mediaGroups.push({ groupId: msg.media_group_id, mediaFiles: [{mediaFileId: mediaFileId, mediaType: mediaType}], sent: false});
     } else {
         mediaGroups[index].mediaFiles.push({mediaFileId: mediaFileId, mediaType: mediaType});
-        if (msg.caption) mediaGroups[index].text += msg.caption;
+        if (msg.caption && mediaGroups[index].text) mediaGroups[index].text += msg.caption;
+        else if (msg.caption) mediaGroups[index].text = msg.caption;
     }
     //Send interactive action
     try {

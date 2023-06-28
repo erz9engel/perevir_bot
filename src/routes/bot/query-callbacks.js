@@ -30,6 +30,7 @@ const Comment = mongoose.model('Comment');
 const {takeRequestKeyboard} = require("../keyboard");
 const { sendTextMessage } = require("../whatsapp/functions");
 const { sendTextMessageMessenger } = require("../messenger/functions");
+const { automatedCheckGPT } = require("../chatGPT/gpt");
 
 const onReqTakeQuery = async (callbackQuery, bot) => {
 
@@ -628,6 +629,64 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     );
 }
 
+const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
+    const {data, message} = callbackQuery
+    const requestId = data.split('_')[1];
+    const messageChat = message.chat.id;
+    var msgText = message.text
+    const request = await Request.findById(requestId);
+    const inline_keyboard = await statusesKeyboard(requestId, false, true);
+
+    if (request.text) {
+
+        try {
+            await bot.editMessageText(msgText + "\n\nАвтоматична відповідь завантажується...", {
+                chat_id: messageChat,
+                message_id: message.message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+                
+            });
+        } catch (e) { safeErrorLog(e) }
+
+        const autoReply = await automatedCheckGPT(request.text, 'ua');
+        if (autoReply != false) {
+            try {
+                await bot.editMessageText(msgText + "\n\nАвтоматична відповідь:\n" + autoReply, {
+                    chat_id: messageChat,
+                    message_id: message.message_id,
+                    disable_web_page_preview: true,
+                    reply_markup: JSON.stringify({
+                        inline_keyboard
+                    })
+                });
+            } catch (e) { safeErrorLog(e) }
+        } else {
+            try {
+                await bot.editMessageText(msgText + "\n\nАвтоматична відповідь відсутня.", {
+                    chat_id: messageChat,
+                    message_id: message.message_id,
+                    reply_markup: JSON.stringify({
+                        inline_keyboard
+                    })
+                    
+                });
+            } catch (e) { safeErrorLog(e) }
+        }
+    } else {
+        try {
+            await bot.editMessageText(msgText + "\n\nАвтоматична відповідь відсутня", {
+                chat_id: messageChat,
+                message_id: message.message_id,
+                reply_markup: JSON.stringify({
+                    inline_keyboard
+                })
+                
+            });
+        } catch (e) { safeErrorLog(e) }
+    }
+}
 
 module.exports = {
     onFakeStatusQuery,
@@ -645,6 +704,7 @@ module.exports = {
     onMoreStatusesQuery,
     onConfirmClosePending,
     onChangeLanguageQuery,
+    onAutoAsnwerQuery
 }
 
 async function notifyViber(text, viberRequester) {

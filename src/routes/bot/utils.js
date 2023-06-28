@@ -198,11 +198,9 @@ async function involveModerator (requestId, moderatorTg) {
 }
 
 const getDomainWithoutSubdomain = hostname => {
-    const urlParts = hostname.split('.');
+    const urlParts = hostname.split('://')[1];
   
-    return urlParts
-      .slice(urlParts.length - 2)
-      .join('.')
+    return urlParts.replace(/^www\./i, '');
 }
 
 async function newFacebookSource (url) {
@@ -473,6 +471,13 @@ function updateTextsList(oldList, newList) {
   return result;
 }
 
+async function prepareText(text) {
+    text = text.split('\n\n')[0];
+    text = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+
+    return text;
+}
+
 
 module.exports = {
     getSubscriptionBtn,
@@ -498,7 +503,8 @@ module.exports = {
     shuffle,
     getImageUrl,
     checkUserThrottling,
-    updateTextsList
+    updateTextsList,
+    prepareText
 }
 
 async function notifyViber(text, viberRequester) {

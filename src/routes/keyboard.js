@@ -1,4 +1,4 @@
-const statusesKeyboard = async (requestId, viber) => {
+const statusesKeyboard = async (requestId, viber, hideGPT) => {
 
     var arr = [
         [
@@ -17,6 +17,12 @@ const statusesKeyboard = async (requestId, viber) => {
             { text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }
         ]
     ]
+
+    if (!hideGPT) {
+        arr.push([
+            { text: '🪄 Згенерувати відповідь', callback_data: 'AUTOANSWER_' + requestId }
+        ])
+    }
 
     if (!viber) {
         arr.push([
