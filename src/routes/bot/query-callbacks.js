@@ -640,7 +640,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
     if (request.text) {
 
         try {
-            await bot.editMessageText(msgText + "\n\nАвтоматична відповідь завантажується...", {
+            await bot.editMessageText(msgText + "\n\n🤖 AI відповідь завантажується...", {
                 chat_id: messageChat,
                 message_id: message.message_id,
                 reply_markup: JSON.stringify({
@@ -653,7 +653,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
         const autoReply = await automatedCheckGPT(request.text, 'ua');
         if (autoReply != false) {
             try {
-                await bot.editMessageText(msgText + "\n\nАвтоматична відповідь:\n" + autoReply, {
+                await bot.editMessageText(msgText + "\n\n🤖 AI відповідь:\n" + autoReply, {
                     chat_id: messageChat,
                     message_id: message.message_id,
                     disable_web_page_preview: true,
@@ -664,7 +664,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
             } catch (e) { safeErrorLog(e) }
         } else {
             try {
-                await bot.editMessageText(msgText + "\n\nАвтоматична відповідь відсутня.", {
+                await bot.editMessageText(msgText + "\n\n🤖 AI відповідь відсутня.", {
                     chat_id: messageChat,
                     message_id: message.message_id,
                     reply_markup: JSON.stringify({
@@ -676,7 +676,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
         }
     } else {
         try {
-            await bot.editMessageText(msgText + "\n\nАвтоматична відповідь відсутня", {
+            await bot.editMessageText(msgText + "\n\n🤖 AI відповідь відсутня", {
                 chat_id: messageChat,
                 message_id: message.message_id,
                 reply_markup: JSON.stringify({

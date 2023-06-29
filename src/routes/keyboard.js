@@ -20,7 +20,7 @@ const statusesKeyboard = async (requestId, viber, hideGPT) => {
 
     if (!hideGPT) {
         arr.push([
-            { text: '🪄 Згенерувати відповідь', callback_data: 'AUTOANSWER_' + requestId }
+            { text: '🤖 Згенерувати AI відповідь', callback_data: 'AUTOANSWER_' + requestId }
         ])
     }
 
