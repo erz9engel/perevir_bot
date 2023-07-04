@@ -61,7 +61,7 @@ async function parseBody(body, channelName, keywords) {
     
     const $ = cheerio.load(body);
     const lastMessageDiv = $('.tgme_widget_message_bubble').last();
-    const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').text().trim();
+    const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').last().text().trim();
     const lastMessageLink = lastMessageDiv.find('.tgme_widget_message_date').attr('href');
     if (!lastMessageLink) return false;
     const parts = lastMessageLink.split('/');
@@ -83,7 +83,7 @@ async function parseLastPostsBody(body, lastPostId, source) {
     for (var i in messageDivs) {
         const div = messageDivs[i];
         const lastMessageDiv = $(div);
-        const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').text().trim();
+        const lastMessageText = lastMessageDiv.find('.tgme_widget_message_text').last().text().trim();
         const lastMessageLink = lastMessageDiv.find('.tgme_widget_message_date').attr('href');
         const parts = lastMessageLink.split('/');
         const lastMessageId = parts[parts.length - 1];
@@ -131,7 +131,6 @@ async function saveNewPost(answer) {
     const {sourceId, username, keywords, id, text} = answer;
     //Check if has text & keywords
     const hasKeyword = await checkKeyword(text, keywords);
-    console.log(hasKeyword)
     //Alert to the chat
     if (hasKeyword == true) {
         const options = {parse_mode: "HTML"};
