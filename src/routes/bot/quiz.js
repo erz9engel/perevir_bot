@@ -108,8 +108,18 @@ const onStartQuizQuery = async (callbackQuery, bot) => {
     const quiz = await Quiz.findOne({code: quizCode});
     if (!quiz || !quiz.active) return console.log("Quiz is deleted or inactive");
 
-    const user = await TelegramUser.findOne({telegramID: message.chat.id});
-    if (!user) return console.log("No user to start test");
+    var user = await TelegramUser.findOne({telegramID: message.chat.id});
+    if (!user) {
+        let newUser = new TelegramUser({
+            _id: new mongoose.Types.ObjectId(),
+            telegramID: message.chat.id,
+            language: 'ua',
+            joinedCampaign: 'quiz ' + quizCode,
+            createdAt: new Date()
+        });
+        user = newUser;
+        await newUser.save().then(() => {}).catch(() => {});
+    }
 
     const PQId = new mongoose.Types.ObjectId();
     const newPassingQuiz = new PassingQuiz({
