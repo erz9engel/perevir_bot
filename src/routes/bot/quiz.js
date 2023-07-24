@@ -230,9 +230,9 @@ const onAnswerQuizQuery = async (callbackQuery, bot) => {
     var explain = '\n\n', trueAnswer = false;
     if (correctAnswer == '0') {
         trueAnswer = true;
-        explain += "🟢 <b>Вірно!</b>\n"
+        explain += "🟢 <b>Правильно!</b>\n"
     } else { 
-        explain += "🔴 <b>Невірно!</b>\n" 
+        explain += "🔴 <b>Неправильно!</b>\n" 
         explain += question.explain;
     }
     
