@@ -43,7 +43,10 @@ const {
     onNextQuestionQuery
 } = require('./quiz.js');
 
-const {answerInlineQuery} = require("./inline-query")
+const {answerInlineQuery} = require("./inline-query");
+
+const mongoose = require("mongoose");
+const DailyStats = mongoose.model('DailyStats');
 
 //TELEGRAM BOT
 const TelegramBot = require('node-telegram-bot-api');
@@ -252,12 +255,15 @@ module.exports = {
 
 async function sendLettersF(ids, msg) {
     const RPS = 10; //Requests per second
+    const now = new Date();
+    const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
 
     for (var index = 0; index < ids.length; index++) {
         try {
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             try {
                 await bot.sendMessage(ids[index], msg);
+                await DailyStats.findOneAndUpdate({stringDate: stringDate}, {$inc: {nRecived: 1}});
             } catch (e) { safeErrorLog(e) }
             console.log(index + " - " + ids.length );
         } catch (e) { 
