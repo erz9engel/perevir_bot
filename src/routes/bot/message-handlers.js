@@ -587,6 +587,8 @@ const onCheckGroupRequest = async (msg, bot) => {
             }
             const requestId = new mongoose.Types.ObjectId();
 
+            if(!sentMsg) return // in case main body wasn't sent
+
             //new
             var inline_keyboard = await takeRequestKeyboard(requestId);
             var options = {
