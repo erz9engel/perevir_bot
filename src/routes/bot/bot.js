@@ -59,6 +59,7 @@ const escalationGroup = process.env.TGESCALATIONGROUP;
 const {
     CheckContentText,
     SubscribtionText,
+    QuizText,
     ChangeLanguage,
     SetFakesRequestText
 } = require('./contstants');
@@ -82,6 +83,8 @@ try {
 const {onTryToUpdate} = require("./needUpdate");
 const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
 onTryToUpdate(bot);
+
+
 
 bot.on('message', async (msg) => {
     const text = msg.text;
@@ -110,7 +113,7 @@ bot.on('message', async (msg) => {
         var lang = 'ua', campaign = text.split(' c_')[1];
         if (campaign && campaign.startsWith('en_')) lang = 'en';
         await onStart(msg, bot, lang, campaign);
-    } else if (text === '/quiz') {
+    } else if (isTextFromDict(text, QuizText) || text === '/quiz') {
         await onGetQuiz(msg, bot);
     } else if (text && text.startsWith('/start quiz_')) {
         await onSpecificQuiz(msg, bot);

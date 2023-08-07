@@ -14,6 +14,7 @@ const Comment = mongoose.model('Comment');
 const {
     CheckContentText,
     SubscribtionText,
+    QuizText,
     ChangeLanguage,
     NoCurrentFakes,
     UnsupportedContentText,
@@ -71,9 +72,12 @@ const getReplyOptions = async (lang) => {
     var keyboard = [
         [{ text: CheckContentText[`${lang}`] }],
         [{ text: SubscribtionText[`${lang}`] }],
+        [{ text: QuizText[`${lang}`] }],
         [{ text: ChangeLanguage[`${lang}`] }]
     ];
-    if (lang == 'en') keyboard.splice(1,1)
+    if (lang == 'en') {
+        keyboard.splice(1,2)
+    }
 
     return {
         reply_markup: {
