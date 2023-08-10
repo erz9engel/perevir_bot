@@ -84,8 +84,6 @@ const {onTryToUpdate} = require("./needUpdate");
 const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
 onTryToUpdate(bot);
 
-
-
 bot.on('message', async (msg) => {
     const text = msg.text;
     const user = msg.from.id
