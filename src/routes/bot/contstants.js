@@ -8,6 +8,11 @@ const SubscribtionText = {
     en: "🔥 Relevant fakes"
 }
 
+const QuizText = {
+    ua: "📝 Тести",
+    en: "📝 Tests"
+}
+
 const ChangeLanguage = {
     ua: "🌍 Change Language",
     en: "🇺🇦 Змінити мову"
@@ -49,6 +54,7 @@ const BackNav = "🔙 Назад";
 module.exports = {
     CheckContentText,
     SubscribtionText,
+    QuizText,
     ChangeLanguage,
     NoCurrentFakes,
     UnsupportedContentText,

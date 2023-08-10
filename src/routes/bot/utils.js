@@ -112,14 +112,13 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
         }
         if (index == users.length - 1) {
             //Notify admin about end result
-            const receivedUsers = await TelegramUser.find({lastFakeNews: message_id + "_" + chat_id}, '');
             try {
-                await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+                await bot.sendMessage(admin, "Результат розсилки\nДоставлено: " + sent);
             } catch (e) { safeErrorLog(e) }
             try {
-                await bot.sendMessage(394717645, "Результат розсилки\nДоставлено: " + receivedUsers.length);
+                await bot.sendMessage(394717645, "Результат розсилки\nДоставлено: " + sent);
             } catch (e) { safeErrorLog(e) }
-            writeNReceivers(receivedUsers.length);
+            writeNReceivers(sent);
         }
     }
 }
