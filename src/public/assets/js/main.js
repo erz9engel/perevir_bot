@@ -217,6 +217,7 @@ function addQuestion() {
     correct: '',
     incorrect1: '',
     explain: '',
+    correctExplain: '',
     video: ''
   });
 }
@@ -247,7 +248,9 @@ function fillInData(data) {
   if(data.incorrect3) document.getElementById('q-incorrect3').value = data.incorrect3;
   else document.getElementById('q-incorrect3').value = '';
   document.getElementById('q-explain').value = data.explain;
-  
+  if(data.correctExplain) document.getElementById('q-correctExplain').value = data.correctExplain;
+  else document.getElementById('q-correctExplain').value = '';
+
   if (data.image) {
     var dataURL = "../images/" + data.image;
     var output = document.getElementById('output');
@@ -301,8 +304,12 @@ function addNewQuestion() {
   if (incorrect3 != '') formData.append('incorrect3', incorrect3);
 
   const explain = document.getElementById('q-explain').value;
-  if (explain == '') return alert('Заповність пояснення');
+  if (explain == '') return alert('Заповність пояснення для неправильної відповіді');
   formData.append('explain', explain);
+
+  const correctExplain = document.getElementById('q-correctExplain').value;
+  if (correctExplain == '') return alert('Заповність пояснення для правильної відповіді');
+  formData.append('correctExplain', correctExplain);
 
   const imageInput = document.getElementById('q-image');
   const file = imageInput.files[0];

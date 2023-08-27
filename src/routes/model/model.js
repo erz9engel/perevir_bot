@@ -266,6 +266,7 @@ var questionSchema = Schema({
     incorrect1: String,
     incorrect2: String, 
     incorrect3: String,
+    correctExplain: String,
     explain: String,
     image: String,
     video: String
