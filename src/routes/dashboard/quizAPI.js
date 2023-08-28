@@ -72,6 +72,7 @@ router.post('/createQuestion', jsonParser, urlencodedParser, upload.any(), (req,
         incorrect2: data.incorrect2,
         incorrect3: data.incorrect3,
         explain: data.explain,
+        correctExplain: data.correctExplain,
         video: data.video,
     });
 
@@ -101,6 +102,7 @@ router.post('/updateQuestion', jsonParser, urlencodedParser, upload.any(), async
         incorrect2: data.incorrect2,
         incorrect3: data.incorrect3,
         explain: data.explain,
+        correctExplain: data.correctExplain,
         video: data.video,
     };
 
