@@ -321,7 +321,6 @@ router.get('/quiz/stat', auth.optional, async (req, res) => {
                     return res.render('quiz-stat', {data: answer}); 
                 }
             }); 
-            
         } 
     } else {
         return res.render('sign-in');
