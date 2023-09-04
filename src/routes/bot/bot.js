@@ -113,7 +113,13 @@ bot.on('message', async (msg) => {
         await onStart(msg, bot, lang, campaign);
     } else if (isTextFromDict(text, QuizText) || text === '/quiz') {
         await onGetQuiz(msg, bot);
+    } else if (text === '/start quiz') {
+        await onStart(msg, bot, 'ua');
+        await delay(3000);
+        await onGetQuiz(msg, bot);
     } else if (text && text.startsWith('/start quiz_')) {
+        await onStart(msg, bot, 'ua');
+        await delay(3000);
         await onSpecificQuiz(msg, bot);
     } else if (text && text.startsWith('/quiz_')) {
         await onSpecificQuiz(msg, bot);

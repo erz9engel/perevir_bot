@@ -147,6 +147,15 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                 i.sidenav-toggler-line
   // End Navbar
   .container-fluid.py-4
+  .nav-wrapper.position-relative.end-0
+    ul.nav.nav-pills.nav-fill.p-1.bg-transparent(role='tablist')
+      li.nav-item
+        a.nav-link.mb-0.px-0.py-1.active(data-bs-toggle='tab' href='javascript:;' role='tab' aria-selected='true')
+          span.ms-1 Усі дані
+      li.nav-item
+        a.nav-link.mb-0.px-0.py-1(data-bs-toggle='tab' href='javascript:;' role='tab' aria-selected='false')
+          span.ms-1 Унікальні користувачі
+
   .row
     .col-12
       each quiz in data 
@@ -163,6 +172,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
 script(src='../assets/js/core/bootstrap.min.js')
 script(src='../assets/js/plugins/chartjs.min.js')
 script(src='../assets/js/main.js')
+script(src='../assets/js/soft-ui-dashboard.min.js?v=1.0.7')
 script.
   const options = {
   responsive: true,

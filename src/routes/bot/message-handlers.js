@@ -471,7 +471,7 @@ const onCheckRequest = async (msg, bot) => {
             try {
                 sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
                 request.moderatorMsgID = sentMsg.message_id;
-            } catch (e) { safeErrorLog(e) }
+            } catch (e) { return safeErrorLog(e) }
             //Send moderator message
             var options = {
                 reply_to_message_id: sentMsg.message_id,
@@ -493,7 +493,7 @@ const onCheckRequest = async (msg, bot) => {
         try {
             sentMsg = await bot.forwardMessage(moderatorsChanel, msg.chat.id, msg.message_id);
             request.moderatorMsgID = sentMsg.message_id;
-        } catch (e) { safeErrorLog(e) }
+        } catch (e) { return safeErrorLog(e) }
 
         inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
