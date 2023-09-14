@@ -10,9 +10,9 @@ const DailyStats = mongoose.model('DailyStats');
 const TelegramUser = mongoose.model('TelegramUser');
 const SourceStatistics = mongoose.model('SourceStatistics');
 
-schedule.scheduleJob("0 8 * * *", async () => sendStats());
-schedule.scheduleJob("1 8 * * *", async () => sendModeratorDailyStats());
-schedule.scheduleJob("2 8 * * *", async () => sendEscalationStats());
+schedule.scheduleJob("0 1 * * *", async () => sendStats());
+schedule.scheduleJob("1 1 * * *", async () => sendModeratorDailyStats());
+schedule.scheduleJob("2 1 * * *", async () => sendEscalationStats());
 schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 
 function sendStats() {
