@@ -32,6 +32,7 @@ const {takeRequestKeyboard} = require("../keyboard");
 const { sendTextMessage } = require("../whatsapp/functions");
 const { sendTextMessageMessenger } = require("../messenger/functions");
 const { automatedCheckGPT } = require("../chatGPT/gpt");
+const admins = String(process.env.ADMINS).split(',');
 
 const onReqTakeQuery = async (callbackQuery, bot) => {
 
@@ -694,18 +695,16 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
 
 const onBlockUserQuery = async (callbackQuery, bot) => {
     let text;
-    const {data, message} = callbackQuery
-    if (!admins.includes(String(message.from.id))) {
+    if (!admins.includes(String(callbackQuery.from.id))) {
         text = "Блокувати користувачів можуть тільки адміністратори"
     } else {
-        const requestId = data.split('_')[1];
+        const requestId = callbackQuery.data.split('_')[1];
         const request = await Request.findById(requestId);
-        if (!request) return
-        const blockedUser = await blockRequestInitiator(request);
-        if (blockedUser) {
-            text = "Користувача '" + getUserName(blockedUser) + "' заблоковано"
+        if (request) {
+            await blockRequestInitiator(request);
+            text = "Користувача заблоковано"
         } else {
-            text = "Не вдалося заблокувати користувача"
+            text = "Проблема із запитом"
         }
     }
     return await bot.answerCallbackQuery(
