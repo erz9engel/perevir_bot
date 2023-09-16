@@ -445,7 +445,8 @@ const onCheckRequest = async (msg, bot) => {
     const reqsCount = await Request.countDocuments({});
     request.requestId = reqsCount + 1;
 
-    var sentMsg, inline_keyboard;
+    var options, sentMsg, inline_keyboard, sentActionMsg;
+    let initiator = getUserName(msg.from);
     if (!notified) {
         
         //Inform user
@@ -462,9 +463,7 @@ const onCheckRequest = async (msg, bot) => {
         //Inform moderators
         inline_keyboard = await takeRequestKeyboard(requestId);
         
-        var sentActionMsg;
         try {
-            let initiator = getUserName(msg.from);
             if (initiator.startsWith("@")) { initiator = initiator.substring(1)}
             var moderatorMsg = '№' + request.requestId + '\nініціатор: ' + initiator + '\n#pending';
             //Forward original  msg
@@ -473,7 +472,7 @@ const onCheckRequest = async (msg, bot) => {
                 request.moderatorMsgID = sentMsg.message_id;
             } catch (e) { return safeErrorLog(e) }
             //Send moderator message
-            var options = {
+            options = {
                 reply_to_message_id: sentMsg.message_id,
                 reply_markup: JSON.stringify({
                     inline_keyboard
@@ -497,7 +496,7 @@ const onCheckRequest = async (msg, bot) => {
 
         inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + requestId }]];
         inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + requestId }]);
-        var options = {
+        options = {
             reply_to_message_id: sentMsg.message_id,
             reply_markup: JSON.stringify({
                 inline_keyboard
@@ -505,9 +504,12 @@ const onCheckRequest = async (msg, bot) => {
         };
         var status = "#autoDecline"
         if (request.fakeStatus == 2) status = "#autoConfirm";
-        var sentActionMsg;
         try {
-            sentActionMsg = await bot.sendMessage(moderatorsChanel, '№' + request.requestId + '\n' + status ,options);
+            sentActionMsg = await bot.sendMessage(
+                moderatorsChanel,
+                '№' + request.requestId + '\nініціатор: ' + initiator + '\n' + status,
+                options,
+            );
         } catch (e) { safeErrorLog(e) }
         request.moderatorMsgID = sentMsg.message_id;
         request.moderatorActionMsgID = sentActionMsg.message_id;
