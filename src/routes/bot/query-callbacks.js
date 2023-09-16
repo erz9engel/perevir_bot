@@ -20,6 +20,7 @@ const {
 const {informRequestersWithComment} = require("./message-handlers");
 const { getText, getLanguageTGChat} = require('./localisation');
 const mongoose = require("mongoose");
+const {blockRequestInitiator} = require("./authorization");
 require('dotenv').config();
 
 const Request = mongoose.model('Request');
@@ -37,7 +38,7 @@ const onReqTakeQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery;
     let requestId = data.split('_')[1];
     const inline_keyboard = await statusesKeyboard(requestId);
-       
+
     try {
         await bot.editMessageReplyMarkup({
             inline_keyboard: inline_keyboard
@@ -72,7 +73,7 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
         if (req.whatsappReq) sourceTxt = "#whatsapp | ";
         else if (req.messengerReq) sourceTxt = "#messenger | ";
 
-        
+
         try {
             await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nРедактор: " + moderator, {
                 chat_id: messageChat,
@@ -87,7 +88,7 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
     }
     var request = await Request.findByIdAndUpdate(requestId, {fakeStatus: fakeStatus});
     if(!request) request = {requestId: ''};
-    
+
     inline_keyboard = changeInlineKeyboard(
         inline_keyboard,
         'decision',
@@ -96,7 +97,7 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
     sourceTxt = request.viberReq ? "#viber | " : "";
     if (request.whatsappReq) sourceTxt = "#whatsapp | ";
     else if (request.messengerReq) sourceTxt = "#messenger | ";
-        
+
     try {
         await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
             chat_id: messageChat,
@@ -108,14 +109,14 @@ const onFakeStatusQuery = async (callbackQuery, bot, silentMode) => {
     } catch (e) { safeErrorLog(e) }
 
     await involveModerator(requestId, callbackQuery.from);
-        
+
     if (!request._id) return console.log('No request ' + requestId);
     if (!silentMode) {
         await notifyUsers(request, fakeStatus, bot);
     }
 }
 
-const onNeedUpdate = async (request, bot) => {  
+const onNeedUpdate = async (request, bot) => {
 
     const fakeStatus = String(request.fakeStatus);
     const actionMsgText = "№" + request.requestId;
@@ -126,9 +127,9 @@ const onNeedUpdate = async (request, bot) => {
     var moderator;
     if (request.takenModerator) moderator = await involveModerator(request._id, request.takenModerator);
     else moderator = 'невідомий';
-    
+
     const inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + request._id }]]
-    
+
     try {
         await bot.editMessageText(actionMsgText + "\n#resolved | " + sourceTxt + status + "\nМодератор: " + moderator, {
             chat_id: getLanguageTGChat(request.language),
@@ -139,10 +140,10 @@ const onNeedUpdate = async (request, bot) => {
         });
     } catch (e) { safeErrorLog(e) }
     await notifyUsers(request, fakeStatus, bot);
-    
+
 }
 
-const onTakenRequest = async (request, bot) => {  
+const onTakenRequest = async (request, bot) => {
     try {
         await bot.editMessageReplyMarkup({}, {
             chat_id: getLanguageTGChat(request.language),
@@ -154,7 +155,7 @@ const onTakenRequest = async (request, bot) => {
 const onBackRequest = async (request, bot) => {
     //Change status back to pending
     let inline_keyboard = await statusesKeyboard(request._id, request.viberReq);
-    
+
     try {
         await bot.editMessageReplyMarkup({
             inline_keyboard: inline_keyboard
@@ -220,7 +221,10 @@ const onMoreStatusesQuery = async (callbackQuery, bot) => {
                 { text: '⁉️ Ескалація', callback_data: 'ESCALATE_' + requestId },
                 { text: '⏭️ Пропустити', callback_data: 'SKIP_-2_' + requestId },
             ],
-            [{ text: '🌍 Іншомовний запит', callback_data: 'LANG_XX_' + requestId }],
+            [
+                { text: '🌍 Іншомовний запит', callback_data: 'LANG_XX_' + requestId },
+                { text: '🚫 Заблокувати', callback_data: 'BLOCK_' + requestId },
+            ],
             [{ text: '<--', callback_data: 'CS_' + requestId }],
         ]
     )
@@ -338,7 +342,7 @@ const onCommentQuery = async (callbackQuery, bot) => {
                 addText = ' ' + (commentIteration + 1);
             }
             break;
-        } 
+        }
     }
 
     let updated_inline_keyboard = changeInlineKeyboard(
@@ -385,8 +389,8 @@ const onSubscriptionQuery = async (callbackQuery, bot) => {
 
 const onSendFakesQuery = async (callbackQuery, bot) => {
     const {data, message} = callbackQuery
-    
-    try { 
+
+    try {
         await bot.deleteMessage(message.chat.id, message.message_id);
         const send = Boolean(parseInt(data.split('_')[1]));
         if (send) {
@@ -399,7 +403,7 @@ const onSendFakesQuery = async (callbackQuery, bot) => {
             await sendFakes(users, message_id, chat_id, message.chat.id, bot);
         }
     } catch (e) {
-         safeErrorLog(e); 
+         safeErrorLog(e);
     }
 
 }
@@ -542,7 +546,7 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                     inline_keyboard
                 })
             });
-        } catch (e) { safeErrorLog(e) } 
+        } catch (e) { safeErrorLog(e) }
 
     } catch (err) {
         console.error(err);
@@ -580,7 +584,7 @@ const onUpdateCommentQuery = async (callbackQuery, bot) => {
         );
         try {
             await bot.sendMessage(message.chat.id, 'Зміни до ' + tag + ' збережено до бази');
-        } catch (e) { safeErrorLog(e) } 
+        } catch (e) { safeErrorLog(e) }
     }
 }
 
@@ -592,7 +596,7 @@ async function changeRequestLanguage(request, newLanguage, bot) {
     try {
         moderatorMsgId = await bot.forwardMessage(toLanguageChat, request.requesterTG, request.requesterMsgID);
     } catch (e) {
-        return safeErrorLog(e) 
+        return safeErrorLog(e)
     }
     let inline_keyboard = await takeRequestKeyboard(request._id);
     let options = {
@@ -646,7 +650,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
                 reply_markup: JSON.stringify({
                     inline_keyboard
                 })
-                
+
             });
         } catch (e) { safeErrorLog(e) }
 
@@ -670,7 +674,7 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
                     reply_markup: JSON.stringify({
                         inline_keyboard
                     })
-                    
+
                 });
             } catch (e) { safeErrorLog(e) }
         }
@@ -682,10 +686,35 @@ const onAutoAsnwerQuery  = async (callbackQuery, bot) => {
                 reply_markup: JSON.stringify({
                     inline_keyboard
                 })
-                
+
             });
         } catch (e) { safeErrorLog(e) }
     }
+}
+
+const onBlockUserQuery = async (callbackQuery, bot) => {
+    let text;
+    const {data, message} = callbackQuery
+    if (!admins.includes(String(message.from.id))) {
+        text = "Блокувати користувачів можуть тільки адміністратори"
+    } else {
+        const requestId = data.split('_')[1];
+        const request = await Request.findById(requestId);
+        if (!request) return
+        const blockedUser = await blockRequestInitiator(request);
+        if (blockedUser) {
+            text = "Користувача '" + getUserName(blockedUser) + "' заблоковано"
+        } else {
+            text = "Не вдалося заблокувати користувача"
+        }
+    }
+    return await bot.answerCallbackQuery(
+        callbackQuery.id,
+        {
+            text: text,
+            show_alert: true,
+        }
+    );
 }
 
 module.exports = {
@@ -704,7 +733,8 @@ module.exports = {
     onMoreStatusesQuery,
     onConfirmClosePending,
     onChangeLanguageQuery,
-    onAutoAsnwerQuery
+    onAutoAsnwerQuery,
+    onBlockUserQuery,
 }
 
 async function notifyViber(text, viberRequester) {
