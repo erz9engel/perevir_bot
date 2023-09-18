@@ -18,7 +18,10 @@ schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
         var now = new Date(), stats = {};
-        var msg = "#СТАТИСТИКА запитів на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        var displayDate = now;
+            displayDate.setDate(displayDate.getDate() + 1);
+
+        var msg = "#СТАТИСТИКА запитів на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
         //General
         stats.rTotal = requests.length;
         msg += '\nВсього: <b>' + requests.length + '</b>';
@@ -79,6 +82,8 @@ function sendStats() {
 function sendModeratorDailyStats() {
     const now = new Date();
     now.setDate(now.getDate() - 1);
+    var displayDate = now;
+        displayDate.setDate(displayDate.getDate() + 1);
 
     Request.find({ $and: [{'lastUpdate': { $gt: now } }, { moderator: { $ne: undefined } }]}, 'moderator comment commentMsgId fakeStatus lastUpdate', function(err, requests){
         Moderator.populate(requests, { path: 'moderator' }, function (err, requestsM) {
@@ -102,7 +107,7 @@ function sendModeratorDailyStats() {
             if (calculatedModerators.length == 0) return console.log('No moderators activity');
             calculatedModerators.sort((a, b) => a.requests < b.requests ? 1 : -1);
 
-            var msg = "#24H_LEADERBOARD за <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>\nтоп-10';
+            var msg = "#24H_LEADERBOARD за <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>\nтоп-10';
             for (var m in calculatedModerators) {
                 if(m > 9) break;
                 const md = calculatedModerators[m];
@@ -136,7 +141,10 @@ function sendEscalationStats() {
             }
     }], function (err, escalations){
         var now = new Date(), stats = {};
-        var msg = "#СТАТИСТИКА ескалацій на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        var displayDate = now;
+            displayDate.setDate(displayDate.getDate() + 1);
+
+        var msg = "#СТАТИСТИКА ескалацій на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
         //General
         stats.rTotal = escalations.length;
         msg += '\nВсього: <b>' + escalations.length + '</b>';
