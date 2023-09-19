@@ -89,7 +89,8 @@ var telegramUserSchema = Schema({
     status: String, //Status for the user TBD:(blocked/suspended/chat etc)
     joinedCampaign: String, //Name of Campaign from where pressed /start
     quizPoints: Number,
-    createdAt: {type: Date, default: new Date()} //Time of the creation
+    createdAt: {type: Date, default: new Date()}, //Time of the creation
+    blockedMessages: {type: Number, default: 0} //Counter of messages user send us after being blocked
 });
 
 var dataSchema = Schema({

@@ -32,6 +32,7 @@ const {
     onConfirmClosePending,
     onChangeLanguageQuery,
     onAutoAsnwerQuery,
+    onBlockUserQuery,
 } = require('./query-callbacks');
 
 const {
@@ -217,6 +218,8 @@ bot.on('callback_query', async function onCallbackQuery(callbackQuery) {
         await onNextQuestionQuery(callbackQuery, bot)
     } else if (data.startsWith('AUTOANSWER_')) {
         await onAutoAsnwerQuery(callbackQuery, bot)
+    } else if (data.startsWith('BLOCK_')) {
+        await onBlockUserQuery(callbackQuery, bot)
     }
 });
 
