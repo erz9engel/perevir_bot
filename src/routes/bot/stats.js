@@ -18,7 +18,7 @@ schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
         var now = new Date(), stats = {};
-        var displayDate = now;
+        var displayDate = new Date();
             displayDate.setDate(displayDate.getDate() + 1);
 
         var msg = "#СТАТИСТИКА запитів на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
@@ -82,7 +82,7 @@ function sendStats() {
 function sendModeratorDailyStats() {
     const now = new Date();
     now.setDate(now.getDate() - 1);
-    var displayDate = now;
+    var displayDate = new Date();
         displayDate.setDate(displayDate.getDate() + 1);
 
     Request.find({ $and: [{'lastUpdate': { $gt: now } }, { moderator: { $ne: undefined } }]}, 'moderator comment commentMsgId fakeStatus lastUpdate', function(err, requests){
@@ -141,7 +141,7 @@ function sendEscalationStats() {
             }
     }], function (err, escalations){
         var now = new Date(), stats = {};
-        var displayDate = now;
+        var displayDate = new Date();
             displayDate.setDate(displayDate.getDate() + 1);
 
         var msg = "#СТАТИСТИКА ескалацій на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
