@@ -15,7 +15,6 @@ schedule.scheduleJob("1 21 * * *", async () => sendModeratorDailyStats());
 schedule.scheduleJob("2 21 * * *", async () => sendEscalationStats());
 schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 
-sendStats()
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
         var now = new Date(), stats = {};
