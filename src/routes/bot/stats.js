@@ -10,15 +10,18 @@ const DailyStats = mongoose.model('DailyStats');
 const TelegramUser = mongoose.model('TelegramUser');
 const SourceStatistics = mongoose.model('SourceStatistics');
 
-schedule.scheduleJob("0 1 * * *", async () => sendStats());
-schedule.scheduleJob("1 1 * * *", async () => sendModeratorDailyStats());
-schedule.scheduleJob("2 1 * * *", async () => sendEscalationStats());
+schedule.scheduleJob("0 21 * * *", async () => sendStats());
+schedule.scheduleJob("1 21 * * *", async () => sendModeratorDailyStats());
+schedule.scheduleJob("2 21 * * *", async () => sendEscalationStats());
 schedule.scheduleJob("0 2 * * *", async () => updateSourceStats());
 
 function sendStats() {
     Request.find({}, 'fakeStatus createdAt', function(err, requests){
         var now = new Date(), stats = {};
-        var msg = "#СТАТИСТИКА запитів на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        var displayDate = new Date();
+            displayDate.setDate(displayDate.getDate() + 1);
+
+        var msg = "#СТАТИСТИКА запитів на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
         //General
         stats.rTotal = requests.length;
         msg += '\nВсього: <b>' + requests.length + '</b>';
@@ -79,6 +82,7 @@ function sendStats() {
 function sendModeratorDailyStats() {
     const now = new Date();
     now.setDate(now.getDate() - 1);
+    var displayDate = new Date();
 
     Request.find({ $and: [{'lastUpdate': { $gt: now } }, { moderator: { $ne: undefined } }]}, 'moderator comment commentMsgId fakeStatus lastUpdate', function(err, requests){
         Moderator.populate(requests, { path: 'moderator' }, function (err, requestsM) {
@@ -102,7 +106,7 @@ function sendModeratorDailyStats() {
             if (calculatedModerators.length == 0) return console.log('No moderators activity');
             calculatedModerators.sort((a, b) => a.requests < b.requests ? 1 : -1);
 
-            var msg = "#24H_LEADERBOARD за <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>\nтоп-10';
+            var msg = "#24H_LEADERBOARD за <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>\nтоп-10';
             for (var m in calculatedModerators) {
                 if(m > 9) break;
                 const md = calculatedModerators[m];
@@ -136,7 +140,10 @@ function sendEscalationStats() {
             }
     }], function (err, escalations){
         var now = new Date(), stats = {};
-        var msg = "#СТАТИСТИКА ескалацій на <b>" + now.getDate() + '.' + (parseInt(now.getMonth()) + 1) + '</b>';
+        var displayDate = new Date();
+            displayDate.setDate(displayDate.getDate() + 1);
+
+        var msg = "#СТАТИСТИКА ескалацій на <b>" + displayDate.getDate() + '.' + (parseInt(displayDate.getMonth()) + 1) + '</b>';
         //General
         stats.rTotal = escalations.length;
         msg += '\nВсього: <b>' + escalations.length + '</b>';
@@ -257,17 +264,14 @@ function getAmounts(request) {
 }
 
 async function collectStats(stats) {
-    const now = new Date();
+    var now = new Date();
     const stringDate = now.getDate() + '-' + (parseInt(now.getMonth()) + 1) + '-' + now.getFullYear();
     const allUsers = await TelegramUser.countDocuments();
     const nSubs = await TelegramUser.countDocuments({subscribed: true});
 
-    let dailyStats = new DailyStats({
-        _id: new mongoose.Types.ObjectId(),
-        stringDate: stringDate,
+    let dailyStats = {
         subs: allUsers,
         nSubs: nSubs,  
-        nRecived : 0,
         rTotal: stats.rTotal,
         rFake: stats.rFake,
         rTrue: stats.rTrue, 
@@ -281,10 +285,22 @@ async function collectStats(stats) {
         rTodaySemiTrue: stats.rTodaySemiTrue,
         rTodayNoProofs: stats.rTodayNoProofs,
         rTodayReject: stats.rTodayReject,
-        rTodayPending: stats.rTodayPending,
+        rTodayPending: stats.rTodayPending
+    };
+    console.log(dailyStats)
+    await DailyStats.findOneAndUpdate({stringDate: stringDate}, dailyStats);
+
+    //Create for upcoming day
+    var nextDay = new Date();
+    nextDay.setDate(nextDay.getDate() + 1);
+    const stringNextDate = nextDay.getDate() + '-' + (parseInt(nextDay.getMonth()) + 1) + '-' + nextDay.getFullYear();
+    let newDailyStats = new DailyStats({
+        _id: new mongoose.Types.ObjectId(),
+        stringDate: stringNextDate,
+        nRecived : 0,
         createdAt: new Date()
     });
-    await dailyStats.save().then(() => {}).catch((error) => {
+    await newDailyStats.save().then(() => {}).catch((error) => {
         console.log("MongoErr on daily stats: " + error.code);
     });
 }
