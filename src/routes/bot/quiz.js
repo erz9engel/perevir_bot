@@ -13,7 +13,7 @@ const { BackNav } = require('./contstants');
 
 const onGetQuiz = async (msg, bot) => {
     
-    const activeQuiz = await Quiz.find({active: true});
+    const activeQuiz = await Quiz.find({active: true}).sort({ position: 1 });
     var inline_keyboard = [];
     if (activeQuiz.length == 0) {
         try {
