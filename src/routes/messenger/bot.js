@@ -21,14 +21,13 @@ router.get('/messenger', async (req, res) => {
 
 router.post('/messenger', async (req, res) => {
     const { body } = req;
-
     // Handle incoming messages
     if (body.object === 'page') {
         const { messaging } = body.entry[0];
 
         messaging.forEach((event) => {
             const { sender, message } = event;
-
+            
             registerUser(sender.id);
 
             if (message.text || ( message.attachments && (message.attachments[0].type == 'image' || message.attachments[0].type == 'video'))) {

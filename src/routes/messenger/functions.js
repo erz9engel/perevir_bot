@@ -9,6 +9,7 @@ const client = new MessengerClient({
 
 async function sendTextMessageMessenger(sender_id, text) {
     return await client.sendText(sender_id, text, { messaging_type: "RESPONSE"});
+    //return await client.sendAttachment(sender_id, { type: 'image', payload: { url: 'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png', }, });
 }
 
 async function registerUser (id) {
