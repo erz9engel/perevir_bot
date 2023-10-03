@@ -261,6 +261,7 @@ router.get('/quiz', auth.optional, async (req, res) => {
         if (!admin) return res.render('sign-in'); 
         else {
             var data = await Quiz.find({}).sort({ position: 1 });
+            
             for (var i in data) {
                 var quiz = data[i];
                 const amount = await PassingQuiz.aggregate([
