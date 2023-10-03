@@ -138,4 +138,15 @@ router.get('/question', auth.required, async (req, res, next) => {
 });
 
 
+router.post('/changeOrder', auth.required, async (req, res, next) => {
+
+    const data = req.body;
+
+    for(var i in data) {
+        await Quiz.findByIdAndUpdate(data[i], {position: i});
+    }
+
+    return res.send('updated');
+});
+
 module.exports = router

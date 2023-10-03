@@ -257,7 +257,8 @@ var quizSchema = Schema({
     maxQuestions: { type: Number, default: 10 },
     passed_times: { type: Number, default: 0 },
     views: { type: Number, default: 0 },
-    active: { type: Boolean, default: false}
+    active: { type: Boolean, default: false},
+    position: Number
 })
 
 var questionSchema = Schema({

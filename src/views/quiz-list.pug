@@ -172,9 +172,9 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Унікальні проходження
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Статус
                   th.text-secondary.opacity-7
-              tbody
+              tbody#qlist
                 each quiz in data
-                  tr
+                  tr(id= quiz._id)
                     td
                       .d-flex.px-2.py-1
                         .d-flex.flex-column.justify-content-center
@@ -199,4 +199,25 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
 
 // Core JS Files
 script(src='../assets/js/core/bootstrap.min.js')
+script(src='../assets/js/soft-ui-dashboard.min.js')
 script(src='../assets/js/main.js')
+script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js')
+script(src='https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js')
+script.
+  $(document).ready(function() {
+    $( "#qlist" ).sortable({
+        update: function(event, ui) {
+          const qlist = document.getElementById('qlist');
+          const trElements = qlist.querySelectorAll('tr');
+
+          const trIds = Array.from(trElements).map(tr => tr.id);
+
+          fetch("../quizAPI/changeOrder", {
+            method: "POST",
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(trIds)
+          }).then(res => {});
+     
+        }
+    });
+ });
