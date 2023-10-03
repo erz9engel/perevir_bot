@@ -260,7 +260,36 @@ router.get('/quiz', auth.optional, async (req, res) => {
         const admin = await Admin.findById(id, 'username');
         if (!admin) return res.render('sign-in'); 
         else {
-            const data = await Quiz.find({});
+            var data = await Quiz.find({});
+            for (var i in data) {
+                var quiz = data[i];
+                const amount = await PassingQuiz.aggregate([
+                    {
+                      $match: {
+                        quiz: mongoose.Types.ObjectId(quiz._id),
+                        finishedAt: { $exists: true }
+                      }
+                    },
+                    {
+                      $group: {
+                        _id: "$user",
+                        count: { $sum: 1 }
+                      }
+                    },
+                    {
+                      $group: {
+                        _id: null,
+                        uniqueUserCount: { $sum: 1 }
+                      }
+                    }
+                ]);
+                if (!amount[0]) {
+                    data[i].passed_unique_times = 0;
+                } else {
+                    data[i].passed_unique_times = amount[0].uniqueUserCount;
+                }
+            }
+
             return res.render('quiz-list', {data: data}); 
         } 
     } else {

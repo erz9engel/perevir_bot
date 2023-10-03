@@ -169,6 +169,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                   th.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Назва
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Переглядів
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Пройдено разів
+                  th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Унікальні проходження
                   th.text-center.text-uppercase.text-secondary.text-xxs.font-weight-bolder.opacity-7 Статус
                   th.text-secondary.opacity-7
               tbody
@@ -182,6 +183,8 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                       span #{quiz.views}
                     td.align-middle.text-center.text-sm
                       span #{quiz.passed_times}
+                    td.align-middle.text-center.text-sm
+                      span #{quiz.passed_unique_times}
                     td.align-middle.text-center.text-sm
                       if quiz.active
                         span.badge.badge-sm.bg-gradient-success Активний
