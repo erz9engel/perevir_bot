@@ -11,6 +11,7 @@ const SourceStatistics = mongoose.model('SourceStatistics');
 const DailyStats = mongoose.model('DailyStats');
 const User = mongoose.model('User');
 require('dotenv').config();
+const escalationGroup = process.env.TGESCALATIONGROUP;
 
 function getSubscriptionBtn(status, user_id) {
     var inline_keyboard = [];
@@ -123,10 +124,25 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
     }
 }
 
-async function closeRequestByTimeout(request, bot) {
-    let inline_keyboard = [[{ text: '◀️ Змінити статус', callback_data: 'CS_' + request._id }]];
+async function closeRequestByTimeout(request, bot, isEscalation) {
+    if (isEscalation){
+        if (request.actionMsgID) {
+            try {
+                await bot.editMessageText("#timeout", {
+                    chat_id: escalationGroup,
+                    message_id: request.actionMsgID,
+                });
+            } catch (e) {
+                safeErrorLog(e);
+                console.log("Close by timeout failed for message " + request.actionMsgID + ", sleeping for 30 seconds ")
+                await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+            request = request.request
+        }
+    }
+    let inline_keyboard = [[{text: '◀️ Змінити статус', callback_data: 'CS_' + request._id}]];
     if (!request.commentChatId) {
-        inline_keyboard.push([{ text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id }])
+        inline_keyboard.push([{text: '✉️ Залишити коментар', callback_data: 'COMMENT_' + request._id}])
     }
     if (request.moderatorActionMsgID) {
         let moderatorsChannel = getLanguageTGChat(request.language)
