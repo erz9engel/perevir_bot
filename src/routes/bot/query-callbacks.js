@@ -481,8 +481,10 @@ const onEscalateQuery = async (callbackQuery, bot) => {
         var {language} = await getLanguage(request.requesterTG);
         if (request.viberReq) {
             language = 'ua';
-        } else if (request.whatsappReq || request.messengerReq) {
+        } else if (request.whatsappReq) {
             language = 'en';
+        } else if (request.messengerReq) {
+            language = null;
         }
         await getText('request_escalated', language, async function(err, text) {
             if (err) return safeErrorLog(err);
@@ -495,7 +497,8 @@ const onEscalateQuery = async (callbackQuery, bot) => {
             } else if (request.whatsappReq) {
                 sendTextMessage(request.whatsappRequester, text, request.whatsappMessageId);
             } else if (request.messengerReq) {
-                sendTextMessageMessenger(request.messengerRequester, text);
+                var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+                sendTextMessageMessenger(request.messengerRequester, answer);
             } else {
                 try {
                     await bot.sendMessage(request.requesterTG, text, options);

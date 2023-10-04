@@ -56,7 +56,8 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
         } else if (foundRequest.whatsappReq) {
             sendTextMessage(foundRequest.whatsappRequester, text['en'], foundRequest.whatsappMessageId);
         } else if (foundRequest.messengerReq) {
-            sendTextMessageMessenger(foundRequest.messengerRequester, text['en']);
+            var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+            sendTextMessageMessenger(foundRequest.messengerRequester, answer);
         } else {
             let options = {
                 reply_to_message_id: foundRequest.requesterMsgID

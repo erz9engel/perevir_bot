@@ -66,10 +66,11 @@ async function onMessage(event) {
 async function onUnsupportedContent(event) {
     const { sender } = event;
 
-    await getText('unsupported_request', 'en', async function(err, text){
+    await getText('unsupported_request', null, async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await sendTextMessageMessenger(sender.id, text);
+            var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+            await sendTextMessageMessenger(sender.id, answer);
         } catch (e) { safeErrorLog(e) }
     });
 }
@@ -126,10 +127,11 @@ async function createNewRequest(sender, text, attachments) {
     request.save();
 
     //Inform user
-    await getText('new_requests', 'en', async function(err, text){
+    await getText('new_requests', null, async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            await sendTextMessageMessenger(sender.id, text);
+            var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+            await sendTextMessageMessenger(sender.id, answer);
         } catch (e) { safeErrorLog(e) }
     });
 }
