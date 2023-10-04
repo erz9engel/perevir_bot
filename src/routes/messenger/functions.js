@@ -29,7 +29,7 @@ async function registerUser (id) {
 }
 
 async function reportStatusMessenger(foundRequest, sender, bannedChat) {
-
+    console.log('reportStatusMessenger')
     var textArg = '';
     if (bannedChat) {
         textArg = bannedChat.fake ? 'black_source' : 'white_source';
@@ -40,10 +40,11 @@ async function reportStatusMessenger(foundRequest, sender, bannedChat) {
     }
 
     try {
-        await getText(textArg, 'en', async function(err, text){
+        await getText(textArg, null, async function(err, text){
             if (err) return console.log(err);
             try {
-                await sendTextMessageMessenger(sender.id, text);
+                var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+                await sendTextMessageMessenger(sender.id, answer);
             } catch (e) { console.log(e) }
         });
         
@@ -53,10 +54,11 @@ async function reportStatusMessenger(foundRequest, sender, bannedChat) {
 async function reportAutoStatusMessenger(labeledSource, sender) {
     const sourceText = labeledSource.fake ? 'black_source' : 'white_source';
     try {
-        await getText(sourceText, 'en', async function(err, text){
+        await getText(sourceText, null, async function(err, text){
             if (err) return safeErrorLog(err);
             try {
-                await sendTextMessageMessenger(sender.id, text);
+                var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+                await sendTextMessageMessenger(sender.id, answer);
             } catch (e) { safeErrorLog(e) }
         });
     } catch (e) {safeErrorLog(e)}
