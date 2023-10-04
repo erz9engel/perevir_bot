@@ -447,19 +447,32 @@ const onConfirmClosePending = async (callbackQuery, bot) => {
         }
     } else {
         const timeoutDate = new Date(parseInt(data.split('_')[1]));
-        var oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": {$lt: timeoutDate}});
-        for (var index = 0; index < oldRequests.length; index++) {
+        const closeEscalations = data.text.split("_")[2] === "ESC"
+        let oldRequests, oldEscalations;
+        let index;
+        if (closeEscalations) {
+            oldEscalations = await Escalation.find({"isResolved": 0, "createdAt": {$lt: timeoutDate}})
+                .populate('request');
+            for (index = 0; index < oldEscalations.length; index++) {
+                try {
+                    await closeRequestByTimeout(oldEscalations[index], bot, true);
+                } catch (e) { safeErrorLog(e); }
+            }
+        } else {
+            oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": {$lt: timeoutDate}});
+            for (index = 0; index < oldRequests.length; index++) {
+                try {
+                    await closeRequestByTimeout(oldRequests[index], bot, false);
+                } catch (e) { safeErrorLog(e); }
+                // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
             try {
-                await closeRequestByTimeout(oldRequests[index], bot);
+                await bot.sendMessage(callbackQuery.from.id, 'Закрито ' + index +
+                    ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
+                    ' року та досі були в статусі #pending');
             } catch (e) { safeErrorLog(e); }
-            // Not sure about this, but in order not to be accused in spaming users added 1 second pause
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        try {
-            await bot.sendMessage(callbackQuery.from.id, 'Закрито ' + index +
-                ' повідомлень, що створені до ' + timeoutDate.toLocaleDateString('uk-UA') +
-                ' року та досі були в статусі #pending');
-        } catch (e) { safeErrorLog(e); }
     }
 }
 

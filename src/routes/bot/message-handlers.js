@@ -3,6 +3,7 @@ const admins = String(process.env.ADMINS).split(',');
 const redactionGroup = process.env.TGREDACTIONSGROUP;
 
 const Request = mongoose.model('Request');
+const Escalation = mongoose.model('Escalation');
 const Image = mongoose.model('Image');
 const Video = mongoose.model('Video');
 const TelegramUser = mongoose.model('TelegramUser');
@@ -768,14 +769,23 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
 const onCloseOldRequests = async (msg, bot) => {
     if (admins.includes(String(msg.from.id))) {
         let timeout = parseInt(msg.text.split(" ")[1]) || RequestTimeout
+        const closeEscalations = msg.text.split(" ")[2] === "escalations"
         let timeoutDate = new Date();
         let text;
         let options = {};
+        let oldRequests;
         timeoutDate.setDate(timeoutDate.getDate() - timeout);
-        let oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": { $lt: timeoutDate }});
+
+        if (closeEscalations) {
+            oldRequests = await Escalation.find({"isResolved": false, "createdAt": {$lt: timeoutDate}});
+        } else {
+            oldRequests = await Request.find({"fakeStatus": 0, "lastUpdate": {$lt: timeoutDate}});
+        }
         if (oldRequests.length) {
+            let callback_data = 'CLOSETIMEOUT_' + timeoutDate.getTime()
+            if (closeEscalations) callback_data = callback_data + '_ESC'
             let inline_keyboard = [
-                [{text: '✅️ Закрити застарілі запити', callback_data: 'CLOSETIMEOUT_' + timeoutDate.getTime()}],
+                [{text: '✅️ Закрити застарілі запити', callback_data: callback_data}],
                 [{text: '❌️ Скасувати', callback_data: 'CLOSETIMEOUT_'}]
             ];
             text = 'Знайдено ' + oldRequests.length + ' повідомлень, що створені до '
