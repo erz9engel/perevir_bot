@@ -72,8 +72,8 @@ router.get('/', auth.optional, async (req, res) => {
                     requestPerUserData: []
                 };
                 for (var i in stats) {
-                    const dateParts = stats[i].stringDate.split('-');
-                    const date = dateParts[0] + '.' + dateParts[1];
+                    const dateParts = stats[i].stringDate.slice(0, -5);
+                    const date = dateParts.replace(/-/g, '.');
                     data.days.push(date);
                     data.rTotal.push(stats[i].rTotal);
                     data.rTrue.push(stats[i].rTrue);
