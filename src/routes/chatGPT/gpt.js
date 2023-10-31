@@ -10,7 +10,7 @@ const configuration = new Configuration({
     apiKey: process.env.GPTOIKEY
 });
 const openai = new OpenAIApi(configuration);
-const google = require('googlethis');
+const google = require('google-it')
 const { parser } = require('html-metadata-parser');
 
 const askGPT = async (text) => {
@@ -38,35 +38,25 @@ const askGPT = async (text) => {
 
 const getGoogleResulte = async(requestSummary, lang) => {
     return new Promise(async (resolve, reject) => {
-        const options = {
-            page: 0, 
-            safe: false, // Safe Search
-            parse_ads: false, // If set to true sponsored results will be parsed
-            additional_params: { // add additional parameters here, see https://moz.com/blog/the-ultimate-guide-to-the-google-search-parameters
-              hl: lang 
-            }
-        }
-
         var answer = {
             description: '',
             sources: []
         };
         try {
-            const response = await google.search(requestSummary, options);
-            for (var i in response.results) {
-                const url = new URL(response.results[i].url);
+            const response = await google({'query': requestSummary, 'excludeSites': 'youtube.com,wikipedia.org'});
+            for (var i in response) {
+                const url = new URL(response[i].link);
                 const domain = getDomainWithoutSubdomain(url.origin);
-                console.log(domain);
                 const source = await SourceDomain.findOne({$and: [{domain: domain}, {fake: false}]});
                 if (source) {
                     try {
-                        var result = await parser(response.results[i].url);
+                        var result = await parser(response[i].link);
                         var metadata = result.meta.title;
                         if (result.meta.description) metadata += '. ' + result.meta.description;
                         answer.description += '- ' + metadata + '\n';
-                        answer.sources.push(response.results[i].url);
+                        answer.sources.push(response[i].link);
                     } catch (e) {
-                        console.log("Error with a source " + response.results[i].url)
+                        console.log("Error with a source " + response[i].link)
                     }
                 }
             }
@@ -81,7 +71,7 @@ async function automatedCheckGPT(text, lang) {
     try {
         //Get search term with chatGPT
         const preparedText = await prepareText(text);
-        var requestText = "Generate search term in ukrainian that can help to confirm this information:\n" + preparedText;
+        var requestText = "Generate search term in ukrainian based on the text:\n" + preparedText;
         const requestSummary = await askGPT(requestText);
         //Request Google
         const searchResults = await getGoogleResulte(requestSummary, lang);
