@@ -270,6 +270,7 @@ const onSetFakes = async (msg, bot) => {
         //save text as well
         var content = {text: msg.text, entities: msg.entities};
         content = JSON.stringify(content)
+        console.log("set fake news = " + content);
         const fakeNewsText = await Data.findOneAndUpdate({name: 'fakeNewsText'}, {value: content });
         if (fakeNewsText == null) {
             var newData = new Data({
