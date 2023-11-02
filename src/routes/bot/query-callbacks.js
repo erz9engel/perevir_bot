@@ -517,6 +517,12 @@ const onEscalateQuery = async (callbackQuery, bot) => {
                     await bot.sendMessage(request.requesterTG, text, options);
                 } catch (e) {
                     safeErrorLog(e)
+                    //try again without reply_to_message_id
+                    try {
+                        await bot.sendMessage(request.requesterTG, text);
+                    } catch (e){
+                        safeErrorLog(e);
+                    }
                 }
             }
         });
