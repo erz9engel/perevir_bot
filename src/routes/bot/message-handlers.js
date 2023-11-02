@@ -115,6 +115,7 @@ const onSubscription = async (msg, bot) => {
     const content = JSON.parse(fakeNews.value);
     const text = content.text;
     const entities = content.entities;
+    const photoId = content.photoId;
     
     var options = {
         entities: JSON.stringify(entities),
@@ -123,9 +124,16 @@ const onSubscription = async (msg, bot) => {
         })
     };
 
-    try {
-        await bot.sendMessage(msg.chat.id, text, options);
-    } catch (e) { safeErrorLog(e) }
+    if (!photoId) {
+        try {
+            await bot.sendMessage(msg.chat.id, text, options);
+        } catch (e) { safeErrorLog(e) }
+    } else {
+        options.caption = text;
+        try {
+            await bot.sendPhoto(msg.chat.id, photoId, options);
+        } catch (e) { safeErrorLog(e) }
+    }
 }
 
 const onChangeLanguage = async (msg, bot) => {
@@ -259,7 +267,7 @@ const onSetSource = async (msg, bot, fake) => {
 }
 
 const onSetFakes = async (msg, bot) => {
-
+    
     if (admins.includes(String(msg.from.id))) {
         const fakeNews = msg.message_id + '_' + msg.chat.id;
         await Data.findOneAndUpdate({name: 'fakeNews'}, {value: fakeNews });
@@ -268,10 +276,18 @@ const onSetFakes = async (msg, bot) => {
             await bot.copyMessage(msg.chat.id, msg.chat.id, msg.message_id);
         } catch (e) { safeErrorLog(e) }
         //save text as well
-        var content = {text: msg.text, entities: msg.entities};
+        var content = {};
+        if (msg.text) {
+            content = {text: msg.text, entities: msg.entities};
+        } else if (msg.caption && msg.photo) {
+            content = {text: msg.caption, entities: msg.caption_entities, photoId: msg.photo[msg.photo.length-1].file_id};
+        } else if (msg.caption) {
+            content = {text: msg.caption, entities: msg.caption_entities};
+        }
+        
         content = JSON.stringify(content)
         console.log("set fake news = " + content);
-        const fakeNewsText = await Data.findOneAndUpdate({name: 'fakeNewsText'}, {value: content });
+        const fakeNewsText = await Data.findOneAndUpdate({name: 'fakeNewsText'}, {value: content});
         if (fakeNewsText == null) {
             var newData = new Data({
                 _id: new mongoose.Types.ObjectId(),
