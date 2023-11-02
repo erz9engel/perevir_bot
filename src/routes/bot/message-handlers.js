@@ -279,8 +279,10 @@ const onSetFakes = async (msg, bot) => {
         var content = {};
         if (msg.text) {
             content = {text: msg.text, entities: msg.entities};
-        } else if (msg.caption) {
+        } else if (msg.caption && msg.photo) {
             content = {text: msg.caption, entities: msg.caption_entities, photoId: msg.photo[msg.photo.length-1].file_id};
+        } else if (msg.caption) {
+            content = {text: msg.caption, entities: msg.caption_entities};
         }
         
         content = JSON.stringify(content)
