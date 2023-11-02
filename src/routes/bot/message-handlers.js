@@ -752,7 +752,15 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
     } else {
         try {
             await bot.copyMessage(request.requesterTG, chatId, commentMsgId, options);
-        } catch (e){ safeErrorLog(e) }
+        } catch (e){ 
+            safeErrorLog(e)
+            //try again without reply_to_message_id
+            try {
+                await bot.copyMessage(request.requesterTG, chatId, commentMsgId);
+            } catch (e){
+                safeErrorLog(e);
+            }
+        }
     }
 
     for (var i in request.otherUsetsTG) {
@@ -761,7 +769,15 @@ async function informRequestersWithComment(request, chatId, commentMsgId, bot, t
         };
         try {
             await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId, commentMsgId, optionsR);
-        } catch (e){ safeErrorLog(e) }
+        } catch (e){
+            safeErrorLog(e);
+            //try again without reply_to_message_id
+            try {
+                await bot.copyMessage(request.otherUsetsTG[i].requesterTG, chatId, commentMsgId);
+            } catch (e){
+                safeErrorLog(e);
+            }
+        }
     }
     //TASK: Need to handle comment sending for users who joined waiting after comment was send & before fakeStatus changed
 }

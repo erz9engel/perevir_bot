@@ -66,7 +66,15 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             lang = getRequesterLanguage(foundRequest.requesterId)
             try {
                 await bot.sendMessage(foundRequest.requesterTG, text[lang], options);
-            } catch (e){ safeErrorLog(e) }
+            } catch (e){ 
+                safeErrorLog(e)
+                //try again without reply_to_message_id
+                try {
+                    await bot.sendMessage(foundRequest.requesterTG, text[lang]);
+                } catch (e){
+                    safeErrorLog(e);
+                }
+            }
         }
         //Notify other requesters
         for (let i in foundRequest.otherUsetsTG) {
@@ -76,7 +84,15 @@ async function notifyUsers(foundRequest, fakeStatus, bot) {
             lang = getRequesterLanguage(foundRequest.otherUsetsTG[i].requesterId)
             try {
                 await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text[lang], optionsR);
-            } catch (e){ safeErrorLog(e) }
+            } catch (e){
+                safeErrorLog(e)
+                //try again without reply_to_message_id
+                try {
+                    await bot.sendMessage(foundRequest.otherUsetsTG[i].requesterTG, text[lang]);
+                } catch (e){
+                    safeErrorLog(e);
+                }
+            }
         }
     });
 }
