@@ -25,17 +25,11 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
         .ms-md-auto.pe-md-3.d-flex.align-items-center
         ul.navbar-nav.justify-content-end
           li.headlink
-            a.nav-link.text-body.font-weight-bold.px-0(href='javascript:;')
-              span.d-sm-inline.d-none Статистика
-          li.headlink
             a.nav-link.text-body.font-weight-bold.px-0(href='https://t.me/perevir_bot' target="_blank")
               span.d-sm-inline.d-none Бот у Telegram
           li.headlink
-            a.nav-link.text-body.font-weight-bold.px-0(href='https://viber.com/perevir' target="_blank")
+            a.nav-link.text-body.font-weight-bold.px-0(href='https://www.viber.com/perevir_bot' target="_blank")
               span.d-sm-inline.d-none Бот у Viber
-          li.headlink
-            a.nav-link.text-body.font-weight-bold.px-0(href='https://m.me/perevir' target="_blank")
-              span.d-sm-inline.d-none Бот у Messenger
           
   // End Navbar
   .container-fluid.py-4
@@ -52,7 +46,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                   .d-flex
                     a.externalmain(href='https://t.me/perevir_bot')
                       | Перейти у Телеграм
-                    a.externalsecond(href='https://viber.com/perevir')
+                    a.externalsecond(href='https://www.viber.com/perevir_bot')
                       | Перейти у Вайбер
               .col-lg-5.ms-auto.text-center.mt-5.mt-lg-0
                 .bg-gradient-primary.border-radius-lg.h-100
@@ -67,7 +61,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
               .col-12
                 .numbers.center
                   h4.font-weight-bolder.mb-0
-                    | 100,000
+                    | #{data.reqTotal}
                   p.text-sm.mb-0.text-capitalize.font-weight-bold Запитів
       .col-xl-3.col-sm-6.mb-xl-0.mb-4
         .card
@@ -76,7 +70,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
               .col-12
                 .numbers.center
                   h4.font-weight-bolder.mb-0
-                    | 1,300
+                    | #{data.trueTotal}
                   p.text-sm.mb-0.text-capitalize.font-weight-bold Правди
       .col-xl-3.col-sm-6.mb-xl-0.mb-4
         .card
@@ -85,7 +79,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
               .col-12
                 .numbers.center
                   h4.font-weight-bolder.mb-0
-                    | 3,462
+                    | #{data.falseTotal}
                   p.text-sm.mb-0.text-capitalize.font-weight-bold Фейків
       .col-xl-3.col-sm-6
         .card
@@ -94,7 +88,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
               .col-12
                 .numbers.center
                   h4.font-weight-bolder.mb-0
-                    | 13,430
+                    | #{data.semiTotal}
                   p.text-sm.mb-0.text-capitalize.font-weight-bold Напівправди
     .row.mt-4
       .col-lg-6
@@ -133,7 +127,7 @@ main.main-content.position-relative.max-height-vh-100.h-100.border-radius-lg
                   .d-flex
                     a.externalmain(href='https://t.me/perevir_bot')
                       | Перейти у Телеграм
-                    a.externalsecond(href='https://viber.com/perevir')
+                    a.externalsecond(href='https://www.viber.com/perevir_bot')
                       | Перейти у Вайбер
     footer.footer.pt-3
       .container-fluid

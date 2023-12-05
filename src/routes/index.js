@@ -60,7 +60,11 @@ router.get('/', auth.optional, async (req, res) => {
             nSubs: [],
             nRecived: [],
             requestPerUserLabel: [],
-            requestPerUserData: []
+            requestPerUserData: [],
+            reqTotal: 0,
+            trueTotal: 0,
+            falseTotal: 0,
+            semiTotal: 0
         };
         for (var i in stats) {
             const dateParts = stats[i].stringDate.slice(0, -5);
@@ -70,6 +74,12 @@ router.get('/', auth.optional, async (req, res) => {
             data.rTrue.push(stats[i].rTrue);
             data.rFake.push(stats[i].rFake);
             data.rSemiTrue.push(stats[i].rSemiTrue);
+            
+            if(stats[i].rTotal) data.reqTotal = stats[i].rTotal;
+            if(stats[i].rTrue) data.trueTotal = stats[i].rTrue;
+            if(stats[i].rFake) data.falseTotal = stats[i].rFake;
+            if(stats[i].rSemiTrue) data.semiTotal = stats[i].rSemiTrue;
+
             data.rNoProofs.push(stats[i].rNoProofs);
             data.rReject.push(stats[i].rReject);
             data.rPending.push(stats[i].rPending);
@@ -86,7 +96,7 @@ router.get('/', auth.optional, async (req, res) => {
             data.nSubs.push(stats[i].nSubs);
             data.nRecived.push(stats[i].nRecived);
         }
-        
+
         return res.render('landing', {data: data}); 
     });
 });
