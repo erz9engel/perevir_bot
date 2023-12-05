@@ -61,3 +61,7 @@
 .terms {
     position:relative;
 }
+
+.bottomimg {
+    max-width: 300px!important;
+}
