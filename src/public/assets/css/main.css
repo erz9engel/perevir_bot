@@ -14,3 +14,50 @@
 .date {
     margin-right: 20px;
 }
+
+.headlink {
+    padding-left: 30px!important;
+}
+
+.toptitle {
+    margin-top: 50px;
+}
+
+.externalmain {
+    display: flex;
+    padding: 16px 28px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--Primary, #27FB6B);
+    background: var(--Primary, #27FB6B);
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+}
+
+.externalsecond {
+    display: flex;
+    padding: 16px 28px;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--Black, #1C1B1B);
+    background: var(--White, #FAFAFA);
+    box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+    margin-left: 24px;
+}
+
+.statheadline {
+    padding: 20px 0 10px;
+}
+
+.center {
+    text-align: center;
+}
+
+.ifcn {
+    margin-top:10px
+}
+
+.terms {
+    position:relative;
+}
