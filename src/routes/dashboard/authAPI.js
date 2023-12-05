@@ -25,7 +25,7 @@ router.post('/register', auth.optional, (req, res, next) => {
             return finalAdmin.save()
                 .then(function () {
                     res.cookie('token', finalAdmin.toAuthJSON().token, { maxAge: 60 * 24 * 60 * 60 * 1000, session: false }); 
-                    return res.redirect('../');
+                    return res.redirect('../dash');
                 });
 
 
