@@ -37,11 +37,65 @@ require('./parser-bot/parser');
 const {FakeStatusesStrToInt, FakeStatusesStrToHuman} = require("./bot/contstants");
 //router.use(require('./api'));
 
+router.get('/', auth.optional, async (req, res) => {
+    DailyStats.find({}).sort('-_id').limit(14).exec(async function(err, stats){
+        stats = stats.reverse();
+        var data = {
+            days: [],
+            rTotal: [],
+            rTrue: [],
+            rFake: [],
+            rSemiTrue: [],
+            rNoProofs: [],
+            rReject: [],
+            rPending: [],
+            rToday: [],
+            rTodayTrue: [],
+            rTodayFake: [],
+            rTodaySemiTrue: [],
+            rTodayNoProofs: [],
+            rTodayReject: [],
+            rTodayPending: [],
+            subs: [],
+            nSubs: [],
+            nRecived: [],
+            requestPerUserLabel: [],
+            requestPerUserData: []
+        };
+        for (var i in stats) {
+            const dateParts = stats[i].stringDate.slice(0, -5);
+            const date = dateParts.replace(/-/g, '.');
+            data.days.push(date);
+            data.rTotal.push(stats[i].rTotal);
+            data.rTrue.push(stats[i].rTrue);
+            data.rFake.push(stats[i].rFake);
+            data.rSemiTrue.push(stats[i].rSemiTrue);
+            data.rNoProofs.push(stats[i].rNoProofs);
+            data.rReject.push(stats[i].rReject);
+            data.rPending.push(stats[i].rPending);
+
+            data.rToday.push(stats[i].rToday);
+            data.rTodayTrue.push(stats[i].rTodayTrue);
+            data.rTodayFake.push(stats[i].rTodayFake);
+            data.rTodaySemiTrue.push(stats[i].rTodaySemiTrue);
+            data.rTodayNoProofs.push(stats[i].rTodayNoProofs);
+            data.rTodayReject.push(stats[i].rTodayReject);
+            data.rTodayPending.push(stats[i].rTodayPending);
+
+            data.subs.push(stats[i].subs);
+            data.nSubs.push(stats[i].nSubs);
+            data.nRecived.push(stats[i].nRecived);
+        }
+        
+        return res.render('landing', {data: data}); 
+    });
+});
+
 router.get('/sign-up', auth.optional, async (req, res) => {
     return res.render('sign-up');
 });
 
-router.get('/', auth.optional, async (req, res) => {
+router.get('/dash', auth.optional, async (req, res) => {
     if (req.auth && req.auth.id) {
         const id = req.auth.id;
         const admin = await Admin.findById(id, 'username');
