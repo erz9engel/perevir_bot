@@ -69,32 +69,34 @@ router.get('/', auth.optional, async (req, res) => {
         for (var i in stats) {
             const dateParts = stats[i].stringDate.slice(0, -5);
             const date = dateParts.replace(/-/g, '.');
-            data.days.push(date);
-            data.rTotal.push(stats[i].rTotal);
-            data.rTrue.push(stats[i].rTrue);
-            data.rFake.push(stats[i].rFake);
-            data.rSemiTrue.push(stats[i].rSemiTrue);
-            
-            if(stats[i].rTotal) data.reqTotal = stats[i].rTotal;
-            if(stats[i].rTrue) data.trueTotal = stats[i].rTrue;
-            if(stats[i].rFake) data.falseTotal = stats[i].rFake;
-            if(stats[i].rSemiTrue) data.semiTotal = stats[i].rSemiTrue;
+            if (stats[i].rTotal) {
+                data.days.push(date);
+                data.rTotal.push(stats[i].rTotal);
+                data.rTrue.push(stats[i].rTrue);
+                data.rFake.push(stats[i].rFake);
+                data.rSemiTrue.push(stats[i].rSemiTrue);
+                
+                if(stats[i].rTotal) data.reqTotal = stats[i].rTotal;
+                if(stats[i].rTrue) data.trueTotal = stats[i].rTrue;
+                if(stats[i].rFake) data.falseTotal = stats[i].rFake;
+                if(stats[i].rSemiTrue) data.semiTotal = stats[i].rSemiTrue;
 
-            data.rNoProofs.push(stats[i].rNoProofs);
-            data.rReject.push(stats[i].rReject);
-            data.rPending.push(stats[i].rPending);
+                data.rNoProofs.push(stats[i].rNoProofs);
+                data.rReject.push(stats[i].rReject);
+                data.rPending.push(stats[i].rPending);
 
-            data.rToday.push(stats[i].rToday);
-            data.rTodayTrue.push(stats[i].rTodayTrue);
-            data.rTodayFake.push(stats[i].rTodayFake);
-            data.rTodaySemiTrue.push(stats[i].rTodaySemiTrue);
-            data.rTodayNoProofs.push(stats[i].rTodayNoProofs);
-            data.rTodayReject.push(stats[i].rTodayReject);
-            data.rTodayPending.push(stats[i].rTodayPending);
+                data.rToday.push(stats[i].rToday);
+                data.rTodayTrue.push(stats[i].rTodayTrue);
+                data.rTodayFake.push(stats[i].rTodayFake);
+                data.rTodaySemiTrue.push(stats[i].rTodaySemiTrue);
+                data.rTodayNoProofs.push(stats[i].rTodayNoProofs);
+                data.rTodayReject.push(stats[i].rTodayReject);
+                data.rTodayPending.push(stats[i].rTodayPending);
 
-            data.subs.push(stats[i].subs);
-            data.nSubs.push(stats[i].nSubs);
-            data.nRecived.push(stats[i].nRecived);
+                data.subs.push(stats[i].subs);
+                data.nSubs.push(stats[i].nSubs);
+                data.nRecived.push(stats[i].nRecived);
+            }
         }
 
         return res.render('landing', {data: data}); 
