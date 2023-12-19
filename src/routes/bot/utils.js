@@ -20,11 +20,6 @@ function getSubscriptionBtn(status, user_id) {
     return inline_keyboard;
 }
 
-function getMailBtn () {
-    const inline_keyboard = [[{text: '🔎 Дізнатися більше', url: 'https://t.me/gwaramedia'}]];
-    return inline_keyboard;
-}
-
 function getUserName(user) {
     if (!user) return '';
     if (user.username) {
@@ -112,15 +107,9 @@ async function sendFakes(users, message_id, chat_id, admin, bot) {
 
     for (var index = 0; index < users.length; index++) {
         try {
-            const inline_keyboard = getMailBtn();
-            var options = {
-                reply_markup: JSON.stringify({
-                    inline_keyboard
-                })
-            };
             await new Promise(resolve => setTimeout(resolve, 1000 / RPS));
             try {
-                await bot.copyMessage(users[index].telegramID, chat_id, message_id, options);
+                await bot.copyMessage(users[index].telegramID, chat_id, message_id);
                 await TelegramUser.updateOne(users[index], {lastFakeNews: message_id + "_" + chat_id});
                 sent++;
                 console.log(index + " - " + users.length + " - " + users[index].telegramID + ". Sent: " + sent);
