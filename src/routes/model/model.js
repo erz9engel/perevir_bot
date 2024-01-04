@@ -41,6 +41,7 @@ var requestSchema = Schema({
     language: {type: String, default: 'ua'}, //In what language channel request was sent
     lastUpdate: {type: Date, default: new Date()}, //Time of last setting update
     needUpdate: Boolean,
+    isExpired: {type: Number, default: 0}, // 0 - green, 1 - yellow (older 23h), 2 - red (older 24h)
     createdAt: {type: Date, default: new Date()} //Time of the creation
 });
 

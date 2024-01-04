@@ -15,7 +15,8 @@ const {
     onUnsupportedContent,
     onCloseOldRequests,
     saveCommentToDB,
-    confirmComment
+    confirmComment,
+    markExpiringRequests,
 } = require('./message-handlers');
 
 const {
@@ -83,6 +84,11 @@ try {
 //Lauch needUpdate
 const {onTryToUpdate} = require("./needUpdate");
 const {processChatMessage, onChatModeQuery, unpauseCallback} = require("./chat");
+
+//Schedule job to mark expiring requests
+const schedule = require("node-schedule");
+schedule.scheduleJob("*/15 * * * *", async () => markExpiringRequests(bot));
+
 onTryToUpdate(bot);
 
 bot.on('message', async (msg) => {

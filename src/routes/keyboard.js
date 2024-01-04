@@ -34,10 +34,13 @@ const statusesKeyboard = async (requestId, viber, hideGPT) => {
 };
 
 
-const takeRequestKeyboard = async (requestId) => {
+const takeRequestKeyboard = async (requestId, expireLevel = 0) => {
+    let text  = '🤏 Взяти запит'
+    if (expireLevel === 1) text = '🟨🟨🟨 ' + text;
+    if (expireLevel === 2) text = '🟥🟥🟥 ' + text;
     return [
         [
-            { text: '🤏 Взяти запит', callback_data: 'TAKEREQ_' + requestId }
+            { text: text, callback_data: 'TAKEREQ_' + requestId }
         ]
     ];
 };

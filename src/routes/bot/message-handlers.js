@@ -921,6 +921,50 @@ async function confirmComment(message, bot) {
         console.log(e);
     }
 }
+async function iterateExpiringRequests(bot, requestsList, expireLevel) {
+    let tg_error_raised
+    for (let index = 0; index < requestsList.length; index++) {
+        let request = requestsList[index];
+        const inline_keyboard = await takeRequestKeyboard(request._id, expireLevel);
+        let moderatorChat = getLanguageTGChat(request.language)
+        try {
+            tg_error_raised = false
+            await bot.editMessageReplyMarkup({
+                inline_keyboard: inline_keyboard
+            }, {
+                chat_id: moderatorChat,
+                message_id: request.moderatorActionMsgID
+            });
+        } catch (e) {
+            tg_error_raised = true
+            safeErrorLog(e);
+        }
+        if (!tg_error_raised) {
+            await Request.findOneAndUpdate({_id: request._id}, {isExpired: expireLevel});
+        }
+        // Not sure about this, but in order not to be accused in spaming users added 1 second pause
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+}
+async function markExpiringRequests(bot) {
+    const yellowExpireLevel = 1
+    const redExpireLevel = 2
+    let currentDate = new Date()
+    let expiringDate = new Date(currentDate.setHours(currentDate.getHours() - 23))
+    let expiredDate = new Date(currentDate.setHours(currentDate.getHours() - 1))
+    let expiredRequests = await Request.find({
+            "fakeStatus": 0,
+            "isExpired": yellowExpireLevel,
+            "lastUpdate": {$lt: expiredDate}
+        });
+    await iterateExpiringRequests(bot, expiredRequests, redExpireLevel)
+    let expiringRequests = await Request.find({
+            "fakeStatus": 0,
+            "isExpired": 0,
+            "lastUpdate": {$lt: expiringDate, $gt: expiredDate}
+        });
+    await iterateExpiringRequests(bot, expiringRequests, yellowExpireLevel)
+}
 
 module.exports = {
     onStart,
@@ -941,6 +985,7 @@ module.exports = {
     confirmComment,
     informRequestersWithComment,
     getReplyOptions,
+    markExpiringRequests,
 }
 
 async function notifyViber(text, viberRequester) {
