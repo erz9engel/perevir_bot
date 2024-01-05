@@ -69,7 +69,7 @@ async function onUnsupportedContent(event) {
     await getText('unsupported_request', null, async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            var answer = "🇺🇦 UA: (ENG below)\nПоки що ми не знайшли достатньої кількості доказів щодо цієї інформації. Ми нічого не знайшли або не бачили такої інформації у нашій базі перевірених новин.\nФактчекери почали опрацьовувати цей запит, це може зайняти до доби.\n\n📝Переходь до Telegram-боту Перевірки та проходь освітні тести для того, щоб навчитися самостійно боротися з фейками: https://t.me/perevir_bot?start=quiz\n\n🌍 ENG:\nWe didn't find or see anything like that in our database. This request should be processed by journalists within 24 hours/nSupport our work via https://buymeacoffee.com/gwaramedia"
+            var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
             await sendTextMessageMessenger(sender.id, answer);
         } catch (e) { safeErrorLog(e) }
     });
@@ -130,7 +130,7 @@ async function createNewRequest(sender, text, attachments) {
     await getText('new_requests', null, async function(err, text){
         if (err) return safeErrorLog(err);
         try {
-            var answer = "🇺🇦 UA: (ENG below)\n" + text['ua'] + "\n\n🌍 ENG:\n" + text['en'];
+            var answer = "🇺🇦 UA: (ENG below)\nПоки що ми не знайшли достатньої кількості доказів щодо цієї інформації. Ми нічого не знайшли або не бачили такої інформації у нашій базі перевірених новин.\nФактчекери почали опрацьовувати цей запит, це може зайняти до доби.\n\n📝Переходь до Telegram-боту Перевірки та проходь освітні тести для того, щоб навчитися самостійно боротися з фейками: https://t.me/perevir_bot?start=quiz\n\n🌍 ENG:\nWe didn't find or see anything like that in our database. This request should be processed by journalists within 24 hours/nSupport our work via https://buymeacoffee.com/gwaramedia"
             await sendTextMessageMessenger(sender.id, answer);
         } catch (e) { safeErrorLog(e) }
     });
