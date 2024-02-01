@@ -2,14 +2,10 @@ const mongoose = require('mongoose');
 const Request = mongoose.model('Request');
 const SourceDomain = mongoose.model('SourceDomain');
 
-const { Configuration, OpenAIApi } = require('openai');
+const { OpenAI } = require('openai');
 const { prepareText, getDomainWithoutSubdomain } = require('../bot/utils');
 
-const configuration = new Configuration({
-    organization: process.env.GPTOIORG,
-    apiKey: process.env.GPTOIKEY
-});
-const openai = new OpenAIApi(configuration);
+const openai = new OpenAI();
 const google = require('google-it')
 const { parser } = require('html-metadata-parser');
 
@@ -17,16 +13,16 @@ const askGPT = async (text) => {
     return new Promise(async (resolve, reject) => {
 
         try {
-            const response = await openai.createChatCompletion({
-                model: "gpt-3.5-turbo",
+            const response = await openai.chat.completions.create({
+                model: "gpt-4",
                 messages: [{"role": "user", "content": text}],
                 max_tokens: 1000,
                 temperature: 0
             });
-            console.log(response.data.usage);
-            console.log(response.data.choices[0].message);
+            console.log(response.usage);
+            console.log(response.choices[0].message);
             // Get the generated text from the OpenAI API response
-            var generatedText = response.data.choices[0].message.content;
+            var generatedText = response.choices[0].message.content;
             generatedText = generatedText.replace(/"/g, '');
             resolve(generatedText); //Answer
        
@@ -43,7 +39,7 @@ const getGoogleResulte = async(requestSummary, lang) => {
             sources: []
         };
         try {
-            const response = await google({'query': requestSummary, 'excludeSites': 'youtube.com,wikipedia.org'});
+            const response = await google({'query': requestSummary, 'excludeSites': 'youtube.com,wikipedia.org,facebook.com,t.me,vk.com'});
             for (var i in response) {
                 const url = new URL(response[i].link);
                 const domain = getDomainWithoutSubdomain(url.origin);
@@ -51,6 +47,7 @@ const getGoogleResulte = async(requestSummary, lang) => {
                 if (source) {
                     try {
                         var result = await parser(response[i].link);
+                        console.log(result);
                         var metadata = result.meta.title;
                         if (result.meta.description) metadata += '. ' + result.meta.description;
                         answer.description += '- ' + metadata + '\n';
@@ -77,7 +74,7 @@ async function automatedCheckGPT(text, lang) {
         const searchResults = await getGoogleResulte(requestSummary, lang);
         if (!searchResults || searchResults.sources.length == 0) return false;
         //Ask chatGPT to comment
-        var commentRequestText = "Statement: " + preparedText + "\nSummary from trusted sources: " + searchResults.description + "\nBased on the summary, comment on the truth of the statement in ukrainian?";
+        var commentRequestText = "Act like fact checker AI bot. You got the statement: " + preparedText + "\n and here is summary from trusted sources: " + searchResults.description + "\nBased on the summary, comment on the truth of the statement in ukrainian.";
         const commentRequest = await askGPT(commentRequestText);
         var replyText = commentRequest + "\n\nДжерела:";
         for (var i in searchResults.sources) {
@@ -88,6 +85,7 @@ async function automatedCheckGPT(text, lang) {
         return replyText;
 
     } catch (e) {
+        console.log(e);
         if(e.response && e.response.statusText) console.log("GPT error: " + e.response.statusText);
         return false;
     }
