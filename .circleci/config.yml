@@ -1,38 +1,18 @@
-version: 2.1
-
+version: '2.1'
 orbs:
-  aws-ecr: circleci/aws-ecr@7.3.0
-  aws-ecs: circleci/aws-ecs@4.0.0
-
-jobs:
-  build_and_push_image:
-    docker:
-      - image: cimg/aws:2024.03.1
-    steps:
-      - checkout
-      - setup_remote_docker:
-          version: 19.03.13
-          docker_layer_caching: true
-      - aws-ecr/build-and-push-image:
-          account-url: AWS_ACCOUNT_URL
-          repo: ${ECR_REPOSITORY_NAME}
-          region: AWS_REGION
-          tag: ${ENVIRONMENT}
-
-  deploy-to-ecs:
-    docker:
-      - image: cimg/aws:2024.03.1
-    steps:
-      - aws-ecs/update-service:
-          family: ${AWS_ECS_SERVICE}
-          cluster-name: ${AWS_ECS_CLUSTER}
-          container-image-name-updates: container=bot,image-and-tag=${AWS_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${ENVIRONMENT}
-          verify-revision-is-deployed: true
-
+  aws-ecr: circleci/aws-ecr@9.0
+  aws-ecs: circleci/aws-ecs@4.0
 workflows:
-  build-deploy:
+  build-and-deploy:
     jobs:
-      - build_and_push_image
-      - deploy-to-ecs:
+      - aws-ecr/build_and_push_image:
+          region: AWS_REGION
+          registry_id: ${AWS_ACCOUNT_URL}
+          repo: ${ECR_REPOSITORY_NAME}
+          tag: ${ENVIRONMENT}
+      - aws-ecs/deploy_service_update:
+          cluster: ${AWS_ECS_CLUSTER}
+          container_image_name_updates: container=bot,image-and-tag=${AWS_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${ENVIRONMENT}
+          family: ${AWS_ECS_SERVICE}
           requires:
-            - build_and_push_image
+            - aws-ecr/build-and-push-image
