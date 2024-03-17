@@ -10,7 +10,7 @@ workflows:
           auth:
             - aws-cli/setup
           region: AWS_REGION
-          registry_id: ${AWS_ACCOUNT_URL}
+          account_id: ${AWS_ACCOUNT_ID}
           repo: ${ECR_REPOSITORY_NAME}
           tag: ${ENVIRONMENT}
       - aws-ecs/deploy_service_update:
