@@ -17,7 +17,8 @@ workflows:
           auth:
             - aws-cli/setup
           cluster: ${AWS_ECS_CLUSTER}
+          service_name: ${AWS_ECS_SERVICE}
           container_image_name_updates: container=bot,image-and-tag=${AWS_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${ENVIRONMENT}
-          family: ${AWS_ECS_SERVICE}
+          family: ${AWS_ECS_TASK_DEFINITION}
           requires:
             - aws-ecr/build_and_push_image
