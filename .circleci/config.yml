@@ -9,7 +9,7 @@ workflows:
       - aws-ecr/build_and_push_image:
           auth:
             - aws-cli/setup
-          region: AWS_REGION
+          region: ${AWS_REGION}
           account_id: ${AWS_ACCOUNT_ID}
           repo: ${ECR_REPOSITORY_NAME}
           tag: ${ENVIRONMENT}
