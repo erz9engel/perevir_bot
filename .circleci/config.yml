@@ -20,4 +20,4 @@ workflows:
           container_image_name_updates: container=bot,image-and-tag=${AWS_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${ENVIRONMENT}
           family: ${AWS_ECS_SERVICE}
           requires:
-            - aws-ecr/build-and-push-image
+            - aws-ecr/build_and_push_image
