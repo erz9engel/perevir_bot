@@ -2,15 +2,20 @@ version: '2.1'
 orbs:
   aws-ecr: circleci/aws-ecr@9.0
   aws-ecs: circleci/aws-ecs@4.0
+  aws-cli: circleci/aws-cli@4.0
 workflows:
   build-and-deploy:
     jobs:
       - aws-ecr/build_and_push_image:
+          auth:
+            - aws-cli/setup
           region: AWS_REGION
           registry_id: ${AWS_ACCOUNT_URL}
           repo: ${ECR_REPOSITORY_NAME}
           tag: ${ENVIRONMENT}
       - aws-ecs/deploy_service_update:
+          auth:
+            - aws-cli/setup
           cluster: ${AWS_ECS_CLUSTER}
           container_image_name_updates: container=bot,image-and-tag=${AWS_ACCOUNT_URL}/${ECR_REPOSITORY_NAME}:${ENVIRONMENT}
           family: ${AWS_ECS_SERVICE}
